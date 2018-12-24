@@ -91,6 +91,26 @@ type ModuleStmt struct {
 	Stmts []Stmt
 }
 
+// SelectStmt provide switch statement.
+type SelectStmt struct {
+	StmtImpl
+	Body Stmt
+}
+
+// SelectBodyStmt provide switch case statements and default statement.
+type SelectBodyStmt struct {
+	StmtImpl
+	Cases   []Stmt
+	Default []Stmt
+}
+
+// SelectCaseStmt provide switch case statement.
+type SelectCaseStmt struct {
+	StmtImpl
+	Expr  Stmt
+	Stmts []Stmt
+}
+
 // SwitchStmt provide switch statement.
 type SwitchStmt struct {
 	StmtImpl

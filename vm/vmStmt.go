@@ -488,6 +488,85 @@ func runSingleStmt(stmt ast.Stmt, env *Env, ctx context.Context) (reflect.Value,
 		env.defineGlobalValue(stmt.Name, reflect.ValueOf(newenv))
 		return rv, nil
 
+	// SelectStmt
+	case *ast.SelectStmt:
+		newenv := env.NewEnv()
+		body := stmt.Body.(*ast.SelectBodyStmt)
+		letsStmts := []*ast.LetsStmt{nil}
+		bodies := [][]ast.Stmt{nil}
+		cases := []reflect.SelectCase{{
+			Dir:  reflect.SelectRecv,
+			Chan: reflect.ValueOf(ctx.Done()),
+			Send: zeroValue,
+		}}
+		for _, selectCaseStmt := range body.Cases {
+			caseStmt := selectCaseStmt.(*ast.SelectCaseStmt)
+			switch e := caseStmt.Expr.(type) {
+			case *ast.LetsStmt:
+				if ee, ok := e.Rhss[0].(*ast.ChanExpr); ok {
+					ident, _ := ee.Rhs.(*ast.IdentExpr)
+					v, err := newenv.get(ident.Lit)
+					if err != nil {
+						return nilValue, newError(ee, err)
+					}
+					letsStmts = append(letsStmts, e)
+					bodies = append(bodies, caseStmt.Stmts)
+					cases = append(cases, reflect.SelectCase{
+						Dir:  reflect.SelectRecv,
+						Chan: v,
+						Send: reflect.ValueOf(nil),
+					})
+				} else {
+					return nilValue, newStringError(e.Rhss[0], "invalid operation")
+				}
+			case *ast.ExprStmt:
+				if ee, ok := e.Expr.(*ast.ChanExpr); ok {
+					ident, _ := ee.Rhs.(*ast.IdentExpr)
+					v, err := newenv.get(ident.Lit)
+					if err != nil {
+						return nilValue, newError(ee, err)
+					}
+					letsStmts = append(letsStmts, nil)
+					bodies = append(bodies, caseStmt.Stmts)
+					cases = append(cases, reflect.SelectCase{
+						Dir:  reflect.SelectRecv,
+						Chan: v,
+						Send: reflect.ValueOf(nil),
+					})
+				} else {
+					return nilValue, newStringError(e.Expr, "invalid operation")
+				}
+			default:
+				return nilValue, newStringError(e, "invalid operation")
+			}
+		}
+		if body.Default != nil {
+			letsStmts = append(letsStmts, nil)
+			bodies = append(bodies, body.Default)
+			cases = append(cases, reflect.SelectCase{
+				Dir:  reflect.SelectDefault,
+				Chan: reflect.ValueOf(nil),
+				Send: reflect.ValueOf(nil),
+			})
+		}
+		chosen, rv, _ := reflect.Select(cases)
+		if chosen == 0 {
+			return nilValue, ErrInterrupt
+		}
+		if letStmt := letsStmts[chosen]; letStmt != nil {
+			if _, err := invokeLetExpr(letStmt.Lhss[0], rv, newenv, ctx); err != nil {
+				return nilValue, newError(letStmt.Lhss[0], err)
+			}
+		}
+		if statements := bodies[chosen]; statements != nil {
+			var err error
+			rv, err = run(statements, newenv, ctx)
+			if err != nil {
+				return rv, err
+			}
+		}
+		return rv, nil
+
 	// SwitchStmt
 	case *ast.SwitchStmt:
 		newenv := env.NewEnv()

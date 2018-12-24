@@ -786,6 +786,10 @@ a = make(chan int64, 1)
 closeWaitChan()
 for v in a { }
 `,
+		`
+closeWaitChan()
+select { }
+`,
 	}
 	for _, script := range scripts {
 		runCancelTestWithContext(t, script)

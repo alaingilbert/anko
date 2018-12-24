@@ -477,6 +477,42 @@ func TestIf(t *testing.T) {
 	testlib.Run(t, tests, nil)
 }
 
+func TestSelect(t *testing.T) {
+	os.Setenv("ANKO_DEBUG", "1")
+	tests := []testlib.Test{
+		// test run errors
+		{Script: `select {case a = <-b: return 1}`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil},
+		{Script: `select {case b = 1: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
+		{Script: `select {case 1: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
+		{Script: `select {case <-a: return 1}`, RunError: fmt.Errorf("undefined symbol 'a'"), RunOutput: nil},
+		{Script: `select {case if true { }: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
+		{Script: `a = make(chan int64, 1); a <- 1; select {case b.c = <-a: return 1}`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil},
+
+		// test 1 channel
+		{Script: `a = make(chan int64, 1); a <- 1; select {case <-a: return 1}`, RunOutput: int64(1)},
+
+		// test 2 channels
+		{Script: `a = make(chan int64, 1); b = make(chan int64, 1); a <- 1; select {case <-a: return 1; case <-b: return 2}`, RunOutput: int64(1)},
+		{Script: `a = make(chan int64, 1); b = make(chan int64, 1); b <- 1; select {case <-a: return 1; case <-b: return 2}`, RunOutput: int64(2)},
+
+		// test default
+		{Script: `a = make(chan int64, 1); b = make(chan int64, 1); select {case <-a: return 1; case <-b: return 2; default: return 3}`, RunOutput: int64(3)},
+
+		// test assignment
+		{Script: `a = make(chan int64, 1); b = make(chan int64, 1); a <- 1; v = 0; select {case v = <-a:; case v = <-b:}; v`, RunOutput: int64(1), Output: map[string]interface{}{"v": int64(1)}},
+
+		// test new lines
+		{Script: `
+		a = make(chan int64, 1)
+		a <- 1
+		select {
+			case <-a:
+				return 1
+		}`, RunOutput: int64(1)},
+	}
+	testlib.Run(t, tests, nil)
+}
+
 func TestSwitch(t *testing.T) {
 	os.Setenv("ANKO_DEBUG", "1")
 	tests := []testlib.Test{

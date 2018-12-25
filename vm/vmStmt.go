@@ -501,44 +501,34 @@ func runSingleStmt(stmt ast.Stmt, env *Env, ctx context.Context) (reflect.Value,
 		}}
 		for _, selectCaseStmt := range body.Cases {
 			caseStmt := selectCaseStmt.(*ast.SelectCaseStmt)
+			var letStmt *ast.LetsStmt
+			var ee *ast.ChanExpr
+			var ok bool
+			var pos ast.Pos = caseStmt.Expr
 			switch e := caseStmt.Expr.(type) {
 			case *ast.LetsStmt:
-				ee, ok := e.Rhss[0].(*ast.ChanExpr)
-				if !ok {
-					return nilValue, newStringError(e.Rhss[0], "invalid operation")
-				}
-				ident, _ := ee.Rhs.(*ast.IdentExpr)
-				v, err := newenv.get(ident.Lit)
-				if err != nil {
-					return nilValue, newError(ee, err)
-				}
-				letsStmts = append(letsStmts, e)
-				bodies = append(bodies, caseStmt.Stmts)
-				cases = append(cases, reflect.SelectCase{
-					Dir:  reflect.SelectRecv,
-					Chan: v,
-					Send: reflect.ValueOf(nil),
-				})
+				letStmt = e
+				pos = e.Rhss[0]
+				ee, ok = e.Rhss[0].(*ast.ChanExpr)
 			case *ast.ExprStmt:
-				ee, ok := e.Expr.(*ast.ChanExpr)
-				if !ok {
-					return nilValue, newStringError(e.Expr, "invalid operation")
-				}
-				ident, _ := ee.Rhs.(*ast.IdentExpr)
-				v, err := newenv.get(ident.Lit)
-				if err != nil {
-					return nilValue, newError(ee, err)
-				}
-				letsStmts = append(letsStmts, nil)
-				bodies = append(bodies, caseStmt.Stmts)
-				cases = append(cases, reflect.SelectCase{
-					Dir:  reflect.SelectRecv,
-					Chan: v,
-					Send: reflect.ValueOf(nil),
-				})
-			default:
-				return nilValue, newStringError(e, "invalid operation")
+				pos = e.Expr
+				ee, ok = e.Expr.(*ast.ChanExpr)
 			}
+			if !ok {
+				return nilValue, newStringError(pos, "invalid operation")
+			}
+			ident, _ := ee.Rhs.(*ast.IdentExpr)
+			v, err := newenv.get(ident.Lit)
+			if err != nil {
+				return nilValue, newError(ee, err)
+			}
+			letsStmts = append(letsStmts, letStmt)
+			bodies = append(bodies, caseStmt.Stmts)
+			cases = append(cases, reflect.SelectCase{
+				Dir:  reflect.SelectRecv,
+				Chan: v,
+				Send: reflect.ValueOf(nil),
+			})
 		}
 		if body.Default != nil {
 			letsStmts = append(letsStmts, nil)

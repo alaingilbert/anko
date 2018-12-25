@@ -503,39 +503,39 @@ func runSingleStmt(stmt ast.Stmt, env *Env, ctx context.Context) (reflect.Value,
 			caseStmt := selectCaseStmt.(*ast.SelectCaseStmt)
 			switch e := caseStmt.Expr.(type) {
 			case *ast.LetsStmt:
-				if ee, ok := e.Rhss[0].(*ast.ChanExpr); ok {
-					ident, _ := ee.Rhs.(*ast.IdentExpr)
-					v, err := newenv.get(ident.Lit)
-					if err != nil {
-						return nilValue, newError(ee, err)
-					}
-					letsStmts = append(letsStmts, e)
-					bodies = append(bodies, caseStmt.Stmts)
-					cases = append(cases, reflect.SelectCase{
-						Dir:  reflect.SelectRecv,
-						Chan: v,
-						Send: reflect.ValueOf(nil),
-					})
-				} else {
+				ee, ok := e.Rhss[0].(*ast.ChanExpr)
+				if !ok {
 					return nilValue, newStringError(e.Rhss[0], "invalid operation")
 				}
+				ident, _ := ee.Rhs.(*ast.IdentExpr)
+				v, err := newenv.get(ident.Lit)
+				if err != nil {
+					return nilValue, newError(ee, err)
+				}
+				letsStmts = append(letsStmts, e)
+				bodies = append(bodies, caseStmt.Stmts)
+				cases = append(cases, reflect.SelectCase{
+					Dir:  reflect.SelectRecv,
+					Chan: v,
+					Send: reflect.ValueOf(nil),
+				})
 			case *ast.ExprStmt:
-				if ee, ok := e.Expr.(*ast.ChanExpr); ok {
-					ident, _ := ee.Rhs.(*ast.IdentExpr)
-					v, err := newenv.get(ident.Lit)
-					if err != nil {
-						return nilValue, newError(ee, err)
-					}
-					letsStmts = append(letsStmts, nil)
-					bodies = append(bodies, caseStmt.Stmts)
-					cases = append(cases, reflect.SelectCase{
-						Dir:  reflect.SelectRecv,
-						Chan: v,
-						Send: reflect.ValueOf(nil),
-					})
-				} else {
+				ee, ok := e.Expr.(*ast.ChanExpr)
+				if !ok {
 					return nilValue, newStringError(e.Expr, "invalid operation")
 				}
+				ident, _ := ee.Rhs.(*ast.IdentExpr)
+				v, err := newenv.get(ident.Lit)
+				if err != nil {
+					return nilValue, newError(ee, err)
+				}
+				letsStmts = append(letsStmts, nil)
+				bodies = append(bodies, caseStmt.Stmts)
+				cases = append(cases, reflect.SelectCase{
+					Dir:  reflect.SelectRecv,
+					Chan: v,
+					Send: reflect.ValueOf(nil),
+				})
 			default:
 				return nilValue, newStringError(e, "invalid operation")
 			}

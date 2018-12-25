@@ -490,6 +490,7 @@ func runSingleStmt(stmt ast.Stmt, env *Env, ctx context.Context) (reflect.Value,
 
 	// SelectStmt
 	case *ast.SelectStmt:
+		var err error
 		newenv := env.NewEnv()
 		body := stmt.Body.(*ast.SelectBodyStmt)
 		letsStmts := []*ast.LetsStmt{nil}
@@ -544,12 +545,12 @@ func runSingleStmt(stmt ast.Stmt, env *Env, ctx context.Context) (reflect.Value,
 			return nilValue, ErrInterrupt
 		}
 		if letStmt := letsStmts[chosen]; letStmt != nil {
-			if _, err := invokeLetExpr(letStmt.Lhss[0], rv, newenv, ctx); err != nil {
+			rv, err = invokeLetExpr(letStmt.Lhss[0], rv, newenv, ctx)
+			if err != nil {
 				return nilValue, newError(letStmt.Lhss[0], err)
 			}
 		}
 		if statements := bodies[chosen]; statements != nil {
-			var err error
 			rv, err = run(statements, newenv, ctx)
 			if err != nil {
 				return rv, err

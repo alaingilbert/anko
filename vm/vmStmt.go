@@ -502,25 +502,25 @@ func runSingleStmt(stmt ast.Stmt, env *Env, ctx context.Context) (reflect.Value,
 		for _, selectCaseStmt := range body.Cases {
 			caseStmt := selectCaseStmt.(*ast.SelectCaseStmt)
 			var letStmt *ast.LetsStmt
-			var ee *ast.ChanExpr
+			var che *ast.ChanExpr
 			var ok bool
 			var pos ast.Pos = caseStmt.Expr
 			switch e := caseStmt.Expr.(type) {
 			case *ast.LetsStmt:
 				letStmt = e
 				pos = e.Rhss[0]
-				ee, ok = e.Rhss[0].(*ast.ChanExpr)
+				che, ok = e.Rhss[0].(*ast.ChanExpr)
 			case *ast.ExprStmt:
 				pos = e.Expr
-				ee, ok = e.Expr.(*ast.ChanExpr)
+				che, ok = e.Expr.(*ast.ChanExpr)
 			}
 			if !ok {
 				return nilValue, newStringError(pos, "invalid operation")
 			}
-			ident, _ := ee.Rhs.(*ast.IdentExpr)
+			ident := che.Rhs.(*ast.IdentExpr)
 			v, err := newenv.get(ident.Lit)
 			if err != nil {
-				return nilValue, newError(ee, err)
+				return nilValue, newError(che, err)
 			}
 			letsStmts = append(letsStmts, letStmt)
 			bodies = append(bodies, caseStmt.Stmts)

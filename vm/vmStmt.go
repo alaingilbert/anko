@@ -527,7 +527,7 @@ func runSingleStmt(stmt ast.Stmt, env *Env, ctx context.Context) (reflect.Value,
 			cases = append(cases, reflect.SelectCase{
 				Dir:  reflect.SelectRecv,
 				Chan: v,
-				Send: reflect.ValueOf(nil),
+				Send: zeroValue,
 			})
 		}
 		if body.Default != nil {
@@ -535,8 +535,8 @@ func runSingleStmt(stmt ast.Stmt, env *Env, ctx context.Context) (reflect.Value,
 			bodies = append(bodies, body.Default)
 			cases = append(cases, reflect.SelectCase{
 				Dir:  reflect.SelectDefault,
-				Chan: reflect.ValueOf(nil),
-				Send: reflect.ValueOf(nil),
+				Chan: zeroValue,
+				Send: zeroValue,
 			})
 		}
 		chosen, rv, _ := reflect.Select(cases)

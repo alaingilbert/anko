@@ -518,7 +518,10 @@ func runSingleStmt(stmt ast.Stmt, env *Env, ctx context.Context) (reflect.Value,
 			if !ok {
 				return nilValue, newStringError(pos, "invalid operation")
 			}
-			ident := che.Rhs.(*ast.IdentExpr)
+			ident, ok := che.Rhs.(*ast.IdentExpr)
+			if !ok {
+				return nilValue, newStringError(pos, "invalid operation")
+			}
 			v, err := newenv.get(ident.Lit)
 			if err != nil {
 				return nilValue, newError(che, err)

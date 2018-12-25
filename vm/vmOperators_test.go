@@ -488,6 +488,7 @@ func TestSelect(t *testing.T) {
 		{Script: `select {case a = <-b: return 1}`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil},
 		{Script: `select {case b = 1: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
 		{Script: `select {case 1: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
+		{Script: `select {case <-1: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
 		{Script: `select {case <-a: return 1}`, RunError: fmt.Errorf("undefined symbol 'a'"), RunOutput: nil},
 		{Script: `select {case if true { }: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
 		{Script: `a = make(chan int64, 1); a <- 1; select {case b.c = <-a: return 1}`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil},

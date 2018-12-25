@@ -480,6 +480,10 @@ func TestIf(t *testing.T) {
 func TestSelect(t *testing.T) {
 	os.Setenv("ANKO_DEBUG", "1")
 	tests := []testlib.Test{
+		// test parse errors
+		{Script: `select {default: return 6; default: return 7}`, ParseError: fmt.Errorf("multiple default statement"), RunOutput: int64(7)},
+		{Script: `a = make(chan int64, 1); a <- 1; select {case <-a: return 5; default: return 6; default: return 7}`, ParseError: fmt.Errorf("multiple default statement"), RunOutput: int64(5)},
+
 		// test run errors
 		{Script: `select {case a = <-b: return 1}`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil},
 		{Script: `select {case b = 1: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
@@ -487,6 +491,7 @@ func TestSelect(t *testing.T) {
 		{Script: `select {case <-a: return 1}`, RunError: fmt.Errorf("undefined symbol 'a'"), RunOutput: nil},
 		{Script: `select {case if true { }: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
 		{Script: `a = make(chan int64, 1); a <- 1; select {case b.c = <-a: return 1}`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil},
+		{Script: `a = make(chan int64, 1); a <- 1; select {case v = <-a:}; v`, RunError: fmt.Errorf("undefined symbol 'v'"), RunOutput: nil},
 
 		// test 1 channel
 		{Script: `a = make(chan int64, 1); a <- 1; select {case <-a: return 1}`, RunOutput: int64(1)},
@@ -496,10 +501,14 @@ func TestSelect(t *testing.T) {
 		{Script: `a = make(chan int64, 1); b = make(chan int64, 1); b <- 1; select {case <-a: return 1; case <-b: return 2}`, RunOutput: int64(2)},
 
 		// test default
+		{Script: `select {default: return 1}`, RunOutput: int64(1)},
 		{Script: `a = make(chan int64, 1); b = make(chan int64, 1); select {case <-a: return 1; case <-b: return 2; default: return 3}`, RunOutput: int64(3)},
+		{Script: `a = make(chan int64, 1); b = make(chan int64, 1); a <- 1; select {case <-a: return 1; case <-b: return 2; default: return 3}`, RunOutput: int64(1)},
+		{Script: `a = make(chan int64, 1); b = make(chan int64, 1); b <- 1; select {case <-a: return 1; case <-b: return 2; default: return 3}`, RunOutput: int64(2)},
 
 		// test assignment
 		{Script: `a = make(chan int64, 1); b = make(chan int64, 1); a <- 1; v = 0; select {case v = <-a:; case v = <-b:}; v`, RunOutput: int64(1), Output: map[string]interface{}{"v": int64(1)}},
+		{Script: `a = make(chan int64, 1); a <- 1; select {case v = <-a: return v}`, RunOutput: int64(1), Output: map[string]interface{}{}},
 
 		// test new lines
 		{Script: `

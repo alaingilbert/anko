@@ -1,7 +1,9 @@
 package vm
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"fmt"
 	"reflect"
 	"strings"
@@ -372,6 +374,36 @@ func (e *Env) Dump() {
 		fmt.Printf("%v = %#v\n", k, v)
 	}
 	e.RUnlock()
+}
+
+// Compile ...
+func (e *Env) Compile(src string) ([]byte, error) {
+	stmt, err := parser.ParseSrc(src)
+	if err != nil {
+		return []byte{}, err
+	}
+	var out bytes.Buffer
+	enc := gob.NewEncoder(&out)
+	if err := enc.Encode(stmt); err != nil {
+		return []byte{}, err
+	}
+	return out.Bytes(), nil
+}
+
+// ExecuteCompiled ...
+func (e *Env) ExecuteCompiled(src []byte) (interface{}, error) {
+	return e.ExecuteCompiledContext(context.Background(), src)
+}
+
+// ExecuteCompiledContext ...
+func (e *Env) ExecuteCompiledContext(ctx context.Context, src []byte) (interface{}, error) {
+	var out bytes.Buffer
+	dec := gob.NewDecoder(&out)
+	var a ast.Stmt
+	if err := dec.Decode(&a); err != nil {
+		return nil, fmt.Errorf("decode error: %s", err.Error())
+	}
+	return RunContext(ctx, a, e)
 }
 
 // Execute parses and runs source in current scope.

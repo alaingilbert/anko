@@ -1,0 +1,5 @@
+.envrc
+vendor
+pkg/parser/y.output
+script.ank
+*.bnk

@@ -1,0 +1,266 @@
+//go:build !appengine
+
+package main
+
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"github.com/alaingilbert/anko/pkg/compiler"
+	"github.com/alaingilbert/anko/pkg/parser"
+	"github.com/alaingilbert/anko/pkg/utils"
+	"github.com/alaingilbert/anko/pkg/vm"
+	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	"github.com/chzyer/readline"
+	"io"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+const (
+	version         = "0.0.1"
+	ankoFileExt     = ".ank"
+	ankoBytecodeExt = ".bnk"
+)
+
+type AppFlags struct {
+	FlagExecute    string
+	File           string
+	FlagOutputFile string
+}
+
+func main() {
+	var exitCode int
+	var appFlags AppFlags
+	args := parseFlags(&appFlags)
+	env := setupEnv(args)
+	if appFlags.FlagExecute != "" || flag.NArg() > 0 {
+		exitCode = runNonInteractive(env, appFlags)
+	} else {
+		exitCode = runInteractive(env)
+	}
+	os.Exit(exitCode)
+}
+
+func parseFlags(appFlags *AppFlags) (args []string) {
+	flagVersion := flag.Bool("v", false, "prints out the version and then exits")
+	flag.StringVar(&appFlags.FlagExecute, "e", "", "execute the Anko code")
+	flag.StringVar(&appFlags.FlagOutputFile, "o", "", "compile output file")
+	flag.Parse()
+
+	if *flagVersion {
+		fmt.Println(version)
+		os.Exit(OkExitCode)
+	}
+
+	if appFlags.FlagExecute != "" || flag.NArg() < 1 {
+		args = flag.Args()
+		return
+	}
+
+	appFlags.File = flag.Arg(0)
+	args = flag.Args()[1:]
+	return
+}
+
+func setupEnv(args []string) *envPkg.Env {
+	env := envPkg.NewEnv()
+	_ = env.Define("args", args)
+	vm.Import(env)
+	vm.DefineImport(env)
+	return env
+}
+
+const (
+	OkExitCode          = 0
+	ReadFileErrExitCode = 2
+	ExecuteErrExitCode  = 4
+	CompileErrExitCode  = 5
+	ScannerErrExitCode  = 12
+)
+
+func runNonInteractive(env *envPkg.Env, appFlags AppFlags) int {
+	var source string
+	if appFlags.FlagExecute != "" {
+		source = appFlags.FlagExecute
+	} else {
+		sourceBytes, err := os.ReadFile(appFlags.File)
+		if err != nil {
+			fmt.Println("ReadFile error:", err)
+			return ReadFileErrExitCode
+		}
+		source = string(sourceBytes)
+	}
+
+	if appFlags.FlagOutputFile != "" {
+		if err := compileAndSave(source, appFlags.FlagOutputFile); err != nil {
+			fmt.Println("Compile error:", err)
+			return CompileErrExitCode
+		}
+		return OkExitCode
+	}
+
+	executor := vm.New(&vm.Configs{Env: env}).Executor()
+	fileExt := filepath.Ext(appFlags.File)
+	var err error
+	if appFlags.FlagExecute != "" || fileExt == ankoFileExt {
+		_, err = executor.Run(nil, source)
+	} else {
+		_, err = executor.Run(nil, []byte(source))
+	}
+	if err != nil {
+		handleErr(os.Stdout, err)
+		return ExecuteErrExitCode
+	}
+
+	return OkExitCode
+}
+
+func usage(w io.Writer) {
+	_, _ = io.WriteString(w, "commands:\n")
+	_, _ = io.WriteString(w, completer.Tree("    "))
+}
+
+// Function constructor - constructs new function for listing given directory
+func listFiles(path string) func(string) []string {
+	return func(line string) []string {
+		names := make([]string, 0)
+		files, _ := os.ReadDir(path)
+		for _, f := range files {
+			names = append(names, f.Name())
+		}
+		return names
+	}
+}
+
+var completer = readline.NewPrefixCompleter(
+	readline.PcItem("mode",
+		readline.PcItem("vi"),
+		readline.PcItem("emacs"),
+	),
+	readline.PcItem("quit()"),
+	readline.PcItem("dump"),
+	readline.PcItem("help"),
+)
+
+func filterInput(r rune) (rune, bool) {
+	switch r {
+	// block CtrlZ feature
+	case readline.CharCtrlZ:
+		return r, false
+	}
+	return r, true
+}
+
+func runInteractive(env *envPkg.Env) int {
+	l, err := readline.NewEx(&readline.Config{
+		Prompt:          "\033[31m»\033[0m ",
+		HistoryFile:     "/tmp/readline.tmp",
+		AutoComplete:    completer,
+		InterruptPrompt: "^C",
+		EOFPrompt:       "exit",
+
+		HistorySearchFold:   true,
+		FuncFilterInputRune: filterInput,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer l.Close()
+	//l.CaptureExitSignal()
+
+	log.SetOutput(l.Stderr())
+	for {
+		line, err := l.Readline()
+		if errors.Is(err, readline.ErrInterrupt) {
+			if len(line) == 0 {
+				break
+			} else {
+				continue
+			}
+		} else if err == io.EOF {
+			break
+		}
+
+		line = strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(line, "mode "):
+			switch line[5:] {
+			case "vi":
+				l.SetVimMode(true)
+			case "emacs":
+				l.SetVimMode(false)
+			default:
+				println("invalid mode:", line[5:])
+			}
+		case line == "mode":
+			println("current mode: " + utils.Ternary(l.IsVimMode(), "vim", "emacs"))
+		case line == "help":
+			usage(l.Stderr())
+		case line == "dump":
+			println(env.String())
+		case line == "quit()":
+			goto exit
+		case line == "":
+		default:
+
+			source := line
+			stmts, err := parser.ParseSrc(source)
+			if err != nil {
+				var e *parser.Error
+				if errors.As(err, &e) {
+					es := e.Error()
+					if strings.HasPrefix(es, "syntax error: unexpected") {
+						if strings.HasPrefix(es, "syntax error: unexpected $end,") {
+							continue
+						}
+					} else {
+						if e.Pos.Column == len(source) && !e.Fatal {
+							_, _ = fmt.Fprintln(os.Stderr, e)
+							continue
+						}
+						if e.Error() == "unexpected EOF" {
+							continue
+						}
+					}
+				}
+			}
+			var v any
+			if err == nil {
+				v, err = vm.New(&vm.Configs{Env: env}).Executor().Run(nil, stmts)
+			}
+			if err != nil {
+				handleErr(os.Stderr, err)
+				continue
+			}
+			fmt.Printf("%#v\n", v)
+		}
+	}
+exit:
+	return OkExitCode
+}
+
+func handleErr(w io.Writer, err error) {
+	var vmErr *vm.Error
+	var parserErr *parser.Error
+	if errors.As(err, &vmErr) {
+		_, _ = fmt.Fprintf(w, "%d:%d %s\n", vmErr.Pos.Line, vmErr.Pos.Column, err)
+	} else if errors.As(err, &parserErr) {
+		_, _ = fmt.Fprintf(w, "%d:%d %s\n", parserErr.Pos.Line, parserErr.Pos.Column, err)
+	} else {
+		_, _ = fmt.Fprintln(w, err)
+	}
+}
+
+func compileAndSave(source, flagOutputFile string) error {
+	out, err := compiler.Compile(source)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(flagOutputFile, out, 0744); err != nil {
+		return err
+	}
+	return nil
+}

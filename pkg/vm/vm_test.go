@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
-	"github.com/alaingilbert/anko/pkg/ast/astutil"
 	"github.com/alaingilbert/anko/pkg/packages"
 	"github.com/alaingilbert/anko/pkg/utils"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
@@ -973,37 +972,15 @@ func TestValueEqual(t *testing.T) {
 }
 
 func TestLetsStatementPosition(t *testing.T) {
-	src := `a, b = 1, 2
-`
-	stmts, err := parser.ParseSrc(src)
-	if err != nil {
-		t.Fatal(err)
+	src := `a, b = 1, 2`
+	stmts, _ := parser.ParseSrc(src)
+	e := stmts[0].(*ast.LetsStmt)
+	pos := e.Position()
+	if pos.Line != 1 {
+		t.Fatalf("%v != %v", pos.Line, 1)
 	}
-
-	var stmtFound bool
-	err = astutil.Walk(stmts, func(e interface{}) error {
-		switch e := e.(type) {
-		case *ast.LetsStmt:
-			if len(e.Lhss) == 2 {
-				if is, want := e.Position().Line, 1; is != want {
-					t.Fatalf("%v != %v", is, want)
-				}
-				if is, want := e.Position().Column, 1; is != want {
-					t.Fatalf("%v != %v", is, want)
-				}
-			}
-			stmtFound = true
-		}
-
-		return nil
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if is, want := stmtFound, true; is != want {
-		t.Fatalf("%v != %v", is, want)
+	if pos.Column != 1 {
+		t.Fatalf("%v != %v", pos.Column, 1)
 	}
 }
 

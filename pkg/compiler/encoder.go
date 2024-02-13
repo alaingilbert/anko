@@ -20,26 +20,48 @@ func Compile(src string) ([]byte, error) {
 	return EncodeStmts(stmts)
 }
 
+type Encoder struct {
+	*bytes.Buffer
+	strings    map[string]int
+	stringsArr []string
+	stringsIdx int
+}
+
+func NewEncoder() *Encoder {
+	e := new(Encoder)
+	e.Buffer = new(bytes.Buffer)
+	e.strings = make(map[string]int)
+	return e
+}
+
 func EncodeStmts(stmts []ast.Stmt) ([]byte, error) {
-	e := new(bytes.Buffer)
+	b := NewEncoder()
+	encodeStmtArray(b, stmts)
+
+	e := NewEncoder()
 	writeMagic(e, magic)
 	writeVersion(e, version)
-	encodeStmtArray(e, stmts)
+	encode(e, b.stringsIdx)
+	for _, s := range b.stringsArr {
+		encode(e, []byte(s))
+	}
+	encode(e, b.Bytes())
+
 	return e.Bytes(), nil
 }
 
-func writeMagic(w *bytes.Buffer, magic string) {
+func writeMagic(w *Encoder, magic string) {
 	encode(w, magic)
 }
 
-func writeVersion(w *bytes.Buffer, version uint16) {
+func writeVersion(w *Encoder, version uint16) {
 	versionBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(versionBytes, version)
 	encode(w, versionBytes)
 }
 
 // Encode ...
-func encode(w *bytes.Buffer, args ...any) {
+func encode(w *Encoder, args ...any) {
 	var err error
 	for _, v := range args {
 		switch v := v.(type) {
@@ -71,22 +93,30 @@ func encode(w *bytes.Buffer, args ...any) {
 	}
 }
 
-func encodeString(w *bytes.Buffer, str string) {
-	encode(w, int32(len(str)), str)
+func encodeString(w *Encoder, str string) {
+	strIdx := w.stringsIdx
+	if el, ok := w.strings[str]; !ok {
+		w.strings[str] = w.stringsIdx
+		w.stringsIdx += len(str)
+		w.stringsArr = append(w.stringsArr, str)
+	} else {
+		strIdx = el
+	}
+	encode(w, strIdx, int32(len(str)))
 }
 
-func encodeStringArray(w *bytes.Buffer, strs []string) {
+func encodeStringArray(w *Encoder, strs []string) {
 	encode(w, int32(len(strs)))
 	for _, str := range strs {
 		encodeString(w, str)
 	}
 }
 
-func encodeBool(w *bytes.Buffer, v bool) {
+func encodeBool(w *Encoder, v bool) {
 	encode(w, v)
 }
 
-func encodeStmtArray(w *bytes.Buffer, stmts []ast.Stmt) {
+func encodeStmtArray(w *Encoder, stmts []ast.Stmt) {
 	isNil := stmts == nil
 	encodeBool(w, isNil)
 	if !isNil {
@@ -97,14 +127,14 @@ func encodeStmtArray(w *bytes.Buffer, stmts []ast.Stmt) {
 	}
 }
 
-func encodeExprArray(w *bytes.Buffer, exprs []ast.Expr) {
+func encodeExprArray(w *Encoder, exprs []ast.Expr) {
 	encode(w, int32(len(exprs)))
 	for _, e := range exprs {
 		encodeExpr(w, e)
 	}
 }
 
-func encodeExprMap(w *bytes.Buffer, expr map[ast.Expr]ast.Expr) {
+func encodeExprMap(w *Encoder, expr map[ast.Expr]ast.Expr) {
 	encode(w, int32(len(expr)))
 	for k, v := range expr {
 		encodeExpr(w, k)
@@ -112,21 +142,21 @@ func encodeExprMap(w *bytes.Buffer, expr map[ast.Expr]ast.Expr) {
 	}
 }
 
-func encodePosImpl(w *bytes.Buffer, p ast.PosImpl) {
+func encodePosImpl(w *Encoder, p ast.PosImpl) {
 	pos := p.Position()
 	encode(w, int32(pos.Line))
 	encode(w, int32(pos.Column))
 }
 
-func encodeExprImpl(w *bytes.Buffer, i ast.ExprImpl) {
+func encodeExprImpl(w *Encoder, i ast.ExprImpl) {
 	encodePosImpl(w, i.PosImpl)
 }
 
-func encodeStmtImpl(w *bytes.Buffer, i ast.StmtImpl) {
+func encodeStmtImpl(w *Encoder, i ast.StmtImpl) {
 	encodePosImpl(w, i.PosImpl)
 }
 
-func encodeSingleStmt(w *bytes.Buffer, stmt ast.Stmt) {
+func encodeSingleStmt(w *Encoder, stmt ast.Stmt) {
 	//fmt.Println("encodeSingleStmt", reflect.ValueOf(stmt).String())
 	switch stmt := stmt.(type) {
 	case nil:
@@ -180,20 +210,20 @@ func encodeSingleStmt(w *bytes.Buffer, stmt ast.Stmt) {
 	}
 }
 
-func encodeExprStmt(w *bytes.Buffer, stmt *ast.ExprStmt) {
+func encodeExprStmt(w *Encoder, stmt *ast.ExprStmt) {
 	encode(w, ExprStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Expr)
 }
 
-func encodeVarStmt(w *bytes.Buffer, stmt *ast.VarStmt) {
+func encodeVarStmt(w *Encoder, stmt *ast.VarStmt) {
 	encode(w, VarStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeStringArray(w, stmt.Names)
 	encodeExprArray(w, stmt.Exprs)
 }
 
-func encodeLetsStmt(w *bytes.Buffer, stmt *ast.LetsStmt) {
+func encodeLetsStmt(w *Encoder, stmt *ast.LetsStmt) {
 	encode(w, LetsStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExprArray(w, stmt.Lhss)
@@ -201,14 +231,14 @@ func encodeLetsStmt(w *bytes.Buffer, stmt *ast.LetsStmt) {
 	encodeExprArray(w, stmt.Rhss)
 }
 
-func encodeLetMapItemStmt(w *bytes.Buffer, stmt *ast.LetMapItemStmt) {
+func encodeLetMapItemStmt(w *Encoder, stmt *ast.LetMapItemStmt) {
 	encode(w, LetMapItemStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Rhs)
 	encodeExprArray(w, stmt.Lhss)
 }
 
-func encodeIfStmt(w *bytes.Buffer, stmt *ast.IfStmt) {
+func encodeIfStmt(w *Encoder, stmt *ast.IfStmt) {
 	encode(w, IfStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.If)
@@ -217,7 +247,7 @@ func encodeIfStmt(w *bytes.Buffer, stmt *ast.IfStmt) {
 	encodeStmtArray(w, stmt.Else)
 }
 
-func encodeTryStmt(w *bytes.Buffer, stmt *ast.TryStmt) {
+func encodeTryStmt(w *Encoder, stmt *ast.TryStmt) {
 	encode(w, TryStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeString(w, stmt.Var)
@@ -226,14 +256,14 @@ func encodeTryStmt(w *bytes.Buffer, stmt *ast.TryStmt) {
 	encodeStmtArray(w, stmt.Finally)
 }
 
-func encodeLoopStmt(w *bytes.Buffer, stmt *ast.LoopStmt) {
+func encodeLoopStmt(w *Encoder, stmt *ast.LoopStmt) {
 	encode(w, LoopStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Expr)
 	encodeStmtArray(w, stmt.Stmts)
 }
 
-func encodeForStmt(w *bytes.Buffer, stmt *ast.ForStmt) {
+func encodeForStmt(w *Encoder, stmt *ast.ForStmt) {
 	encode(w, ForStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Value)
@@ -241,7 +271,7 @@ func encodeForStmt(w *bytes.Buffer, stmt *ast.ForStmt) {
 	encodeStringArray(w, stmt.Vars)
 }
 
-func encodeCForStmt(w *bytes.Buffer, stmt *ast.CForStmt) {
+func encodeCForStmt(w *Encoder, stmt *ast.CForStmt) {
 	encode(w, CForStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeStmtArray(w, stmt.Stmts)
@@ -250,89 +280,89 @@ func encodeCForStmt(w *bytes.Buffer, stmt *ast.CForStmt) {
 	encodeExpr(w, stmt.Expr3)
 }
 
-func encodeThrowStmt(w *bytes.Buffer, stmt *ast.ThrowStmt) {
+func encodeThrowStmt(w *Encoder, stmt *ast.ThrowStmt) {
 	encode(w, ThrowStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Expr)
 }
 
-func encodeModuleStmt(w *bytes.Buffer, stmt *ast.ModuleStmt) {
+func encodeModuleStmt(w *Encoder, stmt *ast.ModuleStmt) {
 	encode(w, ModuleStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeString(w, stmt.Name)
 	encodeStmtArray(w, stmt.Stmts)
 }
 
-func encodeSelectStmt(w *bytes.Buffer, stmt *ast.SelectStmt) {
+func encodeSelectStmt(w *Encoder, stmt *ast.SelectStmt) {
 	encode(w, SelectStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeSingleStmt(w, stmt.Body)
 }
 
-func encodeSelectBodyStmt(w *bytes.Buffer, stmt *ast.SelectBodyStmt) {
+func encodeSelectBodyStmt(w *Encoder, stmt *ast.SelectBodyStmt) {
 	encode(w, SelectBodyStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeStmtArray(w, stmt.Default)
 	encodeStmtArray(w, stmt.Cases)
 }
 
-func encodeSelectCaseStmt(w *bytes.Buffer, stmt *ast.SelectCaseStmt) {
+func encodeSelectCaseStmt(w *Encoder, stmt *ast.SelectCaseStmt) {
 	encode(w, SelectCaseStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeSingleStmt(w, stmt.Expr)
 	encodeStmtArray(w, stmt.Stmts)
 }
 
-func encodeSwitchStmt(w *bytes.Buffer, stmt *ast.SwitchStmt) {
+func encodeSwitchStmt(w *Encoder, stmt *ast.SwitchStmt) {
 	encode(w, SwitchStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Expr)
 	encodeSingleStmt(w, stmt.Body)
 }
 
-func encodeSwitchCaseStmt(w *bytes.Buffer, stmt *ast.SwitchCaseStmt) {
+func encodeSwitchCaseStmt(w *Encoder, stmt *ast.SwitchCaseStmt) {
 	encode(w, SwitchCaseStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeStmtArray(w, stmt.Stmts)
 	encodeExprArray(w, stmt.Exprs)
 }
 
-func encodeSwitchBodyStmt(w *bytes.Buffer, stmt *ast.SwitchBodyStmt) {
+func encodeSwitchBodyStmt(w *Encoder, stmt *ast.SwitchBodyStmt) {
 	encode(w, SwitchBodyStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeStmtArray(w, stmt.Cases)
 	encodeStmtArray(w, stmt.Default)
 }
 
-func encodeGoroutineStmt(w *bytes.Buffer, stmt *ast.GoroutineStmt) {
+func encodeGoroutineStmt(w *Encoder, stmt *ast.GoroutineStmt) {
 	encode(w, GoroutineStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Expr)
 }
 
-func encodeDeferStmt(w *bytes.Buffer, stmt *ast.DeferStmt) {
+func encodeDeferStmt(w *Encoder, stmt *ast.DeferStmt) {
 	encode(w, DeferStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Expr)
 }
 
-func encodeBreakStmt(w *bytes.Buffer, stmt *ast.BreakStmt) {
+func encodeBreakStmt(w *Encoder, stmt *ast.BreakStmt) {
 	encode(w, BreakStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 }
 
-func encodeContinueStmt(w *bytes.Buffer, stmt *ast.ContinueStmt) {
+func encodeContinueStmt(w *Encoder, stmt *ast.ContinueStmt) {
 	encode(w, ContinueStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 }
 
-func encodeReturnStmt(w *bytes.Buffer, stmt *ast.ReturnStmt) {
+func encodeReturnStmt(w *Encoder, stmt *ast.ReturnStmt) {
 	encode(w, ReturnStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExprArray(w, stmt.Exprs)
 }
 
-func encodeExpr(w *bytes.Buffer, expr ast.Expr) {
+func encodeExpr(w *Encoder, expr ast.Expr) {
 	//fmt.Println("encodeExpr", reflect.ValueOf(expr).String())
 	switch expr := expr.(type) {
 	case nil:
@@ -403,76 +433,76 @@ func encodeExpr(w *bytes.Buffer, expr ast.Expr) {
 	}
 }
 
-func encodeNumberExpr(w *bytes.Buffer, expr *ast.NumberExpr) {
+func encodeNumberExpr(w *Encoder, expr *ast.NumberExpr) {
 	encode(w, NumberExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Lit)
 }
 
-func encodeIdentExpr(w *bytes.Buffer, expr *ast.IdentExpr) {
+func encodeIdentExpr(w *Encoder, expr *ast.IdentExpr) {
 	encode(w, IdentExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Lit)
 }
 
-func encodeStringExpr(w *bytes.Buffer, expr *ast.StringExpr) {
+func encodeStringExpr(w *Encoder, expr *ast.StringExpr) {
 	encode(w, StringExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Lit)
 }
 
-func encodeArrayExpr(w *bytes.Buffer, expr *ast.ArrayExpr) {
+func encodeArrayExpr(w *Encoder, expr *ast.ArrayExpr) {
 	encode(w, ArrayExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExprArray(w, expr.Exprs)
 }
 
-func encodeMapExpr(w *bytes.Buffer, expr *ast.MapExpr) {
+func encodeMapExpr(w *Encoder, expr *ast.MapExpr) {
 	encode(w, MapExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExprMap(w, expr.MapExpr)
 }
 
-func encodeDerefExpr(w *bytes.Buffer, expr *ast.DerefExpr) {
+func encodeDerefExpr(w *Encoder, expr *ast.DerefExpr) {
 	encode(w, DerefExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Expr)
 }
 
-func encodeAddrExpr(w *bytes.Buffer, expr *ast.AddrExpr) {
+func encodeAddrExpr(w *Encoder, expr *ast.AddrExpr) {
 	encode(w, AddrExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Expr)
 }
 
-func encodeUnaryExpr(w *bytes.Buffer, expr *ast.UnaryExpr) {
+func encodeUnaryExpr(w *Encoder, expr *ast.UnaryExpr) {
 	encode(w, UnaryExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Operator)
 	encodeExpr(w, expr.Expr)
 }
 
-func encodeParenExpr(w *bytes.Buffer, expr *ast.ParenExpr) {
+func encodeParenExpr(w *Encoder, expr *ast.ParenExpr) {
 	encode(w, ParenExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.SubExpr)
 }
 
-func encodeMemberExpr(w *bytes.Buffer, expr *ast.MemberExpr) {
+func encodeMemberExpr(w *Encoder, expr *ast.MemberExpr) {
 	encode(w, MemberExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Name)
 	encodeExpr(w, expr.Expr)
 }
 
-func encodeItemExpr(w *bytes.Buffer, expr *ast.ItemExpr) {
+func encodeItemExpr(w *Encoder, expr *ast.ItemExpr) {
 	encode(w, ItemExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Index)
 	encodeExpr(w, expr.Value)
 }
 
-func encodeSliceExpr(w *bytes.Buffer, expr *ast.SliceExpr) {
+func encodeSliceExpr(w *Encoder, expr *ast.SliceExpr) {
 	encode(w, SliceExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Value)
@@ -480,7 +510,7 @@ func encodeSliceExpr(w *bytes.Buffer, expr *ast.SliceExpr) {
 	encodeExpr(w, expr.End)
 }
 
-func encodeAssocExpr(w *bytes.Buffer, expr *ast.AssocExpr) {
+func encodeAssocExpr(w *Encoder, expr *ast.AssocExpr) {
 	encode(w, AssocExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Operator)
@@ -488,14 +518,14 @@ func encodeAssocExpr(w *bytes.Buffer, expr *ast.AssocExpr) {
 	encodeExpr(w, expr.Rhs)
 }
 
-func encodeLetsExpr(w *bytes.Buffer, expr *ast.LetsExpr) {
+func encodeLetsExpr(w *Encoder, expr *ast.LetsExpr) {
 	encode(w, LetsExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExprArray(w, expr.Lhss)
 	encodeExprArray(w, expr.Rhss)
 }
 
-func encodeBinOpExpr(w *bytes.Buffer, expr *ast.BinOpExpr) {
+func encodeBinOpExpr(w *Encoder, expr *ast.BinOpExpr) {
 	encode(w, BinaryOperatorBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Operator)
@@ -503,13 +533,13 @@ func encodeBinOpExpr(w *bytes.Buffer, expr *ast.BinOpExpr) {
 	encodeExpr(w, expr.Rhs)
 }
 
-func encodeConstExpr(w *bytes.Buffer, expr *ast.ConstExpr) {
+func encodeConstExpr(w *Encoder, expr *ast.ConstExpr) {
 	encode(w, ConstExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Value)
 }
 
-func encodeTernaryOpExpr(w *bytes.Buffer, expr *ast.TernaryOpExpr) {
+func encodeTernaryOpExpr(w *Encoder, expr *ast.TernaryOpExpr) {
 	encode(w, TernaryOpExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Expr)
@@ -517,26 +547,26 @@ func encodeTernaryOpExpr(w *bytes.Buffer, expr *ast.TernaryOpExpr) {
 	encodeExpr(w, expr.Rhs)
 }
 
-func encodeNilCoalescingOpExpr(w *bytes.Buffer, expr *ast.NilCoalescingOpExpr) {
+func encodeNilCoalescingOpExpr(w *Encoder, expr *ast.NilCoalescingOpExpr) {
 	encode(w, NilCoalescingOpExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Lhs)
 	encodeExpr(w, expr.Rhs)
 }
 
-func encodeLenExpr(w *bytes.Buffer, expr *ast.LenExpr) {
+func encodeLenExpr(w *Encoder, expr *ast.LenExpr) {
 	encode(w, LenExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Expr)
 }
 
-func encodeNewExpr(w *bytes.Buffer, expr *ast.NewExpr) {
+func encodeNewExpr(w *Encoder, expr *ast.NewExpr) {
 	encode(w, NewExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Type)
 }
 
-func encodeMakeExpr(w *bytes.Buffer, expr *ast.MakeExpr) {
+func encodeMakeExpr(w *Encoder, expr *ast.MakeExpr) {
 	encode(w, MakeExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encode(w, int32(expr.Dimensions))
@@ -545,28 +575,28 @@ func encodeMakeExpr(w *bytes.Buffer, expr *ast.MakeExpr) {
 	encodeExpr(w, expr.CapExpr)
 }
 
-func encodeMakeTypeExpr(w *bytes.Buffer, expr *ast.MakeTypeExpr) {
+func encodeMakeTypeExpr(w *Encoder, expr *ast.MakeTypeExpr) {
 	encode(w, MakeTypeExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Name)
 	encodeExpr(w, expr.Type)
 }
 
-func encodeMakeChanExpr(w *bytes.Buffer, expr *ast.MakeChanExpr) {
+func encodeMakeChanExpr(w *Encoder, expr *ast.MakeChanExpr) {
 	encode(w, MakeChanExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Type)
 	encodeExpr(w, expr.SizeExpr)
 }
 
-func encodeChanExpr(w *bytes.Buffer, expr *ast.ChanExpr) {
+func encodeChanExpr(w *Encoder, expr *ast.ChanExpr) {
 	encode(w, ChanExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Lhs)
 	encodeExpr(w, expr.Rhs)
 }
 
-func encodeFuncExpr(w *bytes.Buffer, expr *ast.FuncExpr) {
+func encodeFuncExpr(w *Encoder, expr *ast.FuncExpr) {
 	encode(w, FuncExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Name)
@@ -575,7 +605,7 @@ func encodeFuncExpr(w *bytes.Buffer, expr *ast.FuncExpr) {
 	encodeStmtArray(w, expr.Stmts)
 }
 
-func encodeAnonCallExpr(w *bytes.Buffer, expr *ast.AnonCallExpr) {
+func encodeAnonCallExpr(w *Encoder, expr *ast.AnonCallExpr) {
 	encode(w, AnonCallExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encode(w, expr.VarArg)
@@ -584,7 +614,7 @@ func encodeAnonCallExpr(w *bytes.Buffer, expr *ast.AnonCallExpr) {
 	encodeExprArray(w, expr.SubExprs)
 }
 
-func encodeCallExpr(w *bytes.Buffer, expr *ast.CallExpr) {
+func encodeCallExpr(w *Encoder, expr *ast.CallExpr) {
 	encode(w, CallExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Name)
@@ -594,20 +624,20 @@ func encodeCallExpr(w *bytes.Buffer, expr *ast.CallExpr) {
 	encodeBool(w, expr.Defer)
 }
 
-func encodeCloseExpr(w *bytes.Buffer, expr *ast.CloseExpr) {
+func encodeCloseExpr(w *Encoder, expr *ast.CloseExpr) {
 	encode(w, CloseExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.WhatExpr)
 }
 
-func encodeDeleteExpr(w *bytes.Buffer, expr *ast.DeleteExpr) {
+func encodeDeleteExpr(w *Encoder, expr *ast.DeleteExpr) {
 	encode(w, DeleteExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.KeyExpr)
 	encodeExpr(w, expr.WhatExpr)
 }
 
-func encodeIncludeExpr(w *bytes.Buffer, expr *ast.IncludeExpr) {
+func encodeIncludeExpr(w *Encoder, expr *ast.IncludeExpr) {
 	encode(w, IncludeExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.ItemExpr)

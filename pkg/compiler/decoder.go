@@ -12,6 +12,7 @@ import (
 // Decoder ...
 type Decoder struct {
 	*bytes.Reader
+	data []byte
 }
 
 func NewDecoder(in []byte) *Decoder {
@@ -47,10 +48,12 @@ func (d *Decoder) readBytecode() bytecode {
 }
 
 func (d *Decoder) readString() string {
+	var strIdx int32
+	_ = gob.NewDecoder(d).Decode(&strIdx)
 	var nbChars int32
 	_ = gob.NewDecoder(d).Decode(&nbChars)
 	str := make([]byte, nbChars)
-	_, _ = d.Read(str)
+	str = d.data[strIdx : strIdx+nbChars]
 	return string(str)
 }
 
@@ -135,6 +138,9 @@ func Decode(in []byte) []ast.Stmt {
 	r := NewDecoder(in)
 	r.readMagic()
 	r.readVersion()
+	startIdx := r.readInt32()
+	r.data = make([]byte, int(startIdx))
+	_, _ = r.Read(r.data)
 	return r.readStmtArray()
 }
 

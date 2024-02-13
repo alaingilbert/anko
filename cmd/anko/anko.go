@@ -3,11 +3,11 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/compiler"
+	"github.com/alaingilbert/anko/pkg/decompiler"
 	"github.com/alaingilbert/anko/pkg/parser"
 	"github.com/alaingilbert/anko/pkg/utils"
 	"github.com/alaingilbert/anko/pkg/vm"
@@ -45,8 +45,8 @@ func main() {
 			os.Exit(ReadFileErrExitCode)
 		}
 		stmts := compiler.Decode(sourceBytes)
-		by, _ := json.MarshalIndent(stmts, "", "  ")
-		fmt.Println(string(by))
+
+		fmt.Println(decompiler.Decompile(stmts))
 		os.Exit(OkExitCode)
 	}
 	if appFlags.FlagExecute != "" || flag.NArg() > 0 {

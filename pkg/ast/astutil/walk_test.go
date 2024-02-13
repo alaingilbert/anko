@@ -127,7 +127,7 @@ func TestWalk(t *testing.T) {
 	}
 	var mainFound bool
 	var lenFound bool
-	err = Walk(stmts, func(e any) error {
+	err = WalkHelper(stmts, func(e any) error {
 		switch exp := e.(type) {
 		case *ast.CallExpr:
 			switch exp.Name {
@@ -186,7 +186,7 @@ fmt.Println(Main())
 		return
 	}
 	var mainFound bool
-	err = Walk(stmts, func(e any) error {
+	err = WalkHelper(stmts, func(e any) error {
 		switch e := e.(type) {
 		case *ast.CallExpr:
 			//check if the BuiltinFuncX is getting the right number of args

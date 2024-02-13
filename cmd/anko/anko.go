@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -29,6 +30,7 @@ type AppFlags struct {
 	FlagExecute    string
 	File           string
 	FlagOutputFile string
+	Decompile      bool
 }
 
 func main() {
@@ -36,6 +38,17 @@ func main() {
 	var appFlags AppFlags
 	args := parseFlags(&appFlags)
 	env := setupEnv(args)
+	if appFlags.Decompile {
+		sourceBytes, err := os.ReadFile(appFlags.File)
+		if err != nil {
+			fmt.Println("ReadFile error:", err)
+			os.Exit(ReadFileErrExitCode)
+		}
+		stmts := compiler.Decode(sourceBytes)
+		by, _ := json.MarshalIndent(stmts, "", "  ")
+		fmt.Println(string(by))
+		os.Exit(OkExitCode)
+	}
 	if appFlags.FlagExecute != "" || flag.NArg() > 0 {
 		exitCode = runNonInteractive(env, appFlags)
 	} else {
@@ -48,6 +61,7 @@ func parseFlags(appFlags *AppFlags) (args []string) {
 	flagVersion := flag.Bool("v", false, "prints out the version and then exits")
 	flag.StringVar(&appFlags.FlagExecute, "e", "", "execute the Anko code")
 	flag.StringVar(&appFlags.FlagOutputFile, "o", "", "compile output file")
+	flag.BoolVar(&appFlags.Decompile, "d", false, "decompile anko bytecode")
 	flag.Parse()
 
 	if *flagVersion {

@@ -269,7 +269,7 @@ func handleErr(w io.Writer, err error) {
 }
 
 func compileAndSave(source, flagOutputFile string) error {
-	out, err := compiler.Compile(source)
+	out, err := compiler.Compile(source, false)
 	if err != nil {
 		return err
 	}

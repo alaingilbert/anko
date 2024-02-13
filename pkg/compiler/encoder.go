@@ -4,41 +4,47 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
+	"encoding/hex"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/parser"
 	"github.com/alaingilbert/anko/pkg/utils"
+	"math/rand"
 	"reflect"
 
 	"github.com/alaingilbert/anko/pkg/ast"
 )
 
-func Compile(src string) ([]byte, error) {
+func Compile(src string, obfuscate bool) ([]byte, error) {
 	stmts, err := parser.ParseSrc(src)
 	if err != nil {
 		return nil, err
 	}
-	return EncodeStmts(stmts)
+	return EncodeStmts(stmts, obfuscate)
 }
 
 type Encoder struct {
 	*bytes.Buffer
+	obfuscate  bool
 	strings    map[string]int
 	stringsArr []string
 	stringsIdx int
+	idents     map[string]string
 }
 
-func NewEncoder() *Encoder {
+func NewEncoder(obfuscate bool) *Encoder {
 	e := new(Encoder)
+	e.obfuscate = obfuscate
 	e.Buffer = new(bytes.Buffer)
 	e.strings = make(map[string]int)
+	e.idents = make(map[string]string)
 	return e
 }
 
-func EncodeStmts(stmts []ast.Stmt) ([]byte, error) {
-	b := NewEncoder()
+func EncodeStmts(stmts []ast.Stmt, obfuscate bool) ([]byte, error) {
+	b := NewEncoder(obfuscate)
 	encodeStmtArray(b, stmts)
 
-	e := NewEncoder()
+	e := NewEncoder(obfuscate)
 	writeMagic(e, magic)
 	writeVersion(e, version)
 	encode(e, b.stringsIdx)
@@ -439,10 +445,25 @@ func encodeNumberExpr(w *Encoder, expr *ast.NumberExpr) {
 	encodeString(w, expr.Lit)
 }
 
+func generateToken1() string {
+	b := make([]byte, 6)
+	rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
 func encodeIdentExpr(w *Encoder, expr *ast.IdentExpr) {
+	lit := expr.Lit
+	if w.obfuscate {
+		if id, ok := w.idents[expr.Lit]; ok {
+			lit = id
+		} else {
+			lit = "id_" + generateToken1()
+			w.idents[expr.Lit] = lit
+		}
+	}
 	encode(w, IdentExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
-	encodeString(w, expr.Lit)
+	encodeString(w, lit)
 }
 
 func encodeStringExpr(w *Encoder, expr *ast.StringExpr) {

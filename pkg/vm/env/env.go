@@ -66,9 +66,9 @@ type CapturedFunc struct {
 func newEnv() *Env {
 	return &Env{
 		parent: nil,
-		values: mtx.NewMapPtr[string, reflect.Value](nil),
-		types:  mtx.NewMapPtr[string, reflect.Type](nil),
-		defers: mtx.NewSlicePtr[CapturedFunc](nil),
+		values: mtx.NewRWMapPtr[string, reflect.Value](nil),
+		types:  mtx.NewRWMapPtr[string, reflect.Type](nil),
+		defers: mtx.NewRWSlicePtr[CapturedFunc](nil),
 	}
 }
 

@@ -25,10 +25,19 @@ func Import(env *env.Env) *env.Env {
 	_ = env.Define("println", fmt.Println)
 	_ = env.Define("printf", fmt.Printf)
 	_ = env.Define("close", closeFn)
+	_ = env.Define("dbg", dbgFn)
 
 	ImportToX(env)
 
 	return env
+}
+
+func dbgFn(v any) {
+	if e, ok := v.(*env.Env); ok {
+		println(e.String())
+		return
+	}
+	println(fmt.Sprintf("%#v", v))
 }
 
 // Given a map, returns its keys

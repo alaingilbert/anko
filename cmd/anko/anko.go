@@ -188,7 +188,7 @@ func runInteractive(env *envPkg.Env) int {
 	//l.CaptureExitSignal()
 
 	log.SetOutput(l.Stderr())
-	executor := vm.New(&vm.Configs{DefineImport: true, Env: env}).Executor()
+	executor := vm.New(&vm.Configs{Env: env}).Executor()
 	for {
 		line, err := l.Readline()
 		if errors.Is(err, readline.ErrInterrupt) {

@@ -46,6 +46,47 @@ func decompileStmt(w *bytes.Buffer, stmt ast.Stmt, deep int) {
 	}
 }
 
+func decompileExpr(w *bytes.Buffer, expr ast.Expr, deep int) {
+	prefix := strings.Repeat(" ", 4*deep)
+	switch e := expr.(type) {
+	case nil:
+	case *ast.ParenExpr: // Completed
+		decompileParenExpr(w, prefix, e)
+	case *ast.LenExpr: // Completed
+		decompileLenExpr(w, prefix, e)
+	case *ast.ItemExpr:
+		decompileItemExpr(w, prefix, e)
+	case *ast.UnaryExpr:
+		decompileUnaryExpr(w, prefix, e)
+	case *ast.MemberExpr:
+		decompileMemberExpr(w, prefix, e)
+	case *ast.AnonCallExpr:
+		decompileAnonCallExpr(w, prefix, e)
+	case *ast.FuncExpr:
+		decompileFuncExpr(w, prefix, e, deep)
+	case *ast.ConstExpr:
+		decompileConstExpr(w, prefix, e)
+	case *ast.MapExpr:
+		decompileMapExpr(w, prefix, e)
+	case *ast.ArrayExpr:
+		decompileArrayExpr(w, prefix, e)
+	case *ast.StringExpr: // Completed
+		decompileStringExpr(w, prefix, e)
+	case *ast.CallExpr: // Completed
+		decompileCallExpr(w, prefix, e)
+	case *ast.AssocExpr: // Completed
+		decompileAssocExpr(w, prefix, e)
+	case *ast.BinOpExpr: // Completed
+		decompileBinOpExpr(w, prefix, e)
+	case *ast.NumberExpr: // Completed
+		decompileNumberExpr(w, prefix, e)
+	case *ast.IdentExpr: // Completed
+		decompileIdentExpr(w, prefix, e)
+	default:
+		panic(fmt.Sprintf("expr: %s %s", e, reflect.TypeOf(e)))
+	}
+}
+
 func decompileCForStmt(w *bytes.Buffer, prefix string, s *ast.CForStmt, deep int) {
 	w.WriteString(prefix + "for ")
 	if el, ok := s.Stmt1.(*ast.LetsStmt); ok {
@@ -183,47 +224,6 @@ func decompileIfStmt(w *bytes.Buffer, prefix string, s *ast.IfStmt, deep int) {
 		}
 	}
 	w.WriteString(prefix + "}\n")
-}
-
-func decompileExpr(w *bytes.Buffer, expr ast.Expr, deep int) {
-	prefix := strings.Repeat(" ", 4*deep)
-	switch e := expr.(type) {
-	case nil:
-	case *ast.ParenExpr: // Completed
-		decompileParenExpr(w, prefix, e)
-	case *ast.LenExpr: // Completed
-		decompileLenExpr(w, prefix, e)
-	case *ast.ItemExpr:
-		decompileItemExpr(w, prefix, e)
-	case *ast.UnaryExpr:
-		decompileUnaryExpr(w, prefix, e)
-	case *ast.MemberExpr:
-		decompileMemberExpr(w, prefix, e)
-	case *ast.AnonCallExpr:
-		decompileAnonCallExpr(w, prefix, e)
-	case *ast.FuncExpr:
-		decompileFuncExpr(w, prefix, e, deep)
-	case *ast.ConstExpr:
-		decompileConstExpr(w, prefix, e)
-	case *ast.MapExpr:
-		decompileMapExpr(w, prefix, e)
-	case *ast.ArrayExpr:
-		decompileArrayExpr(w, prefix, e)
-	case *ast.StringExpr: // Completed
-		decompileStringExpr(w, prefix, e)
-	case *ast.CallExpr: // Completed
-		decompileCallExpr(w, prefix, e)
-	case *ast.AssocExpr: // Completed
-		decompileAssocExpr(w, prefix, e)
-	case *ast.BinOpExpr: // Completed
-		decompileBinOpExpr(w, prefix, e)
-	case *ast.NumberExpr: // Completed
-		decompileNumberExpr(w, prefix, e)
-	case *ast.IdentExpr: // Completed
-		decompileIdentExpr(w, prefix, e)
-	default:
-		panic(fmt.Sprintf("expr: %s %s", e, reflect.TypeOf(e)))
-	}
 }
 
 func decompileParenExpr(w *bytes.Buffer, prefix string, e *ast.ParenExpr) {

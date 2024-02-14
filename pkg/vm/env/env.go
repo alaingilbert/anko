@@ -187,11 +187,12 @@ func (e *Env) String() string {
 	var buffer bytes.Buffer
 	parentStr := utils.Ternary(e.parent == nil, "No parent\n", "Has parent\n")
 	buffer.WriteString(parentStr)
+	format := "%-" + strconv.Itoa(maxSymbolLen) + "v = %s\n"
 	for _, v := range valuesArr {
-		buffer.WriteString(fmt.Sprintf("%-"+strconv.Itoa(maxSymbolLen)+"v = %s\n", v[0], v[1]))
+		buffer.WriteString(fmt.Sprintf(format, v[0], v[1]))
 	}
 	for _, v := range typesArr {
-		buffer.WriteString(fmt.Sprintf("%-"+strconv.Itoa(maxSymbolLen)+"v = %s\n", v[0], v[1]))
+		buffer.WriteString(fmt.Sprintf(format, v[0], v[1]))
 	}
 	return buffer.String()
 }

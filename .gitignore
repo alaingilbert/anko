@@ -1,5 +1,6 @@
 .envrc
 vendor
+private
 pkg/parser/y.output
 script.ank
 *.bnk

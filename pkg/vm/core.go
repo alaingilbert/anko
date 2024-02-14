@@ -35,7 +35,7 @@ func Import(env *env.Env) *env.Env {
 
 func dbgFn(v any) {
 	if e, ok := v.(*env.Env); ok {
-		println(e.String())
+		print(e.String())
 		return
 	}
 	println(vmUtils.FormatValue(reflect.ValueOf(v)))

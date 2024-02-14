@@ -22,6 +22,10 @@ type Env struct {
 	defers *mtx.Slice[CapturedFunc]
 }
 
+func (e *Env) Parent() *Env {
+	return e.parent
+}
+
 func (e *Env) Values() *mtx.Map[string, reflect.Value] {
 	return e.values
 }

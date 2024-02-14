@@ -23,15 +23,13 @@ import (
 %type<stmt_select_cases> stmt_select_cases
 %type<stmt_select_case> stmt_select_case
 %type<stmt_select_default> stmt_select_default
-%type<expr> expr
 %type<exprs> exprs
-%type<map_expr> map_expr
+%type<expr> expr
 %type<expr_idents> expr_idents
 %type<type_data> type_data
 %type<type_data_struct> type_data_struct
 %type<slice_count> slice_count
-%type<expr_type> expr_type
-%type<array_count> array_count
+%type<expr_map> expr_map
 %type<expr_slice> expr_slice
 %type<expr_ident> expr_ident
 
@@ -54,14 +52,12 @@ import (
 	stmt                   ast.Stmt
 	expr                   ast.Expr
 	exprs                  []ast.Expr
-	map_expr               map[ast.Expr]ast.Expr
 	expr_idents            []string
+	expr_map               *ast.MapExpr
 	type_data              *ast.TypeStruct
         type_data_struct       *ast.TypeStruct
         slice_count            int
-	expr_type              string
 	tok                    ast.Token
-	array_count            ast.ArrayCount
 	expr_slice             ast.Expr
 	expr_ident             ast.Expr
 }
@@ -186,10 +182,10 @@ stmt :
 	{
 		$$ = $1
 	}
-    | stmt_select
-    {
-        $$ = $1
-    }
+	| stmt_select
+	{
+		$$ = $1
+	}
 	| GO IDENT '(' exprs VARARG ')'
 	{
 		$$ = &ast.GoroutineStmt{Expr: &ast.CallExpr{Name: $2.Lit, SubExprs: $4, VarArg: true, Go: true}}
@@ -416,37 +412,6 @@ stmt_switch_default :
 		$$ = $3
 	}
 
-array_count :
-	{
-		$$ = ast.ArrayCount{Count: 0}
-	}
-	| '[' ']'
-	{
-		$$ = ast.ArrayCount{Count: 1}
-	}
-	| array_count '[' ']'
-	{
-		$$.Count = $$.Count + 1
-	}
-
-map_expr :
-	{
-		$$ = make(map[ast.Expr]ast.Expr)
-	}
-	| expr ':' expr
-	{
-		mapExpr := make(map[ast.Expr]ast.Expr)
-		mapExpr[$1] = $3
-		$$ = mapExpr
-	}
-	| map_expr ',' opt_newlines expr ':' expr
-	{
-		if len($1) == 0 {
-			yylex.Error("syntax error: unexpected ','")
-		}
-		$1[$4] = $6
-	}
-
 expr_idents :
 	{
 		$$ = []string{}
@@ -463,21 +428,11 @@ expr_idents :
 		$$ = append($1, $4.Lit)
 	}
 
-expr_type :
-	IDENT
-	{
-		$$ = $1.Lit
-	}
-	| expr_type '.' IDENT
-	{
-		$$ = $$ + "." + $3.Lit
-	}
-
 exprs :
 	{
 		$$ = nil
 	}
-	| expr 
+	| expr
 	{
 		$$ = []ast.Expr{$1}
 	}
@@ -494,32 +449,6 @@ exprs :
 			yylex.Error("syntax error: unexpected ','")
 		}
 		$$ = append($1, $4)
-	}
-
-expr_slice :
-	expr_ident '[' expr ':' expr ']'
-	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: $5}
-	}
-	| expr_ident '[' expr ':' ']'
-	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: nil}
-	}
-	| expr_ident '[' ':' expr ']'
-	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
-	}
-	| expr '[' expr ':' expr ']'
-	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: $5}
-	}
-	| expr '[' expr ':' ']'
-	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: nil}
-	}
-	| expr '[' ':' expr ']'
-	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
 	}
 
 expr :
@@ -635,11 +564,6 @@ expr :
 	| slice_count type_data '{' opt_newlines exprs opt_comma_newlines '}'
 	{
 		$$ = &ast.ArrayExpr{Exprs: $5, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}}
-		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
-	}
-	| '{' opt_newlines map_expr opt_comma_newlines '}'
-	{
-		$$ = &ast.MapExpr{MapExpr: $3}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
 	| '(' expr ')'
@@ -817,40 +741,52 @@ expr :
 		$$ = &ast.LenExpr{Expr: $3}
 		$$.SetPosition($1.Position())
 	}
-	| NEW '(' expr_type ')'
+	| NEW '(' type_data ')'
 	{
-		$$ = &ast.NewExpr{Type: $3}
+		if $3.Kind == ast.TypeDefault {
+			$3.Kind = ast.TypePtr
+			$$ = &ast.MakeExpr{TypeData: $3}
+		} else {
+			$$ = &ast.MakeExpr{TypeData: &ast.TypeStruct{Kind: ast.TypePtr, SubType: $3}}
+		}
 		$$.SetPosition($1.Position())
 	}
-	| MAKE '(' CHAN expr_type ')'
+	| MAKE '(' type_data ')'
 	{
-		$$ = &ast.MakeChanExpr{Type: $4, SizeExpr: nil}
+		$$ = &ast.MakeExpr{TypeData: $3}
 		$$.SetPosition($1.Position())
 	}
-	| MAKE '(' CHAN expr_type ',' expr ')'
+	| MAKE '(' type_data ',' expr ')'
 	{
-		$$ = &ast.MakeChanExpr{Type: $4, SizeExpr: $6}
+		$$ = &ast.MakeExpr{TypeData: $3, LenExpr: $5}
 		$$.SetPosition($1.Position())
 	}
-	| MAKE '(' array_count expr_type ')'
+	| MAKE '(' type_data ',' expr ',' expr ')'
 	{
-		$$ = &ast.MakeExpr{Dimensions: $3.Count, Type: $4}
-		$$.SetPosition($1.Position())
-	}
-	| MAKE '(' array_count expr_type ',' expr ')'
-	{
-		$$ = &ast.MakeExpr{Dimensions: $3.Count,Type: $4, LenExpr: $6}
-		$$.SetPosition($1.Position())
-	}
-	| MAKE '(' array_count expr_type ',' expr ',' expr ')'
-	{
-		$$ = &ast.MakeExpr{Dimensions: $3.Count,Type: $4, LenExpr: $6, CapExpr: $8}
+		$$ = &ast.MakeExpr{TypeData: $3, LenExpr: $5, CapExpr: $7}
 		$$.SetPosition($1.Position())
 	}
 	| MAKE '(' TYPE IDENT ',' expr ')'
 	{
 		$$ = &ast.MakeTypeExpr{Name: $4.Lit, Type: $6}
 		$$.SetPosition($1.Position())
+	}
+	| MAP '{' opt_newlines expr_map opt_comma_newlines '}'
+	{
+		$4.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: &ast.TypeStruct{Name: "interface"}, SubType: &ast.TypeStruct{Name: "interface"}}
+		$$ = $4
+		$$.SetPosition($1.Position())
+	}
+	| MAP '[' type_data ']' type_data '{' opt_newlines expr_map opt_comma_newlines '}'
+	{
+		$8.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
+		$$ = $8
+		$$.SetPosition($1.Position())
+	}
+	| '{' opt_newlines expr_map opt_comma_newlines '}'
+	{
+		$$ = $3
+		$$.SetPosition($3.Position())
 	}
 	| expr OPCHAN expr
 	{
@@ -957,6 +893,51 @@ slice_count :
 	| '[' ']' slice_count
 	{
 		$$ = $3 + 1
+	}
+
+
+expr_map :
+	/* nothing */
+	{
+		$$ = &ast.MapExpr{}
+	}
+	| expr ':' expr
+	{
+		$$ = &ast.MapExpr{Keys: []ast.Expr{$1}, Values: []ast.Expr{$3}}
+	}
+	| expr_map ',' opt_newlines expr ':' expr
+	{
+		if $1.Keys == nil {
+			yylex.Error("syntax error: unexpected ','")
+		}
+		$$.Keys = append($$.Keys, $4)
+		$$.Values = append($$.Values, $6)
+	}
+
+expr_slice :
+	expr_ident '[' expr ':' expr ']'
+	{
+		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: $5}
+	}
+	| expr_ident '[' expr ':' ']'
+	{
+		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: nil}
+	}
+	| expr_ident '[' ':' expr ']'
+	{
+		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
+	}
+	| expr '[' expr ':' expr ']'
+	{
+		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: $5}
+	}
+	| expr '[' expr ':' ']'
+	{
+		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: nil}
+	}
+	| expr '[' ':' expr ']'
+	{
+		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
 	}
 
 expr_ident :

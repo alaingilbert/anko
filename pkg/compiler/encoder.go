@@ -481,7 +481,9 @@ func encodeArrayExpr(w *Encoder, expr *ast.ArrayExpr) {
 func encodeMapExpr(w *Encoder, expr *ast.MapExpr) {
 	encode(w, MapExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
-	encodeExprMap(w, expr.MapExpr)
+	encodeExprArray(w, expr.Keys)
+	encodeExprArray(w, expr.Values)
+	encodeTypeStruct(w, expr.TypeData)
 }
 
 func encodeDerefExpr(w *Encoder, expr *ast.DerefExpr) {
@@ -590,10 +592,31 @@ func encodeNewExpr(w *Encoder, expr *ast.NewExpr) {
 func encodeMakeExpr(w *Encoder, expr *ast.MakeExpr) {
 	encode(w, MakeExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
-	encode(w, int32(expr.Dimensions))
-	encodeString(w, expr.Type)
+	encodeTypeStruct(w, expr.TypeData)
 	encodeExpr(w, expr.LenExpr)
 	encodeExpr(w, expr.CapExpr)
+}
+
+func encodeTypeStruct(w *Encoder, expr *ast.TypeStruct) {
+	isNil := expr == nil
+	encodeBool(w, isNil)
+	if !isNil {
+		encode(w, int(expr.Kind))
+		encodeStringArray(w, expr.Env)
+		encodeString(w, expr.Name)
+		encode(w, expr.Dimensions)
+		encodeTypeStruct(w, expr.SubType)
+		encodeTypeStruct(w, expr.Key)
+		encodeStringArray(w, expr.StructNames)
+		encodeTypeStructArray(w, expr.StructTypes)
+	}
+}
+
+func encodeTypeStructArray(w *Encoder, exprs []*ast.TypeStruct) {
+	encode(w, int32(len(exprs)))
+	for _, expr := range exprs {
+		encodeTypeStruct(w, expr)
+	}
 }
 
 func encodeMakeTypeExpr(w *Encoder, expr *ast.MakeTypeExpr) {

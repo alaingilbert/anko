@@ -426,7 +426,7 @@ func TestNew(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
 		{Script: `new(foo)`, RunError: fmt.Errorf("undefined type 'foo'")},
-		{Script: `new(nilT)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for new")},
+		{Script: `new(nilT)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for make")},
 
 		{Script: `a = new(bool); *a`, RunOutput: false},
 		{Script: `a = new(int32); *a`, RunOutput: int32(0)},
@@ -484,7 +484,7 @@ func TestMakeChan(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
 		{Script: `make(chan foobar, 2)`, RunError: fmt.Errorf("undefined type 'foobar'")},
-		{Script: `make(chan nilT, 2)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for make chan")},
+		{Script: `make(chan nilT, 2)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for make")},
 		{Script: `make(chan bool, 1++)`, RunError: fmt.Errorf("invalid operation")},
 
 		{Script: `a = make(chan bool); b = func (c) { c <- true }; go b(a); <- a`, RunOutput: true},

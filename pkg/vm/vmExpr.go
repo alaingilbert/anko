@@ -60,7 +60,7 @@ func invokeExpr(vmp *vmParams, env *envPkg.Env, expr ast.Expr) (reflect.Value, e
 	case *ast.NewExpr:
 		return invokeNewExpr(vmp.ctx, e, env, expr)
 	case *ast.MakeExpr:
-		return invokeMakeExpr(vmp, e, env, expr)
+		return invokeMakeExpr(vmp, env, e)
 	case *ast.MakeTypeExpr:
 		return invokeMakeTypeExpr(vmp, e, env, expr)
 	case *ast.MakeChanExpr:
@@ -117,14 +117,14 @@ func invokeStringExpr(ctx context.Context, env *envPkg.Env, e *ast.StringExpr) (
 func makeType(vmp *vmParams, env *envPkg.Env, typeStruct *ast.TypeStruct) (reflect.Type, error) {
 	switch typeStruct.Kind {
 	case ast.TypeDefault:
-		return getTypeFromString(env, typeStruct.Name)
+		return getTypeFromEnv(env, typeStruct)
 	case ast.TypePtr:
 		var t reflect.Type
 		var err error
 		if typeStruct.SubType != nil {
 			t, err = makeType(vmp, env, typeStruct.SubType)
 		} else {
-			t, err = getTypeFromString(env, typeStruct.Name)
+			t, err = getTypeFromEnv(env, typeStruct)
 		}
 		if err != nil {
 			return nil, err
@@ -139,7 +139,7 @@ func makeType(vmp *vmParams, env *envPkg.Env, typeStruct *ast.TypeStruct) (refle
 		if typeStruct.SubType != nil {
 			t, err = makeType(vmp, env, typeStruct.SubType)
 		} else {
-			t, err = getTypeFromString(env, typeStruct.Name)
+			t, err = getTypeFromEnv(env, typeStruct)
 		}
 		if err != nil {
 			return nil, err
@@ -151,64 +151,78 @@ func makeType(vmp *vmParams, env *envPkg.Env, typeStruct *ast.TypeStruct) (refle
 			t = reflect.SliceOf(t)
 		}
 		return reflect.SliceOf(t), nil
-	//case ast.TypeMap:
-	//	key := makeType(runInfo, typeStruct.Key)
-	//	if runInfo.err != nil {
-	//		return nil
-	//	}
-	//	if key == nil {
-	//		return nil
-	//	}
-	//	t := makeType(runInfo, typeStruct.SubType)
-	//	if runInfo.err != nil {
-	//		return nil
-	//	}
-	//	if t == nil {
-	//		return nil
-	//	}
-	//	if !runInfo.options.Debug {
-	//		// captures panic
-	//		defer recoverFunc(runInfo)
-	//	}
-	//	t = reflect.MapOf(key, t)
-	//	return t
-	//case ast.TypeChan:
-	//	var t reflect.Type
-	//	if typeStruct.SubType != nil {
-	//		t = makeType(runInfo, typeStruct.SubType)
-	//	} else {
-	//		t = getTypeFromEnv(runInfo, typeStruct)
-	//	}
-	//	if runInfo.err != nil {
-	//		return nil
-	//	}
-	//	if t == nil {
-	//		return nil
-	//	}
-	//	return reflect.ChanOf(reflect.BothDir, t)
-	//case ast.TypeStructType:
-	//	var t reflect.Type
-	//	fields := make([]reflect.StructField, 0, len(typeStruct.StructNames))
-	//	for i := 0; i < len(typeStruct.StructNames); i++ {
-	//		t = makeType(runInfo, typeStruct.StructTypes[i])
-	//		if runInfo.err != nil {
-	//			return nil
-	//		}
-	//		if t == nil {
-	//			return nil
-	//		}
-	//		fields = append(fields, reflect.StructField{Name: typeStruct.StructNames[i], Type: t})
-	//	}
-	//	if !runInfo.options.Debug {
-	//		// captures panic
-	//		defer recoverFunc(runInfo)
-	//	}
-	//	t = reflect.StructOf(fields)
-	//	return t
+	case ast.TypeMap:
+		key, err := makeType(vmp, env, typeStruct.Key)
+		if err != nil {
+			return nil, err
+		}
+		if key == nil {
+			return nil, err
+		}
+		t, err := makeType(vmp, env, typeStruct.SubType)
+		if err != nil {
+			return nil, err
+		}
+		if t == nil {
+			return nil, err
+		}
+		//if !runInfo.options.Debug {
+		//	// captures panic
+		//	defer recoverFunc(runInfo)
+		//}
+		return reflect.MapOf(key, t), nil
+	case ast.TypeChan:
+		var t reflect.Type
+		var err error
+		if typeStruct.SubType != nil {
+			t, err = makeType(vmp, env, typeStruct.SubType)
+		} else {
+			t, err = getTypeFromEnv(env, typeStruct)
+		}
+		if err != nil {
+			return nil, err
+		}
+		if t == nil {
+			return nil, err
+		}
+		return reflect.ChanOf(reflect.BothDir, t), nil
+	case ast.TypeStructType:
+		var t reflect.Type
+		fields := make([]reflect.StructField, 0, len(typeStruct.StructNames))
+		for i := 0; i < len(typeStruct.StructNames); i++ {
+			var err error
+			t, err = makeType(vmp, env, typeStruct.StructTypes[i])
+			if err != nil {
+				return nil, err
+			}
+			if t == nil {
+				return nil, err
+			}
+			fields = append(fields, reflect.StructField{Name: typeStruct.StructNames[i], Type: t})
+		}
+		// captures panic
+		//defer recoverFunc(runInfo)
+		return reflect.StructOf(fields), nil
 	default:
 		return nil, fmt.Errorf("unknown kind")
 	}
 }
+
+// recoverFunc generic recover function
+//func recoverFunc(runInfo *runInfoStruct) {
+//	recoverInterface := recover()
+//	if recoverInterface == nil {
+//		return
+//	}
+//	switch value := recoverInterface.(type) {
+//	case *Error:
+//		runInfo.err = value
+//	case error:
+//		runInfo.err = value
+//	default:
+//		runInfo.err = fmt.Errorf("%v", recoverInterface)
+//	}
+//}
 
 func invokeArrayExpr(vmp *vmParams, env *envPkg.Env, e *ast.ArrayExpr) (reflect.Value, error) {
 	if e.TypeData == nil {
@@ -249,20 +263,18 @@ func invokeArrayExpr(vmp *vmParams, env *envPkg.Env, e *ast.ArrayExpr) (reflect.
 
 func invokeMapExpr(vmp *vmParams, env *envPkg.Env, e *ast.MapExpr) (reflect.Value, error) {
 	nilValueL := nilValue
-	var err error
-	var key reflect.Value
-	var value reflect.Value
-	m := make(map[any]any, len(e.MapExpr))
-	for keyExpr, valueExpr := range e.MapExpr {
-		key, err = invokeExpr(vmp, env, keyExpr)
+	m := make(map[any]any, len(e.Keys))
+	for i, ee := range e.Keys {
+		key, err := invokeExpr(vmp, env, ee)
 		if err != nil {
-			return nilValueL, newError(keyExpr, err)
+			return nilValueL, newError(ee, err)
 		}
-		value, err = invokeExpr(vmp, env, valueExpr)
+		valueExpr := e.Values[i]
+		rv, err := invokeExpr(vmp, env, valueExpr)
 		if err != nil {
 			return nilValueL, newError(valueExpr, err)
 		}
-		m[key.Interface()] = value.Interface()
+		m[key.Interface()] = rv.Interface()
 	}
 	return reflect.ValueOf(m), nil
 }
@@ -886,58 +898,104 @@ func invokeLenExpr(vmp *vmParams, env *envPkg.Env, e *ast.LenExpr) (reflect.Valu
 }
 
 func invokeNewExpr(ctx context.Context, e *ast.NewExpr, env *envPkg.Env, expr ast.Expr) (reflect.Value, error) {
-	t, err := getTypeFromString(env, e.Type)
-	if err != nil {
-		return nilValue, newError(e, err)
-	}
-	if t == nil {
-		return nilValue, newErrorf(expr, "type cannot be nil for new")
-	}
-
-	return reflect.New(t), nil
+	//t, err := getTypeFromString(env, e.Type)
+	//if err != nil {
+	//	return nilValue, newError(e, err)
+	//}
+	//if t == nil {
+	//	return nilValue, newErrorf(expr, "type cannot be nil for new")
+	//}
+	//return reflect.New(t), nil
+	return nilValue, nil
 }
 
-func invokeMakeExpr(vmp *vmParams, e *ast.MakeExpr, env *envPkg.Env, expr ast.Expr) (reflect.Value, error) {
-	t, err := getTypeFromString(env, e.Type)
+func invokeMakeExpr(vmp *vmParams, env *envPkg.Env, e *ast.MakeExpr) (reflect.Value, error) {
+	t, err := makeType(vmp, env, e.TypeData)
 	if err != nil {
-		return nilValue, newError(e, err)
+		return nilValue, err
 	}
 	if t == nil {
-		return nilValue, newErrorf(expr, "type cannot be nil for make")
+		return nilValue, newErrorf(e, "type cannot be nil for make")
 	}
-
-	for i := 1; i < e.Dimensions; i++ {
-		t = reflect.SliceOf(t)
-	}
-	if e.Dimensions < 1 {
-		v, err := makeValue(t)
-		if err != nil {
-			return nilValue, newError(e, err)
+	switch e.TypeData.Kind {
+	case ast.TypeSlice:
+		aLen := 0
+		if e.LenExpr != nil {
+			ee := e.LenExpr
+			rv, err := invokeExpr(vmp, env, ee)
+			if err != nil {
+				return nilValue, err
+			}
+			aLen = toInt(rv)
 		}
-		return v, nil
-	}
-
-	var alen int
-	if e.LenExpr != nil {
-		rv, err := invokeExpr(vmp, env, e.LenExpr)
-		if err != nil {
-			return nilValue, newError(e.LenExpr, err)
+		aCap := aLen
+		if e.CapExpr != nil {
+			ee := e.CapExpr
+			rv, err := invokeExpr(vmp, env, ee)
+			if err != nil {
+				return nilValue, err
+			}
+			aCap = toInt(rv)
 		}
-		alen = toInt(rv)
-	}
-
-	var acap int
-	if e.CapExpr != nil {
-		rv, err := invokeExpr(vmp, env, e.CapExpr)
-		if err != nil {
-			return nilValue, newError(e.CapExpr, err)
+		if aLen > aCap {
+			return nilValue, newStringError(e, "make slice len > cap")
 		}
-		acap = toInt(rv)
-	} else {
-		acap = alen
+		rv := reflect.MakeSlice(t, aLen, aCap)
+		return rv, nil
+	case ast.TypeChan:
+		aLen := 0
+		if e.LenExpr != nil {
+			ee := e.LenExpr
+			rv, err := invokeExpr(vmp, env, ee)
+			if err != nil {
+				return nilValue, err
+			}
+			aLen = toInt(rv)
+		}
+		return reflect.MakeChan(t, aLen), nil
 	}
+	return makeValue(t)
 
-	return reflect.MakeSlice(reflect.SliceOf(t), alen, acap), nil
+	//t, err := getTypeFromString(env, e.Type)
+	//if err != nil {
+	//	return nilValue, newError(e, err)
+	//}
+	//if t == nil {
+	//	return nilValue, newErrorf(expr, "type cannot be nil for make")
+	//}
+	//
+	//for i := 1; i < e.Dimensions; i++ {
+	//	t = reflect.SliceOf(t)
+	//}
+	//if e.Dimensions < 1 {
+	//	v, err := makeValue(t)
+	//	if err != nil {
+	//		return nilValue, newError(e, err)
+	//	}
+	//	return v, nil
+	//}
+	//
+	//var alen int
+	//if e.LenExpr != nil {
+	//	rv, err := invokeExpr(vmp, env, e.LenExpr)
+	//	if err != nil {
+	//		return nilValue, newError(e.LenExpr, err)
+	//	}
+	//	alen = toInt(rv)
+	//}
+	//
+	//var acap int
+	//if e.CapExpr != nil {
+	//	rv, err := invokeExpr(vmp, env, e.CapExpr)
+	//	if err != nil {
+	//		return nilValue, newError(e.CapExpr, err)
+	//	}
+	//	acap = toInt(rv)
+	//} else {
+	//	acap = alen
+	//}
+	//
+	//return reflect.MakeSlice(reflect.SliceOf(t), alen, acap), nil
 }
 
 func invokeMakeTypeExpr(vmp *vmParams, e *ast.MakeTypeExpr, env *envPkg.Env, expr ast.Expr) (reflect.Value, error) {
@@ -957,24 +1015,25 @@ func invokeMakeTypeExpr(vmp *vmParams, e *ast.MakeTypeExpr, env *envPkg.Env, exp
 }
 
 func invokeMakeChanExpr(vmp *vmParams, e *ast.MakeChanExpr, env *envPkg.Env, expr ast.Expr) (reflect.Value, error) {
-	t, err := getTypeFromString(env, e.Type)
-	if err != nil {
-		return nilValue, newError(e, err)
-	}
-	if t == nil {
-		return nilValue, newErrorf(expr, "type cannot be nil for make chan")
-	}
-
-	var size int
-	if e.SizeExpr != nil {
-		rv, err := invokeExpr(vmp, env, e.SizeExpr)
-		if err != nil {
-			return nilValue, newError(e.SizeExpr, err)
-		}
-		size = int(toInt64(rv))
-	}
-
-	return reflect.MakeChan(reflect.ChanOf(reflect.BothDir, t), size), nil
+	//t, err := getTypeFromEnv(env, e.Type)
+	//if err != nil {
+	//	return nilValue, newError(e, err)
+	//}
+	//if t == nil {
+	//	return nilValue, newErrorf(expr, "type cannot be nil for make chan")
+	//}
+	//
+	//var size int
+	//if e.SizeExpr != nil {
+	//	rv, err := invokeExpr(vmp, env, e.SizeExpr)
+	//	if err != nil {
+	//		return nilValue, newError(e.SizeExpr, err)
+	//	}
+	//	size = int(toInt64(rv))
+	//}
+	//
+	//return reflect.MakeChan(reflect.ChanOf(reflect.BothDir, t), size), nil
+	return nilValue, nil
 }
 
 func invokeChanExpr(vmp *vmParams, e *ast.ChanExpr, env *envPkg.Env, expr ast.Expr) (reflect.Value, error) {

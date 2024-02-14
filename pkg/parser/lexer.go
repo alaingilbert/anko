@@ -65,6 +65,8 @@ var opName = map[string]int{
 	"go":       GO,
 	"defer":    DEFER,
 	"chan":     CHAN,
+	"struct":   STRUCT,
+	"map":      MAP,
 	"make":     MAKE,
 	"type":     TYPE,
 	"len":      LEN,

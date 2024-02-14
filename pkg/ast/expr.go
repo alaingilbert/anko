@@ -40,7 +40,9 @@ type ArrayExpr struct {
 // MapExpr provide Map expression.
 type MapExpr struct {
 	ExprImpl
-	MapExpr map[Expr]Expr
+	Keys     []Expr
+	Values   []Expr
+	TypeData *TypeStruct
 }
 
 // IdentExpr provide identity expression.
@@ -199,10 +201,9 @@ type ArrayCount struct {
 // MakeExpr provide expression to make instance.
 type MakeExpr struct {
 	ExprImpl
-	Dimensions int
-	Type       string
-	LenExpr    Expr
-	CapExpr    Expr
+	TypeData *TypeStruct
+	LenExpr  Expr
+	CapExpr  Expr
 }
 
 // MakeTypeExpr provide expression to make type.

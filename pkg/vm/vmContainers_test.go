@@ -1236,8 +1236,8 @@ func TestArraysAndMaps(t *testing.T) {
 func TestMakeArraysAndMaps(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `make([]map)`, Types: map[string]any{"map": map[string]any{}}, RunOutput: []map[string]any{}},
-		{Script: `make([][]map)`, Types: map[string]any{"map": map[string]any{}}, RunOutput: [][]map[string]any{}},
+		{Script: `make([]aMap)`, Types: map[string]any{"aMap": map[string]any{}}, RunOutput: []map[string]any{}},
+		{Script: `make([][]aMap)`, Types: map[string]any{"aMap": map[string]any{}}, RunOutput: [][]map[string]any{}},
 
 		{Script: `make(mapArray2x)`, Types: map[string]any{"mapArray2x": map[string][][]any{}}, RunOutput: map[string][][]any{}},
 		{Script: `a = make(mapArray2x)`, Types: map[string]any{"mapArray2x": map[string][][]any{}}, RunOutput: map[string][][]any{}, Output: map[string]any{"a": map[string][][]any{}}},
@@ -1312,14 +1312,14 @@ func TestMakeArraysData(t *testing.T) {
 }
 
 func TestMakeMapsData(t *testing.T) {
-	stmts, err := parser.ParseSrc("make(map)")
+	stmts, err := parser.ParseSrc("make(aMap)")
 	if err != nil {
 		t.Errorf("ParseSrc error - received %v - expected: %v", err, nil)
 	}
 
 	// test normal map
 	v := New(nil)
-	err = v.DefineType("map", map[string]string{})
+	err = v.DefineType("aMap", map[string]string{})
 	if err != nil {
 		t.Errorf("DefineType error - received %v - expected: %v", err, nil)
 	}
@@ -1340,7 +1340,7 @@ func TestMakeMapsData(t *testing.T) {
 
 	// test url Values map
 	v = New(nil)
-	err = v.DefineType("map", url.Values{})
+	err = v.DefineType("aMap", url.Values{})
 	if err != nil {
 		t.Errorf("DefineType error - received %v - expected: %v", err, nil)
 	}
@@ -1658,59 +1658,149 @@ func TestStructs(t *testing.T) {
 
 func TestMakeStructs(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
+
 	tests := []Test{
-		{Script: `make(struct)`, Types: map[string]any{"struct": &struct {
-			A any
-			B any
+		{Script: `a = make(struct1)`, Types: map[string]interface{}{"struct1": &testStruct1{}}, RunOutput: &testStruct1{}, Output: map[string]interface{}{"a": &testStruct1{}}},
+		{Script: `a = make(struct2)`, Types: map[string]interface{}{"struct2": &testStruct2{}}, RunOutput: &testStruct2{}, Output: map[string]interface{}{"a": &testStruct2{}}},
+		{Script: `make(struct1)`, Types: map[string]interface{}{"struct1": &struct {
+			A interface{}
+			B interface{}
 		}{}},
 			RunOutput: &struct {
-				A any
-				B any
+				A interface{}
+				B interface{}
 			}{}},
 
-		{Script: `a = make(struct)`, Types: map[string]any{"struct": &struct {
-			A any
-			B any
+		{Script: `a = make(struct1)`, Types: map[string]interface{}{"struct1": &struct {
+			A interface{}
+			B interface{}
 		}{}},
 			RunOutput: &struct {
-				A any
-				B any
+				A interface{}
+				B interface{}
 			}{},
-			Output: map[string]any{"a": &struct {
-				A any
-				B any
+			Output: map[string]interface{}{"a": &struct {
+				A interface{}
+				B interface{}
 			}{}}},
 
-		{Script: `a = make(struct); a.A = 3; a.B = 4`, Types: map[string]any{"struct": &struct {
-			A any
-			B any
+		{Script: `a = make(struct1); a.A = 3; a.B = 4`, Types: map[string]interface{}{"struct1": &struct {
+			A interface{}
+			B interface{}
 		}{}},
 			RunOutput: int64(4),
-			Output: map[string]any{"a": &struct {
-				A any
-				B any
-			}{A: any(int64(3)), B: any(int64(4))}}},
+			Output: map[string]interface{}{"a": &struct {
+				A interface{}
+				B interface{}
+			}{A: interface{}(int64(3)), B: interface{}(int64(4))}}},
 
-		{Script: `a = make(struct); a = *a; a.A = 3; a.B = 4`, Types: map[string]any{"struct": &struct {
-			A any
-			B any
+		{Script: `a = make(struct1); a = *a; a.A = 3; a.B = 4`, Types: map[string]interface{}{"struct1": &struct {
+			A interface{}
+			B interface{}
 		}{}},
 			RunOutput: int64(4),
-			Output: map[string]any{"a": struct {
-				A any
-				B any
-			}{A: any(int64(3)), B: any(int64(4))}}},
+			Output: map[string]interface{}{"a": struct {
+				A interface{}
+				B interface{}
+			}{A: interface{}(int64(3)), B: interface{}(int64(4))}}},
 
-		{Script: `a = make(struct); a.A = func () { return 1 }; a.A()`, Types: map[string]any{"struct": &struct {
-			A any
-			B any
+		{Script: `a = make(struct1); a.A = func () { return 1 }; a.A()`, Types: map[string]interface{}{"struct1": &struct {
+			A interface{}
+			B interface{}
 		}{}},
 			RunOutput: int64(1)},
-		{Script: `a = make(struct); a.A = func () { return 1 }; a = *a; a.A()`, Types: map[string]any{"struct": &struct {
-			A any
-			B any
+		{Script: `a = make(struct1); a.A = func () { return 1 }; a = *a; a.A()`, Types: map[string]interface{}{"struct1": &struct {
+			A interface{}
+			B interface{}
 		}{}},
 			RunOutput: int64(1)},
+
+		// make struct - new lines
+		{Script: `make(struct { A int64, B float64 })`, RunOutput: struct {
+			A int64
+			B float64
+		}{}},
+		{Script: `make(struct {
+A int64, B float64 })`, RunOutput: struct {
+			A int64
+			B float64
+		}{}},
+		{Script: `make(struct { A int64, 
+B float64 })`, RunOutput: struct {
+			A int64
+			B float64
+		}{}},
+		{Script: `make(struct { A int64, B float64
+})`, RunOutput: struct {
+			A int64
+			B float64
+		}{}},
+		{Script: `
+make(struct {
+	A int64,
+	B float64
+})`, RunOutput: struct {
+			A int64
+			B float64
+		}{}},
+
+		// make struct - with basic types
+		{Script: `
+make(struct {
+	A bool,
+	B int32,
+	C int64,
+	D float32,
+	E float64,
+	F string
+})`, RunOutput: struct {
+			A bool
+			B int32
+			C int64
+			D float32
+			E float64
+			F string
+		}{}},
+
+		// make struct - with other types
+		{Script: `
+make(struct {
+	A *int64,
+	B []int64,
+	C map[string]int64
+})`, RunOutput: struct {
+			A *int64
+			B []int64
+			C map[string]int64
+		}{A: (*int64)(nil), B: []int64{}, C: map[string]int64{}}},
+
+		// make struct within structs
+		{Script: `
+make(struct {
+	A struct {
+		AA int64,
+		AB float64
+	},
+	B struct {
+		BA []int64,
+		BB map[string]int64
+	}
+})`, RunOutput: struct {
+			A struct {
+				AA int64
+				AB float64
+			}
+			B struct {
+				BA []int64
+				BB map[string]int64
+			}
+		}{A: struct {
+			AA int64
+			AB float64
+		}{AA: 0, AB: 0}, B: struct {
+			BA []int64
+			BB map[string]int64
+		}{BA: []int64{}, BB: map[string]int64{}}}},
 	}
 	runTests(t, tests, nil)
 }

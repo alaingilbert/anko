@@ -6,7 +6,6 @@ import (
 	"github.com/alaingilbert/anko/pkg/packages"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"reflect"
-	"strings"
 )
 
 func isNil(v reflect.Value) bool {
@@ -199,29 +198,79 @@ func appendSlice(expr ast.Expr, lhsV reflect.Value, rhsV reflect.Value) (reflect
 	return nilValueL, newStringError(expr, "invalid type conversion")
 }
 
-func getTypeFromString(env *envPkg.Env, name string) (reflect.Type, error) {
-	env, typeString, err := getEnvFromString(env, name)
+func getTypeFromEnv(env *envPkg.Env, typeStruct *ast.TypeStruct) (reflect.Type, error) {
+	e, err := getEnvFromPath(env, typeStruct.Env)
 	if err != nil {
-		return nilType, err
+		return nil, err
 	}
-	t, err := env.Type(typeString)
+	t, err := e.Type(typeStruct.Name)
 	if err != nil {
-		return nilType, err
+		return nil, err
 	}
 	return t, nil
 }
 
-func getEnvFromString(env *envPkg.Env, name string) (*envPkg.Env, string, error) {
-	nameSplit := strings.SplitN(name, ".", 2)
-	for len(nameSplit) > 1 {
-		e, found := env.Values().Get(nameSplit[0])
-		if !found {
-			return nil, "", fmt.Errorf("no namespace called: %v", nameSplit[0])
-		}
-		env = e.Interface().(*envPkg.Env)
-		nameSplit = strings.SplitN(nameSplit[1], ".", 2)
+//func getTypeFromString(env *envPkg.Env) (reflect.Type, error) {
+//	env, typeString, err := getEnvFromPath(env, env)
+//	if err != nil {
+//		return nilType, err
+//	}
+//	t, err := env.Type(typeString)
+//	if err != nil {
+//		return nilType, err
+//	}
+//	return t, nil
+//}
+
+//func getEnvFromString(env *envPkg.Env, name string) (*envPkg.Env, string, error) {
+//	nameSplit := strings.SplitN(name, ".", 2)
+//	for len(nameSplit) > 1 {
+//		e, found := env.Values().Get(nameSplit[0])
+//		if !found {
+//			return nil, "", fmt.Errorf("no namespace called: %v", nameSplit[0])
+//		}
+//		env = e.Interface().(*envPkg.Env)
+//		nameSplit = strings.SplitN(nameSplit[1], ".", 2)
+//	}
+//	return env, nameSplit[0], nil
+//}
+
+// getEnvFromPath returns Env from path
+func getEnvFromPath(e *envPkg.Env, path []string) (*envPkg.Env, error) {
+	if len(path) < 1 {
+		return e, nil
 	}
-	return env, nameSplit[0], nil
+
+	var value reflect.Value
+	var ok bool
+	for {
+		// find starting env
+		value, ok = e.Values().Get(path[0])
+		if ok {
+			e, ok = value.Interface().(*envPkg.Env)
+			if ok {
+				break
+			}
+		}
+		if e.Parent() == nil {
+			return nil, fmt.Errorf("no namespace called: %v", path[0])
+		}
+		e = e.Parent()
+	}
+
+	for i := 1; i < len(path); i++ {
+		// find child env
+		value, ok = e.Values().Get(path[i])
+		if ok {
+			e, ok = value.Interface().(*envPkg.Env)
+			if ok {
+				continue
+			}
+		}
+		return nil, fmt.Errorf("no namespace called: %v", path[i])
+	}
+
+	return e, nil
 }
 
 func makeValue(t reflect.Type) (reflect.Value, error) {
@@ -279,6 +328,9 @@ func makeValueSlice(t reflect.Type) (reflect.Value, error) {
 func makeValueStruct(t reflect.Type) (reflect.Value, error) {
 	structV := reflect.New(t).Elem()
 	for i := 0; i < structV.NumField(); i++ {
+		if structV.Field(i).Kind() == reflect.Ptr {
+			continue
+		}
 		v, err := makeValue(structV.Field(i).Type())
 		if err != nil {
 			return nilValue, err

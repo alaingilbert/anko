@@ -482,14 +482,9 @@ func decodeArrayExpr(r *Decoder) *ast.ArrayExpr {
 func decodeMapExpr(r *Decoder) *ast.MapExpr {
 	out := &ast.MapExpr{}
 	out.ExprImpl = decodeExprImpl(r)
-	nb := r.readInt32()
-	out.MapExpr = make(map[ast.Expr]ast.Expr, nb)
-	var i int32
-	for i = 0; i < nb; i++ {
-		key := decodeExpr(r)
-		val := decodeExpr(r)
-		out.MapExpr[key] = val
-	}
+	out.Keys = r.readExprArray()
+	out.Values = r.readExprArray()
+	out.TypeData = decodeTypeStruct(r)
 	return out
 }
 
@@ -614,10 +609,35 @@ func decodeNewExpr(r *Decoder) *ast.NewExpr {
 func decodeMakeExpr(r *Decoder) *ast.MakeExpr {
 	out := &ast.MakeExpr{}
 	out.ExprImpl = decodeExprImpl(r)
-	out.Dimensions = int(r.readInt32())
-	out.Type = r.readString()
+	out.TypeData = decodeTypeStruct(r)
 	out.LenExpr = decodeExpr(r)
 	out.CapExpr = decodeExpr(r)
+	return out
+}
+
+func decodeTypeStruct(r *Decoder) *ast.TypeStruct {
+	isNil := r.readBool()
+	if isNil {
+		return nil
+	}
+	out := &ast.TypeStruct{}
+	out.Kind = ast.TypeKind(r.readInt32())
+	out.Env = r.readStringArray()
+	out.Name = r.readString()
+	out.Dimensions = int(r.readInt32())
+	out.SubType = decodeTypeStruct(r)
+	out.Key = decodeTypeStruct(r)
+	out.StructNames = r.readStringArray()
+	out.StructTypes = decodeTypeStructArray(r)
+	return out
+}
+
+func decodeTypeStructArray(r *Decoder) []*ast.TypeStruct {
+	out := make([]*ast.TypeStruct, 0)
+	nbElems := r.readInt32()
+	for i := 0; int32(i) < nbElems; i++ {
+		out = append(out, decodeTypeStruct(r))
+	}
 	return out
 }
 

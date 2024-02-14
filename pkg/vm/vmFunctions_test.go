@@ -526,7 +526,7 @@ func TestFunctionConvertions(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
 		{Script: `b = func(c){ return c }; a("x", b)`, Input: map[string]any{"a": func(b string, c func(string) string) string { return c(b) }}, RunOutput: "x"},
-		{Script: `b = make(struct); b.A = func (c, d) { return c == d }; b.A(2, 2)`, Types: map[string]any{"struct": &struct {
+		{Script: `b = make(struct1); b.A = func (c, d) { return c == d }; b.A(2, 2)`, Types: map[string]any{"struct1": &struct {
 			A func(int, int) bool
 		}{}},
 			RunOutput: true},

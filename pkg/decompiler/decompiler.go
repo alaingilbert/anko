@@ -342,7 +342,11 @@ func decompileCallExpr(w *bytes.Buffer, prefix string, e *ast.CallExpr) {
 func decompileAssocExpr(w *bytes.Buffer, prefix string, e *ast.AssocExpr) {
 	w.WriteString(prefix)
 	decompileExpr(w, e.Lhs, 0)
-	w.WriteString(" " + e.Operator + " ")
+	if e.Operator == "++" || e.Operator == "--" {
+		w.WriteString(e.Operator)
+	} else {
+		w.WriteString(" " + e.Operator + " ")
+	}
 	decompileExpr(w, e.Rhs, 0)
 }
 

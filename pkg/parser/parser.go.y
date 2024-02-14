@@ -27,6 +27,9 @@ import (
 %type<exprs> exprs
 %type<map_expr> map_expr
 %type<expr_idents> expr_idents
+%type<type_data> type_data
+%type<type_data_struct> type_data_struct
+%type<slice_count> slice_count
 %type<expr_type> expr_type
 %type<array_count> array_count
 %type<expr_slice> expr_slice
@@ -53,6 +56,9 @@ import (
 	exprs                  []ast.Expr
 	map_expr               map[ast.Expr]ast.Expr
 	expr_idents            []string
+	type_data              *ast.TypeStruct
+        type_data_struct       *ast.TypeStruct
+        slice_count            int
 	expr_type              string
 	tok                    ast.Token
 	array_count            ast.ArrayCount
@@ -63,7 +69,7 @@ import (
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR IN EQEQ NEQ GE LE OROR ANDAND NEW
             TRUE FALSE NIL NILCOALESCE MODULE TRY CATCH FINALLY PLUSEQ MINUSEQ MULEQ DIVEQ ANDEQ OREQ BREAK
             CONTINUE PLUSPLUS MINUSMINUS POW SHIFTLEFT SHIFTRIGHT SWITCH SELECT CASE DEFAULT GO DEFER CHAN MAKE
-            OPCHAN TYPE LEN DELETE CLOSE
+            OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT
 
 %right '='
 %right '?' ':'
@@ -616,9 +622,19 @@ expr :
 		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Stmts: $8, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
+	| '[' ']'
+	{
+		$$ = &ast.ArrayExpr{}
+		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
+	}
 	| '[' opt_newlines exprs opt_comma_newlines ']'
 	{
 		$$ = &ast.ArrayExpr{Exprs: $3}
+		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
+	}
+	| slice_count type_data '{' opt_newlines exprs opt_comma_newlines '}'
+	{
+		$$ = &ast.ArrayExpr{Exprs: $5, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
 	| '{' opt_newlines map_expr opt_comma_newlines '}'
@@ -865,6 +881,82 @@ expr :
 	{
 		$$ = &ast.IncludeExpr{ItemExpr: $1, ListExpr: &ast.SliceExpr{Value: $3, Begin: nil, End: nil}}
 		$$.SetPosition($1.Position())
+	}
+
+
+type_data :
+	IDENT
+	{
+		$$ = &ast.TypeStruct{Name: $1.Lit}
+	}
+	| type_data '.' IDENT
+	{
+		if $1.Kind != ast.TypeDefault {
+			yylex.Error("not type default")
+		} else {
+			$1.Env = append($1.Env, $1.Name)
+			$1.Name = $3.Lit
+		}
+	}
+	| '*' type_data
+	{
+		if $2.Kind == ast.TypeDefault {
+			$2.Kind = ast.TypePtr
+			$$ = $2
+		} else {
+			$$ = &ast.TypeStruct{Kind: ast.TypePtr, SubType: $2}
+		}
+	}
+	| slice_count type_data
+	{
+		if $2.Kind == ast.TypeDefault {
+			$2.Kind = ast.TypeSlice
+			$2.Dimensions = $1
+			$$ = $2
+		} else {
+			$$ = &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}
+		}
+	}
+	| MAP '[' type_data ']' type_data
+	{
+		$$ = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
+	}
+	| CHAN type_data
+	{
+		if $2.Kind == ast.TypeDefault {
+			$2.Kind = ast.TypeChan
+			$$ = $2
+		} else {
+			$$ = &ast.TypeStruct{Kind: ast.TypeChan, SubType: $2}
+		}
+	}
+	| STRUCT '{' opt_newlines type_data_struct opt_newlines '}'
+	{
+		$$ = $4
+	}
+
+type_data_struct :
+	IDENT type_data
+	{
+		$$ = &ast.TypeStruct{Kind: ast.TypeStructType, StructNames: []string{$1.Lit}, StructTypes: []*ast.TypeStruct{$2}}
+	}
+	| type_data_struct ',' opt_newlines IDENT type_data
+	{
+		if $1 == nil {
+			yylex.Error("syntax error: unexpected ','")
+		}
+		$$.StructNames = append($$.StructNames, $4.Lit)
+		$$.StructTypes = append($$.StructTypes, $5)
+	}
+
+slice_count :
+	'[' ']'
+	{
+		$$ = 1
+	}
+	| '[' ']' slice_count
+	{
+		$$ = $3 + 1
 	}
 
 expr_ident :

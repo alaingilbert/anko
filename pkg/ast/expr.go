@@ -33,7 +33,8 @@ type StringExpr struct {
 // ArrayExpr provide Array expression.
 type ArrayExpr struct {
 	ExprImpl
-	Exprs []Expr
+	Exprs    []Expr
+	TypeData *TypeStruct
 }
 
 // MapExpr provide Map expression.

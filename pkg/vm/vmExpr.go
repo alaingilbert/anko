@@ -114,16 +114,137 @@ func invokeStringExpr(ctx context.Context, env *envPkg.Env, e *ast.StringExpr) (
 	return reflect.ValueOf(e.Lit), nil
 }
 
-func invokeArrayExpr(vmp *vmParams, env *envPkg.Env, e *ast.ArrayExpr) (reflect.Value, error) {
-	a := make([]any, len(e.Exprs))
-	for i, expr := range e.Exprs {
-		arg, err := invokeExpr(vmp, env, expr)
-		if err != nil {
-			return nilValue, newError(expr, err)
+func makeType(vmp *vmParams, env *envPkg.Env, typeStruct *ast.TypeStruct) (reflect.Type, error) {
+	switch typeStruct.Kind {
+	case ast.TypeDefault:
+		return getTypeFromString(env, typeStruct.Name)
+	case ast.TypePtr:
+		var t reflect.Type
+		var err error
+		if typeStruct.SubType != nil {
+			t, err = makeType(vmp, env, typeStruct.SubType)
+		} else {
+			t, err = getTypeFromString(env, typeStruct.Name)
 		}
-		a[i] = arg.Interface()
+		if err != nil {
+			return nil, err
+		}
+		if t == nil {
+			return nil, err
+		}
+		return reflect.PtrTo(t), nil
+	case ast.TypeSlice:
+		var t reflect.Type
+		var err error
+		if typeStruct.SubType != nil {
+			t, err = makeType(vmp, env, typeStruct.SubType)
+		} else {
+			t, err = getTypeFromString(env, typeStruct.Name)
+		}
+		if err != nil {
+			return nil, err
+		}
+		if t == nil {
+			return nil, err
+		}
+		for i := 1; i < typeStruct.Dimensions; i++ {
+			t = reflect.SliceOf(t)
+		}
+		return reflect.SliceOf(t), nil
+	//case ast.TypeMap:
+	//	key := makeType(runInfo, typeStruct.Key)
+	//	if runInfo.err != nil {
+	//		return nil
+	//	}
+	//	if key == nil {
+	//		return nil
+	//	}
+	//	t := makeType(runInfo, typeStruct.SubType)
+	//	if runInfo.err != nil {
+	//		return nil
+	//	}
+	//	if t == nil {
+	//		return nil
+	//	}
+	//	if !runInfo.options.Debug {
+	//		// captures panic
+	//		defer recoverFunc(runInfo)
+	//	}
+	//	t = reflect.MapOf(key, t)
+	//	return t
+	//case ast.TypeChan:
+	//	var t reflect.Type
+	//	if typeStruct.SubType != nil {
+	//		t = makeType(runInfo, typeStruct.SubType)
+	//	} else {
+	//		t = getTypeFromEnv(runInfo, typeStruct)
+	//	}
+	//	if runInfo.err != nil {
+	//		return nil
+	//	}
+	//	if t == nil {
+	//		return nil
+	//	}
+	//	return reflect.ChanOf(reflect.BothDir, t)
+	//case ast.TypeStructType:
+	//	var t reflect.Type
+	//	fields := make([]reflect.StructField, 0, len(typeStruct.StructNames))
+	//	for i := 0; i < len(typeStruct.StructNames); i++ {
+	//		t = makeType(runInfo, typeStruct.StructTypes[i])
+	//		if runInfo.err != nil {
+	//			return nil
+	//		}
+	//		if t == nil {
+	//			return nil
+	//		}
+	//		fields = append(fields, reflect.StructField{Name: typeStruct.StructNames[i], Type: t})
+	//	}
+	//	if !runInfo.options.Debug {
+	//		// captures panic
+	//		defer recoverFunc(runInfo)
+	//	}
+	//	t = reflect.StructOf(fields)
+	//	return t
+	default:
+		return nil, fmt.Errorf("unknown kind")
 	}
-	return reflect.ValueOf(a), nil
+}
+
+func invokeArrayExpr(vmp *vmParams, env *envPkg.Env, e *ast.ArrayExpr) (reflect.Value, error) {
+	if e.TypeData == nil {
+		a := make([]any, len(e.Exprs))
+		for i, expr := range e.Exprs {
+			arg, err := invokeExpr(vmp, env, expr)
+			if err != nil {
+				return nilValue, newError(expr, err)
+			}
+			a[i] = arg.Interface()
+		}
+		return reflect.ValueOf(a), nil
+	}
+
+	t, err := makeType(vmp, env, e.TypeData)
+	if err != nil {
+		return nilValue, err
+	}
+	if t == nil {
+		return nilValue, newStringError(e, "cannot make type nil")
+	}
+
+	slice := reflect.MakeSlice(t, len(e.Exprs), len(e.Exprs))
+	valueType := t.Elem()
+	for i, ee := range e.Exprs {
+		rv, err := invokeExpr(vmp, env, ee)
+		if err != nil {
+			return nilValue, err
+		}
+		rv, err = convertReflectValueToType(vmp.ctx, rv, valueType)
+		if err != nil {
+			return nilValue, newStringError(e, "cannot use type "+rv.Type().String()+" as type "+valueType.String()+" as slice value")
+		}
+		slice.Index(i).Set(rv)
+	}
+	return slice, nil
 }
 
 func invokeMapExpr(vmp *vmParams, env *envPkg.Env, e *ast.MapExpr) (reflect.Value, error) {

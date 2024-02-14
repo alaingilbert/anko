@@ -157,7 +157,7 @@ func (e *Env) String() string {
 			return
 		}
 		if value.Kind() == reflect.Func {
-			valuesArr = append(valuesArr, []string{symbol, vmUtils.FormatFunc(value)})
+			valuesArr = append(valuesArr, []string{symbol, vmUtils.FormatValue(value)})
 		}
 	})
 

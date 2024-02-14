@@ -7,9 +7,9 @@ import (
 	"strings"
 )
 
-func FormatFunc(value reflect.Value) string {
+func FormatValue(value reflect.Value) string {
+	replaceInterface := func(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
 	if value.Kind() == reflect.Func {
-		replaceInterface := func(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
 		numIn := value.Type().NumIn()
 		inParams := make([]string, numIn)
 		for i := 0; i < numIn; i++ {
@@ -34,5 +34,7 @@ func FormatFunc(value reflect.Value) string {
 		}
 		return sign
 	}
-	return ""
+	s := fmt.Sprintf("%#v", value)
+	s = replaceInterface(s)
+	return s
 }

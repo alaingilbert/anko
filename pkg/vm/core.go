@@ -38,12 +38,7 @@ func dbgFn(v any) {
 		println(e.String())
 		return
 	}
-	vType := reflect.TypeOf(v)
-	if vType.Kind() == reflect.Func {
-		println(vmUtils.FormatFunc(reflect.ValueOf(v)))
-		return
-	}
-	println(fmt.Sprintf("%#v", v))
+	println(vmUtils.FormatValue(reflect.ValueOf(v)))
 }
 
 // Given a map, returns its keys

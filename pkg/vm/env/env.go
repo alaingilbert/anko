@@ -127,11 +127,10 @@ func (e *Env) findModule(name string) *Env {
 			return module
 		}
 		// module not found in current env, try parent
-		parent := currEnv.parent
-		if parent == nil {
+		currEnv = currEnv.parent
+		if currEnv == nil {
 			return nil
 		}
-		currEnv = parent
 	}
 }
 

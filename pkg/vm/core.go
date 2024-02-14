@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/vm/env"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"os"
 	"reflect"
 
@@ -35,6 +36,11 @@ func Import(env *env.Env) *env.Env {
 func dbgFn(v any) {
 	if e, ok := v.(*env.Env); ok {
 		println(e.String())
+		return
+	}
+	vType := reflect.TypeOf(v)
+	if vType.Kind() == reflect.Func {
+		println(vmUtils.FormatFunc(reflect.ValueOf(v)))
 		return
 	}
 	println(fmt.Sprintf("%#v", v))

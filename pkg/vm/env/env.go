@@ -16,6 +16,7 @@ import (
 // If stack goes to blocked-scope, it will make new Env.
 type Env struct {
 	parent *Env
+	name   *mtx.RWMtx[string]
 	values *mtx.Map[string, reflect.Value]
 	types  *mtx.Map[string, reflect.Type]
 	defers *mtx.Slice[CapturedFunc]
@@ -70,6 +71,7 @@ type CapturedFunc struct {
 func newEnv() *Env {
 	return &Env{
 		parent: nil,
+		name:   mtx.NewRWMtxPtr(""),
 		values: mtx.NewRWMapPtr[string, reflect.Value](nil),
 		types:  mtx.NewRWMapPtr[string, reflect.Type](nil),
 		defers: mtx.NewRWSlicePtr[CapturedFunc](nil),
@@ -94,7 +96,11 @@ func (e *Env) NewEnv() *Env {
 // This is a shortcut for calling e.NewEnv then Define that new Env.
 func (e *Env) NewModule(symbol string) (*Env, error) {
 	module := e.NewEnv()
-	return module, e.Define(symbol, module)
+	if err := e.Define(symbol, module); err != nil {
+		return nil, err
+	}
+	module.name.Store(symbol)
+	return module, nil
 }
 
 func isSymbolNameValid(name string) bool {
@@ -139,6 +145,14 @@ func (e *Env) AddPackage(name string, methods map[string]any, types map[string]a
 	return pack, nil
 }
 
+func (e *Env) Name() string {
+	name := e.name.Load()
+	if name == "" {
+		name = "n/a"
+	}
+	return name
+}
+
 // String returns string of values and types in current scope.
 func (e *Env) String() string {
 	replaceInterface := func(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
@@ -146,8 +160,9 @@ func (e *Env) String() string {
 	e.values.Each(func(symbol string, value reflect.Value) {
 		if value.Kind() == reflect.Ptr {
 			if value.IsValid() && value.CanInterface() {
-				if _, ok := value.Interface().(*Env); ok {
-					valuesArr = append(valuesArr, []string{symbol, "<module>"})
+				if ee, ok := value.Interface().(*Env); ok {
+					name := fmt.Sprintf("module<%s>", ee.Name())
+					valuesArr = append(valuesArr, []string{symbol, name})
 					return
 				}
 			}

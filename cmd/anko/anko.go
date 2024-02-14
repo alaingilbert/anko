@@ -252,8 +252,8 @@ func runInteractive(env *envPkg.Env) int {
 				handleErr(os.Stderr, err)
 				continue
 			}
-			if _, ok := v.(*envPkg.Env); ok {
-				fmt.Printf("<env>\n")
+			if e, ok := v.(*envPkg.Env); ok {
+				fmt.Printf("module<%s>\n", e.Name())
 				//fmt.Printf("%s\n", e.String())
 			} else {
 				fmt.Printf("%#v\n", v)

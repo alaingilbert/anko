@@ -180,7 +180,8 @@ func (e *Env) String() string {
 	sort.Slice(valuesArr, func(i, j int) bool { return valuesArr[i][0] < valuesArr[j][0] })
 	sort.Slice(typesArr, func(i, j int) bool { return typesArr[i][0] < typesArr[j][0] })
 	maxSymbolLen := 0
-	for _, v := range append(valuesArr, typesArr...) {
+	allValsTypes := append(valuesArr, typesArr...)
+	for _, v := range allValsTypes {
 		maxSymbolLen = max(maxSymbolLen, len(v[0]))
 	}
 
@@ -188,10 +189,7 @@ func (e *Env) String() string {
 	parentStr := utils.Ternary(e.parent == nil, "No parent\n", "Has parent\n")
 	buffer.WriteString(parentStr)
 	format := "%-" + strconv.Itoa(maxSymbolLen) + "v = %s\n"
-	for _, v := range valuesArr {
-		buffer.WriteString(fmt.Sprintf(format, v[0], v[1]))
-	}
-	for _, v := range typesArr {
+	for _, v := range allValsTypes {
 		buffer.WriteString(fmt.Sprintf(format, v[0], v[1]))
 	}
 	return buffer.String()

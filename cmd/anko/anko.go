@@ -217,7 +217,7 @@ func runInteractive(env *envPkg.Env) int {
 		case line == "help":
 			usage(l.Stderr())
 		case line == "dump":
-			println(env.String())
+			println(executor.GetEnv().String())
 		case line == "quit()":
 			goto exit
 		case line == "":

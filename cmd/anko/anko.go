@@ -269,7 +269,17 @@ exit:
 
 func rebuildCompleter(e *envPkg.Env) {
 	newArr := base
-	keys := e.Values().Keys()
+	keys := make([]string, 0)
+	e.Values().Each(func(s string, value reflect.Value) {
+		keys = append(keys, s)
+		if value.IsValid() {
+			if ee, ok := value.Interface().(*envPkg.Env); ok {
+				ee.Values().Each(func(ss string, _ reflect.Value) {
+					keys = append(keys, s+"."+ss)
+				})
+			}
+		}
+	})
 	slices.Sort(keys)
 	for _, k := range keys {
 		newArr = append(newArr, readline.PcItem(k))

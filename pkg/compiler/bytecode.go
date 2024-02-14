@@ -50,10 +50,10 @@ const (
 	MemberExprBytecode          bytecode = 86
 	ItemExprBytecode            bytecode = 87
 	SliceExprBytecode           bytecode = 88
-	AssocExprBytecode           bytecode = 89
+	AssocExprBytecode           bytecode = 89 // "+=" "-=" "*=" "/=" "&=" "|=" "++" "--"
 	LetsExprBytecode            bytecode = 90
-	TernaryOpExprBytecode       bytecode = 91
-	NilCoalescingOpExprBytecode bytecode = 92
+	TernaryOpExprBytecode       bytecode = 91 // "? :"
+	NilCoalescingOpExprBytecode bytecode = 92 // "??"
 	LenExprBytecode             bytecode = 93
 	NewExprBytecode             bytecode = 94
 	MakeExprBytecode            bytecode = 95
@@ -64,7 +64,7 @@ const (
 	AnonCallExprBytecode        bytecode = 100
 	CallExprBytecode            bytecode = 101
 	IncludeExprBytecode         bytecode = 102
-	BinaryOperatorBytecode      bytecode = 103
+	BinaryOperatorBytecode      bytecode = 103 // "+" "-" "*" "/" "%" "**" "<<" ">>" "==" "!=" ">" ">=" "<" "<=" "|" "||" "&" "&&"
 	ConstExprBytecode           bytecode = 104
 )
 

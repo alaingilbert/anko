@@ -240,12 +240,9 @@ func getEnvFromPath(e *envPkg.Env, path []string) (*envPkg.Env, error) {
 	if len(path) < 1 {
 		return e, nil
 	}
-
-	var value reflect.Value
-	var ok bool
 	for {
 		// find starting env
-		value, ok = e.Values().Get(path[0])
+		value, ok := e.Values().Get(path[0])
 		if ok {
 			e, ok = value.Interface().(*envPkg.Env)
 			if ok {
@@ -257,10 +254,9 @@ func getEnvFromPath(e *envPkg.Env, path []string) (*envPkg.Env, error) {
 		}
 		e = e.Parent()
 	}
-
 	for i := 1; i < len(path); i++ {
 		// find child env
-		value, ok = e.Values().Get(path[i])
+		value, ok := e.Values().Get(path[i])
 		if ok {
 			e, ok = value.Interface().(*envPkg.Env)
 			if ok {
@@ -269,7 +265,6 @@ func getEnvFromPath(e *envPkg.Env, path []string) (*envPkg.Env, error) {
 		}
 		return nil, fmt.Errorf("no namespace called: %v", path[i])
 	}
-
 	return e, nil
 }
 

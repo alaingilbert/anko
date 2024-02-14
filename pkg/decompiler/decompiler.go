@@ -90,13 +90,9 @@ func decompileExpr(w *bytes.Buffer, expr ast.Expr, deep int) {
 func decompileCForStmt(w *bytes.Buffer, prefix string, s *ast.CForStmt, deep int) {
 	w.WriteString(prefix + "for ")
 	if el, ok := s.Stmt1.(*ast.LetsStmt); ok {
-		for _, el := range el.Lhss {
-			decompileExpr(w, el, 0)
-		}
+		joinExpr(w, el.Lhss)
 		w.WriteString(" = ")
-		for _, el := range el.Rhss {
-			decompileExpr(w, el, 0)
-		}
+		joinExpr(w, el.Rhss)
 	}
 	w.WriteString("; ")
 	decompileExpr(w, s.Expr2, 0)

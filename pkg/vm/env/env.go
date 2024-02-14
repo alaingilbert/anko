@@ -146,11 +146,8 @@ func (e *Env) AddPackage(name string, methods map[string]any, types map[string]a
 }
 
 func (e *Env) Name() string {
-	name := e.name.Load()
-	if name == "" {
-		name = "n/a"
-	}
-	return name
+	envName := e.name.Load()
+	return utils.Ternary(envName == "", fmt.Sprintf("module<%s>"), "n/a")
 }
 
 // String returns string of values and types in current scope.

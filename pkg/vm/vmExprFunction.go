@@ -75,13 +75,13 @@ func funcExpr(vmp *vmParams, env *env.Env, funcExpr *ast.FuncExpr) (reflect.Valu
 		rv, err = run(newVmp, newEnv, funcExpr.Stmts)
 
 		for i := newEnv.Defers().Len() - 1; i >= 0; i-- {
-			cf := newEnv.Defers().GetIdx(i)
+			cf := newEnv.Defers().Get(i)
 			if cf.CallSlice {
 				cf.Func.CallSlice(cf.Args)
 			} else {
 				cf.Func.Call(cf.Args)
 			}
-			newEnv.Defers().DeleteIdx(i)
+			newEnv.Defers().Remove(i)
 		}
 		//env.defers = nil
 

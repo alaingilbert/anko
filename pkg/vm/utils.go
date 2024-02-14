@@ -215,7 +215,7 @@ func getTypeFromString(env *env.Env, name string) (reflect.Type, error) {
 func getEnvFromString(env *env.Env, name string) (*env.Env, string, error) {
 	nameSplit := strings.SplitN(name, ".", 2)
 	for len(nameSplit) > 1 {
-		e, found := env.Values().GetKey(nameSplit[0])
+		e, found := env.Values().Get(nameSplit[0])
 		if !found {
 			return nil, "", fmt.Errorf("no namespace called: %v", nameSplit[0])
 		}

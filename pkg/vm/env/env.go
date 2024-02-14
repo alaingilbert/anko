@@ -12,20 +12,20 @@ import (
 // If stack goes to blocked-scope, it will make new Env.
 type Env struct {
 	parent *Env
-	values *mtx.RWMtxMap[string, reflect.Value]
-	types  *mtx.RWMtxMap[string, reflect.Type]
-	defers *mtx.RWMtxSlice[CapturedFunc]
+	values *mtx.Map[string, reflect.Value]
+	types  *mtx.Map[string, reflect.Type]
+	defers *mtx.Slice[CapturedFunc]
 }
 
-func (e *Env) Values() *mtx.RWMtxMap[string, reflect.Value] {
+func (e *Env) Values() *mtx.Map[string, reflect.Value] {
 	return e.values
 }
 
-func (e *Env) Types() *mtx.RWMtxMap[string, reflect.Type] {
+func (e *Env) Types() *mtx.Map[string, reflect.Type] {
 	return e.types
 }
 
-func (e *Env) Defers() *mtx.RWMtxSlice[CapturedFunc] {
+func (e *Env) Defers() *mtx.Slice[CapturedFunc] {
 	return e.defers
 }
 
@@ -66,16 +66,16 @@ type CapturedFunc struct {
 func newEnv() *Env {
 	return &Env{
 		parent: nil,
-		values: mtx.NewMapPtr[string, reflect.Value](),
-		types:  mtx.NewMapPtr[string, reflect.Type](),
-		defers: mtx.NewSlicePtr[CapturedFunc](),
+		values: mtx.NewMapPtr[string, reflect.Value](nil),
+		types:  mtx.NewMapPtr[string, reflect.Type](nil),
+		defers: mtx.NewSlicePtr[CapturedFunc](nil),
 	}
 }
 
 // NewEnv creates new global scope.
 func NewEnv() *Env {
 	env := newEnv()
-	env.types.Set(newBasicTypes())
+	env.types.Store(newBasicTypes())
 	return env
 }
 
@@ -158,7 +158,7 @@ var nilType = reflect.TypeOf(nil)
 // Addr returns pointer value which specified symbol. It goes to upper scope until
 // found or returns error.
 func (e *Env) Addr(k string) (reflect.Value, error) {
-	if v, ok := e.values.GetKey(k); ok {
+	if v, ok := e.values.Get(k); ok {
 		if v.CanAddr() {
 			return v.Addr(), nil
 		}
@@ -173,7 +173,7 @@ func (e *Env) Addr(k string) (reflect.Value, error) {
 // Type returns type which specified symbol. It goes to upper scope until
 // found or returns error.
 func (e *Env) Type(k string) (reflect.Type, error) {
-	if v, ok := e.types.GetKey(k); ok {
+	if v, ok := e.types.Get(k); ok {
 		return v, nil
 	}
 	if e.parent == nil {
@@ -193,7 +193,7 @@ func (e *Env) Get(k string) (any, error) {
 }
 
 func (e *Env) GetValue(k string) (reflect.Value, error) {
-	if v, ok := e.values.GetKey(k); ok {
+	if v, ok := e.values.Get(k); ok {
 		return v, nil
 	}
 	if e.parent == nil {
@@ -213,9 +213,9 @@ func (e *Env) Set(k string, v any) error {
 }
 
 func (e *Env) SetValue(k string, v reflect.Value) error {
-	_, ok := e.values.GetKey(k)
+	_, ok := e.values.Get(k)
 	if ok {
-		e.values.SetKey(k, v)
+		e.values.Insert(k, v)
 		return nil
 	}
 	if e.parent == nil {
@@ -248,7 +248,7 @@ func (e *Env) DefineValue(k string, v reflect.Value) error {
 	if !isSymbolNameValid(k) {
 		return newUnknownSymbol(k)
 	}
-	e.values.SetKey(k, v)
+	e.values.Insert(k, v)
 	return nil
 }
 
@@ -257,7 +257,7 @@ func (e *Env) Delete(k string) error {
 	if !isSymbolNameValid(k) {
 		return newUnknownSymbol(k)
 	}
-	e.values.DeleteKey(k)
+	e.values.Delete(k)
 	return nil
 }
 
@@ -266,7 +266,7 @@ func (e *Env) DeleteGlobal(k string) error {
 	if e.parent == nil {
 		return e.Delete(k)
 	}
-	if _, ok := e.values.GetKey(k); ok {
+	if _, ok := e.values.Get(k); ok {
 		return e.Delete(k)
 	}
 	return e.parent.DeleteGlobal(k)
@@ -311,7 +311,7 @@ func (e *Env) DefineReflectType(k string, t reflect.Type) error {
 	if !isSymbolNameValid(k) {
 		return newUnknownSymbol(k)
 	}
-	e.types.SetKey(k, t)
+	e.types.Insert(k, t)
 	return nil
 }
 
@@ -319,9 +319,9 @@ func (e *Env) DefineReflectType(k string, t reflect.Type) error {
 func (e *Env) Copy() *Env {
 	copyEnv := newEnv()
 	copyEnv.parent = e.parent
-	copyEnv.values.Set(e.values.Clone())
+	copyEnv.values.Store(e.values.Clone())
 	if e.types != nil {
-		copyEnv.types.Set(e.types.Clone())
+		copyEnv.types.Store(e.types.Clone())
 	}
 	return copyEnv
 }

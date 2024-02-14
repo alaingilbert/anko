@@ -3,7 +3,7 @@ module github.com/alaingilbert/anko
 go 1.21.4
 
 require (
-	github.com/alaingilbert/mtx v0.0.0-20240212061444-8a68a285a492
+	github.com/alaingilbert/mtx v0.3.0
 	github.com/chzyer/readline v1.5.1
 	github.com/stretchr/testify v1.8.4
 )

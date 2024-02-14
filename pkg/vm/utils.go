@@ -307,7 +307,7 @@ func importFn(e *env.Env) func(string) *env.Env {
 			panic(fmt.Sprintf("package '%s' not found", source))
 		}
 		var err error
-		pack := e.NewEnv()
+		pack, _ := e.NewModule(source)
 		for methodName, methodValue := range methods {
 			err = pack.Define(methodName, methodValue)
 			if err != nil {

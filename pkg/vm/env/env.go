@@ -39,6 +39,7 @@ var basicTypes = []struct {
 	typ  reflect.Type
 }{
 	{name: "interface", typ: reflect.ValueOf([]any{int64(1)}).Index(0).Type()},
+	{name: "any", typ: reflect.ValueOf([]any{int64(1)}).Index(0).Type()},
 	{name: "bool", typ: reflect.TypeOf(true)},
 	{name: "string", typ: reflect.TypeOf("a")},
 	{name: "int", typ: reflect.TypeOf(int(1))},

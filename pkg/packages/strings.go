@@ -29,6 +29,7 @@ func init() {
 		"NewReplacer":    strings.NewReplacer,
 		"Repeat":         strings.Repeat,
 		"Replace":        strings.Replace,
+		"ReplaceAll":     strings.ReplaceAll,
 		"Split":          strings.Split,
 		"SplitAfter":     strings.SplitAfter,
 		"SplitAfterN":    strings.SplitAfterN,

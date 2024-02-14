@@ -143,6 +143,14 @@ func (e *Env) String() string {
 	replaceInterface := func(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
 	valuesArr := make([][]string, 0)
 	e.values.Each(func(symbol string, value reflect.Value) {
+		if value.Kind() == reflect.Ptr {
+			if value.IsValid() && value.CanInterface() {
+				if _, ok := value.Interface().(*Env); ok {
+					valuesArr = append(valuesArr, []string{symbol, "<module>"})
+					return
+				}
+			}
+		}
 		if value.Kind() != reflect.Func {
 			valuesArr = append(valuesArr, []string{symbol, fmt.Sprintf("%#v", value)})
 			return

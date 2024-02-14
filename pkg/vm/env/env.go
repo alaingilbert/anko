@@ -3,8 +3,11 @@ package env
 import (
 	"bytes"
 	"fmt"
+	"github.com/alaingilbert/anko/pkg/utils"
 	"github.com/alaingilbert/mtx"
 	"reflect"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -137,18 +140,59 @@ func (e *Env) AddPackage(name string, methods map[string]any, types map[string]a
 
 // String returns string of values and types in current scope.
 func (e *Env) String() string {
-	var buffer bytes.Buffer
-	if e.parent == nil {
-		buffer.WriteString("No parent\n")
-	} else {
-		buffer.WriteString("Has parent\n")
-	}
+	replaceInterface := func(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
+	valuesArr := make([][]string, 0)
 	e.values.Each(func(symbol string, value reflect.Value) {
-		buffer.WriteString(fmt.Sprintf("%v = %#v\n", symbol, value))
+		if value.Kind() != reflect.Func {
+			valuesArr = append(valuesArr, []string{symbol, fmt.Sprintf("%#v", value)})
+			return
+		}
+		numIn := value.Type().NumIn()
+		inParams := make([]string, numIn)
+		for i := 0; i < numIn; i++ {
+			inParams[i] = value.Type().In(i).String()
+			inParams[i] = replaceInterface(inParams[i])
+		}
+		numOut := value.Type().NumOut()
+		outParams := make([]string, numOut)
+		for i := 0; i < numOut; i++ {
+			outParams[i] = value.Type().Out(i).String()
+			outParams[i] = replaceInterface(outParams[i])
+		}
+
+		inParamsStr := utils.Ternary(numIn > 0, strings.Join(inParams, ", "), "")
+		sign := fmt.Sprintf("func(%s)", inParamsStr)
+		if numOut > 0 {
+			outParamsStr := strings.Join(outParams, ", ")
+			if numOut > 1 {
+				outParamsStr = fmt.Sprintf("(%s)", outParamsStr)
+			}
+			sign += fmt.Sprintf(" %s", outParamsStr)
+		}
+		valuesArr = append(valuesArr, []string{symbol, sign})
 	})
+
+	typesArr := make([][]string, 0)
 	e.types.Each(func(symbol string, aType reflect.Type) {
-		buffer.WriteString(fmt.Sprintf("%v = %v\n", symbol, aType))
+		typesArr = append(typesArr, []string{symbol, fmt.Sprintf("%s", replaceInterface(aType.String()))})
 	})
+
+	sort.Slice(valuesArr, func(i, j int) bool { return valuesArr[i][0] < valuesArr[j][0] })
+	sort.Slice(typesArr, func(i, j int) bool { return typesArr[i][0] < typesArr[j][0] })
+	maxSymbolLen := 0
+	for _, v := range append(valuesArr, typesArr...) {
+		maxSymbolLen = max(maxSymbolLen, len(v[0]))
+	}
+
+	var buffer bytes.Buffer
+	parentStr := utils.Ternary(e.parent == nil, "No parent\n", "Has parent\n")
+	buffer.WriteString(parentStr)
+	for _, v := range valuesArr {
+		buffer.WriteString(fmt.Sprintf("%-"+strconv.Itoa(maxSymbolLen)+"v = %s\n", v[0], v[1]))
+	}
+	for _, v := range typesArr {
+		buffer.WriteString(fmt.Sprintf("%-"+strconv.Itoa(maxSymbolLen)+"v = %s\n", v[0], v[1]))
+	}
 	return buffer.String()
 }
 

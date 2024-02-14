@@ -109,6 +109,32 @@ func (e *Env) NewModule(symbol string) (*Env, error) {
 	return module, nil
 }
 
+// try to find a module by name in current env, returns nil if not found
+func (e *Env) findModuleInCurrentEnv(name string) *Env {
+	if value, ok := e.values.Get(name); ok {
+		if foundEnv, ok := value.Interface().(*Env); ok {
+			return foundEnv
+		}
+	}
+	return nil
+}
+
+// try to find a module by name in the env or any parent, returns nil if not found
+func (e *Env) findModule(name string) *Env {
+	currEnv := e
+	for {
+		if module := currEnv.findModuleInCurrentEnv(name); module != nil {
+			return module
+		}
+		// module not found in current env, try parent
+		parent := currEnv.parent
+		if parent == nil {
+			return nil
+		}
+		currEnv = parent
+	}
+}
+
 // GetEnvFromPath returns Env from path
 func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
 	out := e
@@ -118,33 +144,12 @@ func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
 	buildErr := func(name string) error {
 		return fmt.Errorf("no namespace called: %v", name)
 	}
-	find := func(env *Env, name string) bool {
-		value, ok := env.values.Get(name)
-		if ok {
-			out, ok = value.Interface().(*Env)
-			if ok {
-				return true
-			}
+	for i := 0; i < len(path); i++ {
+		moduleName := path[i]
+		out = utils.Ternary(i == 0, out.findModule, out.findModuleInCurrentEnv)(moduleName)
+		if out == nil {
+			return nil, buildErr(moduleName)
 		}
-		return false
-	}
-	for {
-		// find starting env
-		if find(out, path[0]) {
-			break
-		}
-		parent := out.parent
-		if parent == nil {
-			return nil, buildErr(path[0])
-		}
-		out = parent
-	}
-	for i := 1; i < len(path); i++ {
-		// find child env
-		if find(out, path[i]) {
-			continue
-		}
-		return nil, buildErr(path[i])
 	}
 	return out, nil
 }

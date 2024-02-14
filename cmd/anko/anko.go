@@ -224,7 +224,6 @@ func runInteractive(env *envPkg.Env) int {
 			goto exit
 		case line == "":
 		default:
-			//completer.SetChildren(append(base, []readline.PrefixCompleterInterface{readline.PcItem("test")}...))
 			source := line
 			stmts, err := parser.ParseSrc(source)
 			if err != nil {

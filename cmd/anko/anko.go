@@ -12,11 +12,13 @@ import (
 	"github.com/alaingilbert/anko/pkg/utils"
 	"github.com/alaingilbert/anko/pkg/vm"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"github.com/chzyer/readline"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 )
@@ -256,7 +258,7 @@ func runInteractive(env *envPkg.Env) int {
 			if e, ok := v.(*envPkg.Env); ok {
 				fmt.Printf("%s\n", e.Name())
 			} else {
-				fmt.Printf("%#v\n", v)
+				fmt.Printf("%s\n", vmUtils.FormatValue(reflect.ValueOf(v)))
 			}
 			rebuildCompleter(executor.GetEnv())
 		}

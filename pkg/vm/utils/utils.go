@@ -8,6 +8,9 @@ import (
 )
 
 func FormatValue(value reflect.Value) string {
+	if !value.IsValid() {
+		return "<nil>"
+	}
 	replaceInterface := func(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
 	if value.Kind() == reflect.Func {
 		numIn := value.Type().NumIn()

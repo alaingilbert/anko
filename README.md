@@ -10,6 +10,7 @@ This fork can:
 - Know if a function is being used in a script (works with bytecode too)
 - pause/resume execution of a script
 - Stop a script at any time
+- Much better CLI with auto-completion
 - Get stats, how many statements/expressions were processed
 - Rate limit how many expressions to process per "duration" (example: 1_000/sec)
 - Support "select" statement

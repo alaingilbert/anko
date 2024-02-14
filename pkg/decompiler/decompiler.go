@@ -110,14 +110,26 @@ func decompileCForStmt(w *bytes.Buffer, prefix string, s *ast.CForStmt, deep int
 	w.WriteString(prefix + "}\n")
 }
 
-func decompileForStmt(w *bytes.Buffer, prefix string, s *ast.ForStmt, deep int) {
-	w.WriteString(prefix + "for ")
-	for i := 0; i < len(s.Vars); i++ {
-		w.WriteString(s.Vars[i])
-		if i < len(s.Vars)-1 {
+func joinStr(w *bytes.Buffer, arr []string) {
+	for i := 0; i < len(arr); i++ {
+		w.WriteString(arr[i])
+		if i < len(arr)-1 {
 			w.WriteString(", ")
 		}
 	}
+}
+func joinExpr(w *bytes.Buffer, arr []ast.Expr) {
+	for i := 0; i < len(arr); i++ {
+		decompileExpr(w, arr[i], 0)
+		if i < len(arr)-1 {
+			w.WriteString(", ")
+		}
+	}
+}
+
+func decompileForStmt(w *bytes.Buffer, prefix string, s *ast.ForStmt, deep int) {
+	w.WriteString(prefix + "for ")
+	joinStr(w, s.Vars)
 	decompileExpr(w, s.Value, 0)
 	w.WriteString(" {\n")
 	for _, stmt := range s.Stmts {
@@ -152,19 +164,9 @@ func decompileBreakStmt(w *bytes.Buffer, prefix string) {
 
 func decompileLetsStmt(w *bytes.Buffer, prefix string, s *ast.LetsStmt) {
 	w.WriteString(prefix)
-	for i := 0; i < len(s.Lhss); i++ {
-		decompileExpr(w, s.Lhss[i], 0)
-		if i < len(s.Lhss)-1 {
-			w.WriteString(", ")
-		}
-	}
+	joinExpr(w, s.Lhss)
 	w.WriteString(" = ")
-	for i := 0; i < len(s.Rhss); i++ {
-		decompileExpr(w, s.Rhss[i], 0)
-		if i < len(s.Rhss)-1 {
-			w.WriteString(", ")
-		}
-	}
+	joinExpr(w, s.Rhss)
 	w.WriteString("\n")
 }
 
@@ -183,12 +185,7 @@ func decompileSwitchBodyStmt(w *bytes.Buffer, s *ast.SwitchBodyStmt, deep int, p
 
 func decompileSwitchCaseStmt(w *bytes.Buffer, prefix string, s *ast.SwitchCaseStmt, deep int) {
 	w.WriteString(prefix + "case ")
-	for i := 0; i < len(s.Exprs); i++ {
-		decompileExpr(w, s.Exprs[i], 0)
-		if i < len(s.Exprs)-1 {
-			w.WriteString(", ")
-		}
-	}
+	joinExpr(w, s.Exprs)
 	w.WriteString(":\n")
 	for _, s := range s.Stmts {
 		decompileStmt(w, s, deep+1)
@@ -268,25 +265,14 @@ func decompileAnonCallExpr(w *bytes.Buffer, prefix string, e *ast.AnonCallExpr) 
 	w.WriteString(prefix)
 	decompileExpr(w, e.Expr, 0)
 	w.WriteString("(")
-	for i := 0; i < len(e.SubExprs); i++ {
-		subExpr := e.SubExprs[i]
-		decompileExpr(w, subExpr, 0)
-		if i < len(e.SubExprs)-1 {
-			w.WriteString(", ")
-		}
-	}
+	joinExpr(w, e.SubExprs)
 	w.WriteString(")")
 }
 
 func decompileFuncExpr(w *bytes.Buffer, prefix string, e *ast.FuncExpr, deep int) {
 	w.WriteString(prefix)
 	w.WriteString("func " + e.Name + "(")
-	for i := 0; i < len(e.Params); i++ {
-		w.WriteString(e.Params[i])
-		if i < len(e.Params)-1 {
-			w.WriteString(", ")
-		}
-	}
+	joinStr(w, e.Params)
 	w.WriteString(") {\n")
 	for i := 0; i < len(e.Stmts); i++ {
 		decompileStmt(w, e.Stmts[i], deep+1)
@@ -315,12 +301,7 @@ func decompileMapExpr(w *bytes.Buffer, prefix string, e *ast.MapExpr) {
 func decompileArrayExpr(w *bytes.Buffer, prefix string, e *ast.ArrayExpr) {
 	w.WriteString(prefix)
 	w.WriteString("[")
-	for i := 0; i < len(e.Exprs); i++ {
-		decompileExpr(w, e.Exprs[i], 0)
-		//if i < len(e.Exprs)-1 {
-		//	w.WriteString(", ")
-		//}
-	}
+	joinExpr(w, e.Exprs)
 	w.WriteString("]")
 }
 
@@ -332,13 +313,7 @@ func decompileStringExpr(w *bytes.Buffer, prefix string, e *ast.StringExpr) {
 func decompileCallExpr(w *bytes.Buffer, prefix string, e *ast.CallExpr) {
 	w.WriteString(prefix)
 	w.WriteString(e.Name + "(")
-	for i := 0; i < len(e.SubExprs); i++ {
-		subExpr := e.SubExprs[i]
-		decompileExpr(w, subExpr, 0)
-		if i < len(e.SubExprs)-1 {
-			w.WriteString(", ")
-		}
-	}
+	joinExpr(w, e.SubExprs)
 	w.WriteString(")")
 }
 

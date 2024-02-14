@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/packages"
-	"github.com/alaingilbert/anko/pkg/vm/env"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"reflect"
 	"strings"
@@ -200,7 +199,7 @@ func appendSlice(expr ast.Expr, lhsV reflect.Value, rhsV reflect.Value) (reflect
 	return nilValueL, newStringError(expr, "invalid type conversion")
 }
 
-func getTypeFromString(env *env.Env, name string) (reflect.Type, error) {
+func getTypeFromString(env *envPkg.Env, name string) (reflect.Type, error) {
 	env, typeString, err := getEnvFromString(env, name)
 	if err != nil {
 		return nilType, err
@@ -212,7 +211,7 @@ func getTypeFromString(env *env.Env, name string) (reflect.Type, error) {
 	return t, nil
 }
 
-func getEnvFromString(env *env.Env, name string) (*env.Env, string, error) {
+func getEnvFromString(env *envPkg.Env, name string) (*envPkg.Env, string, error) {
 	nameSplit := strings.SplitN(name, ".", 2)
 	for len(nameSplit) > 1 {
 		e, found := env.Values().Get(nameSplit[0])
@@ -296,12 +295,12 @@ func makeValueDefault(t reflect.Type) (reflect.Value, error) {
 }
 
 // DefineImport defines the vm import command that will import packages and package types when wanted
-func DefineImport(e *env.Env) {
+func DefineImport(e *envPkg.Env) {
 	_ = e.Define("import", importFn(e))
 }
 
-func importFn(e *env.Env) func(string) *env.Env {
-	return func(source string) *env.Env {
+func importFn(e *envPkg.Env) func(string) *envPkg.Env {
+	return func(source string) *envPkg.Env {
 		methods, ok := packages.Packages.Get(source)
 		if !ok {
 			panic(fmt.Sprintf("package '%s' not found", source))

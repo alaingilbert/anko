@@ -147,7 +147,7 @@ func (e *Env) AddPackage(name string, methods map[string]any, types map[string]a
 
 func (e *Env) Name() string {
 	envName := e.name.Load()
-	return utils.Ternary(envName == "", fmt.Sprintf("module<%s>"), "n/a")
+	return utils.TernaryZ(envName, fmt.Sprintf("module<%s>", envName), "n/a")
 }
 
 // String returns string of values and types in current scope.
@@ -158,8 +158,7 @@ func (e *Env) String() string {
 		if value.Kind() == reflect.Ptr {
 			if value.IsValid() && value.CanInterface() {
 				if ee, ok := value.Interface().(*Env); ok {
-					name := fmt.Sprintf("module<%s>", ee.Name())
-					valuesArr = append(valuesArr, []string{symbol, name})
+					valuesArr = append(valuesArr, []string{symbol, ee.Name()})
 					return
 				}
 			}

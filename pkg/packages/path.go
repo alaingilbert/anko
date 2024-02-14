@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["path"] = map[string]any{
+	Packages.Insert("path", map[string]any{
 		"Base":          path.Base,
 		"Clean":         path.Clean,
 		"Dir":           path.Dir,
@@ -15,5 +15,5 @@ func init() {
 		"Join":          path.Join,
 		"Match":         path.Match,
 		"Split":         path.Split,
-	}
+	})
 }

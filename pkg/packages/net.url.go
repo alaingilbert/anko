@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	Packages["net/url"] = map[string]any{
+	Packages.Insert("net/url", map[string]any{
 		"QueryEscape":     url.QueryEscape,
 		"QueryUnescape":   url.QueryUnescape,
 		"Parse":           url.Parse,
@@ -15,10 +15,10 @@ func init() {
 		"User":            url.User,
 		"UserPassword":    url.UserPassword,
 		"ParseQuery":      url.ParseQuery,
-	}
-	PackageTypes["net/url"] = map[string]any{
+	})
+	PackageTypes.Insert("net/url", map[string]any{
 		"Error":  url.Error{},
 		"URL":    url.URL{},
 		"Values": url.Values{},
-	}
+	})
 }

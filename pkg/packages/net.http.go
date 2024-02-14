@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	Packages["net/http"] = map[string]any{
+	Packages.Insert("net/http", map[string]any{
 		"DefaultClient":     http.DefaultClient,
 		"DefaultServeMux":   http.DefaultServeMux,
 		"DefaultTransport":  http.DefaultTransport,
@@ -22,11 +22,11 @@ func init() {
 		"Get":               http.Get,
 		"Post":              http.Post,
 		"PostForm":          http.PostForm,
-	}
-	PackageTypes["net/http"] = map[string]any{
+	})
+	PackageTypes.Insert("net/http", map[string]any{
 		"Client":   http.Client{},
 		"Cookie":   http.Cookie{},
 		"Request":  http.Request{},
 		"Response": http.Response{},
-	}
+	})
 }

@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["fmt"] = map[string]any{
+	Packages.Insert("fmt", map[string]any{
 		"Errorf":   fmt.Errorf,
 		"Fprint":   fmt.Fprint,
 		"Fprintf":  fmt.Fprintf,
@@ -25,5 +25,5 @@ func init() {
 		"Sscan":    fmt.Sscan,
 		"Sscanf":   fmt.Sscanf,
 		"Sscanln":  fmt.Sscanln,
-	}
+	})
 }

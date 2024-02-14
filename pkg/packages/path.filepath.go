@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["path/filepath"] = map[string]any{
+	Packages.Insert("path/filepath", map[string]any{
 		"Abs":          filepath.Abs,
 		"Base":         filepath.Base,
 		"Clean":        filepath.Clean,
@@ -23,5 +23,5 @@ func init() {
 		"SplitList":    filepath.SplitList,
 		"ToSlash":      filepath.ToSlash,
 		"VolumeName":   filepath.VolumeName,
-	}
+	})
 }

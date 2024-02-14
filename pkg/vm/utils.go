@@ -302,7 +302,7 @@ func DefineImport(e *env.Env) {
 
 func importFn(e *env.Env) func(string) *env.Env {
 	return func(source string) *env.Env {
-		methods, ok := packages.Packages[source]
+		methods, ok := packages.Packages.Get(source)
 		if !ok {
 			panic(fmt.Sprintf("package '%s' not found", source))
 		}
@@ -314,7 +314,7 @@ func importFn(e *env.Env) func(string) *env.Env {
 				panic(fmt.Sprintf("import Define error: %v", err))
 			}
 		}
-		types, ok := packages.PackageTypes[source]
+		types, ok := packages.PackageTypes.Get(source)
 		if ok {
 			for typeName, typeValue := range types {
 				err = pack.DefineType(typeName, typeValue)

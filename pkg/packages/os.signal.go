@@ -5,8 +5,8 @@ import (
 )
 
 func init() {
-	Packages["os/signal"] = map[string]any{
+	Packages.Insert("os/signal", map[string]any{
 		"Notify": signal.Notify,
 		"Stop":   signal.Stop,
-	}
+	})
 }

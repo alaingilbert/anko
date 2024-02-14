@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["math/big"] = map[string]any{
+	Packages.Insert("math/big", map[string]any{
 		"Above":        big.Above,
 		"AwayFromZero": big.AwayFromZero,
 		"Below":        big.Below,
@@ -25,5 +25,5 @@ func init() {
 		"ToNegativeInf": big.ToNegativeInf,
 		"ToPositiveInf": big.ToPositiveInf,
 		"ToZero":        big.ToZero,
-	}
+	})
 }

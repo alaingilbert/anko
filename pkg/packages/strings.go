@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["strings"] = map[string]any{
+	Packages.Insert("strings", map[string]any{
 		"Contains":       strings.Contains,
 		"ContainsAny":    strings.ContainsAny,
 		"ContainsRune":   strings.ContainsRune,
@@ -49,5 +49,5 @@ func init() {
 		"TrimRightFunc":  strings.TrimRightFunc,
 		"TrimSpace":      strings.TrimSpace,
 		"TrimSuffix":     strings.TrimSuffix,
-	}
+	})
 }

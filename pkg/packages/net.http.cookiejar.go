@@ -5,10 +5,10 @@ import (
 )
 
 func init() {
-	Packages["net/http/cookiejar"] = map[string]any{
+	Packages.Insert("net/http/cookiejar", map[string]any{
 		"New": cookiejar.New,
-	}
-	PackageTypes["net/http/cookiejar"] = map[string]any{
+	})
+	PackageTypes.Insert("net/http/cookiejar", map[string]any{
 		"Options": cookiejar.Options{},
-	}
+	})
 }

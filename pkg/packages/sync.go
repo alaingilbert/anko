@@ -5,16 +5,16 @@ import (
 )
 
 func init() {
-	Packages["sync"] = map[string]any{
+	Packages.Insert("sync", map[string]any{
 		"NewCond": sync.NewCond,
-	}
-	PackageTypes["sync"] = map[string]any{
+	})
+	PackageTypes.Insert("sync", map[string]any{
 		"Cond":      sync.Cond{},
 		"Mutex":     sync.Mutex{},
 		"Once":      sync.Once{},
 		"Pool":      sync.Pool{},
 		"RWMutex":   sync.RWMutex{},
 		"WaitGroup": sync.WaitGroup{},
-	}
-	syncGo19()
+		"Map":       sync.Map{},
+	})
 }

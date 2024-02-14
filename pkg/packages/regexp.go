@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["regexp"] = map[string]any{
+	Packages.Insert("regexp", map[string]any{
 		"Match":            regexp.Match,
 		"MatchReader":      regexp.MatchReader,
 		"MatchString":      regexp.MatchString,
@@ -14,5 +14,5 @@ func init() {
 		"CompilePOSIX":     regexp.CompilePOSIX,
 		"MustCompile":      regexp.MustCompile,
 		"MustCompilePOSIX": regexp.MustCompilePOSIX,
-	}
+	})
 }

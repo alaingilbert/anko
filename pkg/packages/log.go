@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["log"] = map[string]any{
+	Packages.Insert("log", map[string]any{
 		"Fatal":     log.Fatal,
 		"Fatalf":    log.Fatalf,
 		"Fatalln":   log.Fatalln,
@@ -22,5 +22,5 @@ func init() {
 		"SetFlags":  log.SetFlags,
 		"SetOutput": log.SetOutput,
 		"SetPrefix": log.SetPrefix,
-	}
+	})
 }

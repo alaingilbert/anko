@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["math"] = map[string]any{
+	Packages.Insert("math", map[string]any{
 		"Abs":             math.Abs,
 		"Acos":            math.Acos,
 		"Acosh":           math.Acosh,
@@ -67,5 +67,5 @@ func init() {
 		"Y0":              math.Y0,
 		"Y1":              math.Y1,
 		"Yn":              math.Yn,
-	}
+	})
 }

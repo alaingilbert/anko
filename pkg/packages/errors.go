@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["errors"] = map[string]any{
+	Packages.Insert("errors", map[string]any{
 		"New": errors.New,
-	}
+	})
 }

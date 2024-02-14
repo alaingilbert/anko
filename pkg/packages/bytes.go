@@ -5,9 +5,10 @@ import (
 )
 
 func init() {
-	Packages["bytes"] = map[string]any{
+	Packages.Insert("bytes", map[string]any{
 		"Compare":         bytes.Compare,
 		"Contains":        bytes.Contains,
+		"ContainsRune":    bytes.ContainsRune,
 		"Count":           bytes.Count,
 		"Equal":           bytes.Equal,
 		"EqualFold":       bytes.EqualFold,
@@ -52,10 +53,9 @@ func init() {
 		"TrimRightFunc":   bytes.TrimRightFunc,
 		"TrimSpace":       bytes.TrimSpace,
 		"TrimSuffix":      bytes.TrimSuffix,
-	}
-	PackageTypes["bytes"] = map[string]any{
+	})
+	PackageTypes.Insert("bytes", map[string]any{
 		"Buffer": bytes.Buffer{},
 		"Reader": bytes.Reader{},
-	}
-	bytesGo17()
+	})
 }

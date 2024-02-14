@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	Packages["os"] = map[string]any{
+	Packages.Insert("os", map[string]any{
 		"Args":              os.Args,
 		"Chdir":             os.Chdir,
 		"Chmod":             os.Chmod,
@@ -91,10 +91,10 @@ func init() {
 		"Symlink":           os.Symlink,
 		"TempDir":           os.TempDir,
 		"Truncate":          os.Truncate,
-	}
+		"Getppid":           os.Getppid,
+	})
 	var signal os.Signal
-	PackageTypes["os"] = map[string]any{
+	PackageTypes.Insert("os", map[string]any{
 		"Signal": reflect.TypeOf(&signal).Elem(),
-	}
-	osNotAppEngine()
+	})
 }

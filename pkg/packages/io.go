@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages["io"] = map[string]any{
+	Packages.Insert("io", map[string]any{
 		"Copy":             io.Copy,
 		"CopyN":            io.CopyN,
 		"EOF":              io.EOF,
@@ -23,5 +23,5 @@ func init() {
 		"ReadFull":         io.ReadFull,
 		"TeeReader":        io.TeeReader,
 		"WriteString":      io.WriteString,
-	}
+	})
 }

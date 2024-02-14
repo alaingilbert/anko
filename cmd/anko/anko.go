@@ -17,6 +17,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -189,6 +190,7 @@ func runInteractive(env *envPkg.Env) int {
 
 	log.SetOutput(l.Stderr())
 	executor := vm.New(&vm.Configs{Env: env}).Executor()
+	rebuildCompleter(executor.GetEnv())
 	for {
 		line, err := l.Readline()
 		if errors.Is(err, readline.ErrInterrupt) {
@@ -257,10 +259,21 @@ func runInteractive(env *envPkg.Env) int {
 			} else {
 				fmt.Printf("%#v\n", v)
 			}
+			rebuildCompleter(executor.GetEnv())
 		}
 	}
 exit:
 	return OkExitCode
+}
+
+func rebuildCompleter(e *envPkg.Env) {
+	newArr := base
+	keys := e.Values().Keys()
+	slices.Sort(keys)
+	for _, k := range keys {
+		newArr = append(newArr, readline.PcItem(k))
+	}
+	completer.SetChildren(newArr)
 }
 
 func handleErr(w io.Writer, err error) {

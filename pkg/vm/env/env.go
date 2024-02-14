@@ -118,14 +118,20 @@ func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
 	buildErr := func(name string) error {
 		return fmt.Errorf("no namespace called: %v", name)
 	}
-	for {
-		// find starting env
-		value, ok := out.values.Get(path[0])
+	find := func(env *Env, name string) bool {
+		value, ok := env.values.Get(name)
 		if ok {
 			out, ok = value.Interface().(*Env)
 			if ok {
-				break
+				return true
 			}
+		}
+		return false
+	}
+	for {
+		// find starting env
+		if find(out, path[0]) {
+			break
 		}
 		parent := out.parent
 		if parent == nil {
@@ -135,12 +141,8 @@ func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
 	}
 	for i := 1; i < len(path); i++ {
 		// find child env
-		value, ok := out.values.Get(path[i])
-		if ok {
-			out, ok = value.Interface().(*Env)
-			if ok {
-				continue
-			}
+		if find(out, path[i]) {
+			continue
 		}
 		return nil, buildErr(path[i])
 	}

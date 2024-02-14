@@ -297,7 +297,11 @@ func makeValueDefault(t reflect.Type) (reflect.Value, error) {
 
 // DefineImport defines the vm import command that will import packages and package types when wanted
 func DefineImport(e *env.Env) {
-	_ = e.Define("import", func(source string) *env.Env {
+	_ = e.Define("import", importFn(e))
+}
+
+func importFn(e *env.Env) func(string) *env.Env {
+	return func(source string) *env.Env {
 		methods, ok := packages.Packages[source]
 		if !ok {
 			panic(fmt.Sprintf("package '%s' not found", source))
@@ -320,5 +324,5 @@ func DefineImport(e *env.Env) {
 			}
 		}
 		return pack
-	})
+	}
 }

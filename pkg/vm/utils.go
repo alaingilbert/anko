@@ -199,7 +199,7 @@ func appendSlice(expr ast.Expr, lhsV reflect.Value, rhsV reflect.Value) (reflect
 }
 
 func getTypeFromEnv(env *envPkg.Env, typeStruct *ast.TypeStruct) (reflect.Type, error) {
-	e, err := getEnvFromPath(env, typeStruct.Env)
+	e, err := env.GetEnvFromPath(typeStruct.Env)
 	if err != nil {
 		return nil, err
 	}
@@ -208,64 +208,6 @@ func getTypeFromEnv(env *envPkg.Env, typeStruct *ast.TypeStruct) (reflect.Type, 
 		return nil, err
 	}
 	return t, nil
-}
-
-//func getTypeFromString(env *envPkg.Env) (reflect.Type, error) {
-//	env, typeString, err := getEnvFromPath(env, env)
-//	if err != nil {
-//		return nilType, err
-//	}
-//	t, err := env.Type(typeString)
-//	if err != nil {
-//		return nilType, err
-//	}
-//	return t, nil
-//}
-
-//func getEnvFromString(env *envPkg.Env, name string) (*envPkg.Env, string, error) {
-//	nameSplit := strings.SplitN(name, ".", 2)
-//	for len(nameSplit) > 1 {
-//		e, found := env.Values().Get(nameSplit[0])
-//		if !found {
-//			return nil, "", fmt.Errorf("no namespace called: %v", nameSplit[0])
-//		}
-//		env = e.Interface().(*envPkg.Env)
-//		nameSplit = strings.SplitN(nameSplit[1], ".", 2)
-//	}
-//	return env, nameSplit[0], nil
-//}
-
-// getEnvFromPath returns Env from path
-func getEnvFromPath(e *envPkg.Env, path []string) (*envPkg.Env, error) {
-	if len(path) < 1 {
-		return e, nil
-	}
-	for {
-		// find starting env
-		value, ok := e.Values().Get(path[0])
-		if ok {
-			e, ok = value.Interface().(*envPkg.Env)
-			if ok {
-				break
-			}
-		}
-		if e.Parent() == nil {
-			return nil, fmt.Errorf("no namespace called: %v", path[0])
-		}
-		e = e.Parent()
-	}
-	for i := 1; i < len(path); i++ {
-		// find child env
-		value, ok := e.Values().Get(path[i])
-		if ok {
-			e, ok = value.Interface().(*envPkg.Env)
-			if ok {
-				continue
-			}
-		}
-		return nil, fmt.Errorf("no namespace called: %v", path[i])
-	}
-	return e, nil
 }
 
 func makeValue(t reflect.Type) (reflect.Value, error) {

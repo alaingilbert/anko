@@ -22,10 +22,6 @@ type Env struct {
 	defers *mtx.Slice[CapturedFunc]
 }
 
-func (e *Env) Parent() *Env {
-	return e.parent
-}
-
 func (e *Env) Values() *mtx.Map[string, reflect.Value] {
 	return e.values
 }
@@ -111,6 +107,40 @@ func (e *Env) NewModule(symbol string) (*Env, error) {
 	}
 	module.name.Store(symbol)
 	return module, nil
+}
+
+// GetEnvFromPath returns Env from path
+func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
+	if len(path) < 1 {
+		return e, nil
+	}
+	for {
+		// find starting env
+		value, ok := e.Values().Get(path[0])
+		if ok {
+			e, ok = value.Interface().(*Env)
+			if ok {
+				break
+			}
+		}
+		parent := e.parent
+		if parent == nil {
+			return nil, fmt.Errorf("no namespace called: %v", path[0])
+		}
+		e = parent
+	}
+	for i := 1; i < len(path); i++ {
+		// find child env
+		value, ok := e.Values().Get(path[i])
+		if ok {
+			e, ok = value.Interface().(*Env)
+			if ok {
+				continue
+			}
+		}
+		return nil, fmt.Errorf("no namespace called: %v", path[i])
+	}
+	return e, nil
 }
 
 func isSymbolNameValid(name string) bool {

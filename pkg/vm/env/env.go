@@ -140,14 +140,11 @@ func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
 	if len(path) < 1 {
 		return out, nil
 	}
-	buildErr := func(name string) error {
-		return fmt.Errorf("no namespace called: %v", name)
-	}
 	for i := 0; i < len(path); i++ {
 		moduleName := path[i]
 		out = utils.Ternary(i == 0, out.findModule, out.findModuleInCurrentEnv)(moduleName)
 		if out == nil {
-			return nil, buildErr(moduleName)
+			return nil, fmt.Errorf("no namespace called: %v", moduleName)
 		}
 	}
 	return out, nil

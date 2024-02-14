@@ -149,7 +149,7 @@ func listFiles(path string) func(string) []string {
 	}
 }
 
-var completer = readline.NewPrefixCompleter(
+var base = []readline.PrefixCompleterInterface{
 	readline.PcItem("mode",
 		readline.PcItem("vi"),
 		readline.PcItem("emacs"),
@@ -157,7 +157,9 @@ var completer = readline.NewPrefixCompleter(
 	readline.PcItem("quit()"),
 	readline.PcItem("dump"),
 	readline.PcItem("help"),
-)
+}
+
+var completer = readline.NewPrefixCompleter(base...)
 
 func filterInput(r rune) (rune, bool) {
 	switch r {
@@ -219,7 +221,7 @@ func runInteractive(env *envPkg.Env) int {
 			goto exit
 		case line == "":
 		default:
-
+			//completer.SetChildren(append(base, []readline.PrefixCompleterInterface{readline.PcItem("test")}...))
 			source := line
 			stmts, err := parser.ParseSrc(source)
 			if err != nil {

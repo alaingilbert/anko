@@ -116,7 +116,7 @@ func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
 	}
 	for {
 		// find starting env
-		value, ok := e.Values().Get(path[0])
+		value, ok := e.values.Get(path[0])
 		if ok {
 			e, ok = value.Interface().(*Env)
 			if ok {
@@ -131,7 +131,7 @@ func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
 	}
 	for i := 1; i < len(path); i++ {
 		// find child env
-		value, ok := e.Values().Get(path[i])
+		value, ok := e.values.Get(path[i])
 		if ok {
 			e, ok = value.Interface().(*Env)
 			if ok {

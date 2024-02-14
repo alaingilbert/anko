@@ -188,6 +188,7 @@ func runInteractive(env *envPkg.Env) int {
 	//l.CaptureExitSignal()
 
 	log.SetOutput(l.Stderr())
+	executor := vm.New(&vm.Configs{DefineImport: true, Env: env}).Executor()
 	for {
 		line, err := l.Readline()
 		if errors.Is(err, readline.ErrInterrupt) {
@@ -245,7 +246,7 @@ func runInteractive(env *envPkg.Env) int {
 			}
 			var v any
 			if err == nil {
-				v, err = vm.New(&vm.Configs{Env: env}).Executor().Run(nil, stmts)
+				v, err = executor.Run(nil, stmts)
 			}
 			if err != nil {
 				handleErr(os.Stderr, err)

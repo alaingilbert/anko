@@ -1109,7 +1109,7 @@ func TestDefineImportPackageNotFound(t *testing.T) {
 
 func TestDefineImportPackageDefineError(t *testing.T) {
 	_ = os.Unsetenv("ANKO_DEBUG")
-	packages.Packages["testPackage"] = map[string]any{"bad.name": testing.Coverage}
+	packages.Packages.Insert("testPackage", map[string]any{"bad.name": testing.Coverage})
 
 	value, err := New(&Configs{DefineImport: true}).Executor().Run(nil, `a = import("testPackage")`)
 	expectedError := "import Define error: unknown symbol 'bad.name'"
@@ -1120,8 +1120,8 @@ func TestDefineImportPackageDefineError(t *testing.T) {
 		t.Errorf("execute value - received: %v - expected: %v", value, nil)
 	}
 
-	packages.Packages["testPackage"] = map[string]any{"Coverage": testing.Coverage}
-	packages.PackageTypes["testPackage"] = map[string]any{"bad.name": int64(1)}
+	packages.Packages.Insert("testPackage", map[string]any{"Coverage": testing.Coverage})
+	packages.PackageTypes.Insert("testPackage", map[string]any{"bad.name": int64(1)})
 
 	value, err = New(&Configs{DefineImport: true}).Executor().Run(nil, `a = import("testPackage")`)
 	expectedError = "import DefineType error: unknown symbol 'bad.name'"

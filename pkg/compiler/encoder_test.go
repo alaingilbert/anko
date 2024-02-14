@@ -6,7 +6,7 @@ import (
 )
 
 func TestCompile1(t *testing.T) {
-	by, err := Compile("a = 1")
+	by, err := Compile("a = 1", false)
 	assert.NoError(t, err)
 	Decode(by)
 	//by, err = Compile(`"a" in ["a"]`)

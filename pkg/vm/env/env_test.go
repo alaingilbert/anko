@@ -33,7 +33,7 @@ func TestAddrError(t *testing.T) {
 
 func TestGetInvalid(t *testing.T) {
 	env := NewEnv()
-	env.values.SetKey("a", reflect.Value{})
+	env.values.Insert("a", reflect.Value{})
 	value, err := env.Get("a")
 	if err != nil {
 		t.Errorf("Get error - received: %v - expected: %v", err, nil)

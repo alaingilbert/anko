@@ -15,6 +15,12 @@ func Ternary[T any](predicate bool, a, b T) T {
 	return b
 }
 
+// TernaryZ returns a if the predicate is true (not its zero value)
+func TernaryZ[T comparable](predicate T, a, b T) T {
+	var zero T
+	return Ternary(predicate != zero, a, b)
+}
+
 // MD5 returns md5 hex sum as a string
 func MD5(in []byte) string {
 	h := md5.New()

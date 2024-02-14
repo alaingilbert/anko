@@ -45,7 +45,7 @@ func runTest(t *testing.T, test Test, testingOptions *Options) {
 }
 
 func runTestFromCompiledSource(t *testing.T, test Test, testingOptions *Options) {
-	compiled, err := compiler.Compile(test.Script)
+	compiled, err := compiler.Compile(test.Script, false)
 	if test.ParseErrorFunc != nil {
 		(*test.ParseErrorFunc)(t, err)
 	} else if err != nil && test.ParseError != nil {

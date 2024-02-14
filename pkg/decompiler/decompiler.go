@@ -183,8 +183,11 @@ func decompileSwitchBodyStmt(w *bytes.Buffer, s *ast.SwitchBodyStmt, deep int, p
 
 func decompileSwitchCaseStmt(w *bytes.Buffer, prefix string, s *ast.SwitchCaseStmt, deep int) {
 	w.WriteString(prefix + "case ")
-	for _, e := range s.Exprs {
-		decompileExpr(w, e, 0)
+	for i := 0; i < len(s.Exprs); i++ {
+		decompileExpr(w, s.Exprs[i], 0)
+		if i < len(s.Exprs)-1 {
+			w.WriteString(", ")
+		}
 	}
 	w.WriteString(":\n")
 	for _, s := range s.Stmts {

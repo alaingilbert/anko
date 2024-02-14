@@ -27,10 +27,10 @@ const (
 )
 
 type AppFlags struct {
-	FlagExecute    string
-	File           string
-	FlagOutputFile string
-	Decompile      bool
+	FlagExecute string
+	File        string
+	Compile     bool
+	Decompile   bool
 }
 
 func main() {
@@ -60,7 +60,7 @@ func main() {
 func parseFlags(appFlags *AppFlags) (args []string) {
 	flagVersion := flag.Bool("v", false, "prints out the version and then exits")
 	flag.StringVar(&appFlags.FlagExecute, "e", "", "execute the Anko code")
-	flag.StringVar(&appFlags.FlagOutputFile, "o", "", "compile output file")
+	flag.BoolVar(&appFlags.Compile, "c", false, "compile a script")
 	flag.BoolVar(&appFlags.Decompile, "d", false, "decompile anko bytecode")
 	flag.Parse()
 
@@ -106,14 +106,14 @@ func runNonInteractive(env *envPkg.Env, appFlags AppFlags) int {
 			return ReadFileErrExitCode
 		}
 		source = string(sourceBytes)
-	}
 
-	if appFlags.FlagOutputFile != "" {
-		if err := compileAndSave(source, appFlags.FlagOutputFile); err != nil {
-			fmt.Println("Compile error:", err)
-			return CompileErrExitCode
+		if appFlags.Compile {
+			if err := compileAndSave(source, appFlags.File); err != nil {
+				fmt.Println("Compile error:", err)
+				return CompileErrExitCode
+			}
+			return OkExitCode
 		}
-		return OkExitCode
 	}
 
 	executor := vm.New(&vm.Configs{Env: env}).Executor()
@@ -268,12 +268,13 @@ func handleErr(w io.Writer, err error) {
 	}
 }
 
-func compileAndSave(source, flagOutputFile string) error {
+func compileAndSave(source, fileName string) error {
+	fileName = strings.Replace(fileName, ankoFileExt, ankoBytecodeExt, 1)
 	out, err := compiler.Compile(source, false)
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(flagOutputFile, out, 0744); err != nil {
+	if err := os.WriteFile(fileName, out, 0744); err != nil {
 		return err
 	}
 	return nil

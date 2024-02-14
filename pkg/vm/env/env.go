@@ -111,36 +111,37 @@ func (e *Env) NewModule(symbol string) (*Env, error) {
 
 // GetEnvFromPath returns Env from path
 func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
+	out := e
 	if len(path) < 1 {
-		return e, nil
+		return out, nil
 	}
 	for {
 		// find starting env
-		value, ok := e.values.Get(path[0])
+		value, ok := out.values.Get(path[0])
 		if ok {
-			e, ok = value.Interface().(*Env)
+			out, ok = value.Interface().(*Env)
 			if ok {
 				break
 			}
 		}
-		parent := e.parent
+		parent := out.parent
 		if parent == nil {
 			return nil, fmt.Errorf("no namespace called: %v", path[0])
 		}
-		e = parent
+		out = parent
 	}
 	for i := 1; i < len(path); i++ {
 		// find child env
-		value, ok := e.values.Get(path[i])
+		value, ok := out.values.Get(path[i])
 		if ok {
-			e, ok = value.Interface().(*Env)
+			out, ok = value.Interface().(*Env)
 			if ok {
 				continue
 			}
 		}
 		return nil, fmt.Errorf("no namespace called: %v", path[i])
 	}
-	return e, nil
+	return out, nil
 }
 
 func isSymbolNameValid(name string) bool {

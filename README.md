@@ -20,73 +20,73 @@ This fork can:
 package main
 
 import (
-	"context"
-	"fmt"
-	"github.com/alaingilbert/anko/pkg/vm"
-	"time"
+    "context"
+    "fmt"
+    "github.com/alaingilbert/anko/pkg/vm"
+    "time"
 )
 
 func sleepMs(ms int) {
-	time.Sleep(time.Duration(ms) * time.Millisecond)
+    time.Sleep(time.Duration(ms) * time.Millisecond)
 }
 
 func unused() {}
 
 func main() {
-	ctx := context.Background()
-	// Build a virtual machine with wanted functions
-	v := vm.New(nil)
-	_ = v.Define("println", fmt.Println)
-	_ = v.Define("sleep", sleepMs)
-	_ = v.Define("unused", unused)
-	// Each executor will have its own isolated environment
-	executor := v.Executor()
-	// Execute a script
-	script := `println("Hello World :)")`
-	_, _ = executor.Run(ctx, script) // output: Hello World :)
+    ctx := context.Background()
+    // Build a virtual machine with wanted functions
+    v := vm.New(nil)
+    _ = v.Define("println", fmt.Println)
+    _ = v.Define("sleep", sleepMs)
+    _ = v.Define("unused", unused)
+    // Each executor will have its own isolated environment
+    executor := v.Executor()
+    // Execute a script
+    script := `println("Hello World :)")`
+    _, _ = executor.Run(ctx, script) // output: Hello World :)
 
-	fmt.Println("-------------------------------------------------------------------------------")
-	script = `
+    fmt.Println("-------------------------------------------------------------------------------")
+    script = `
 i = 0
 for {
     println("Iteration #", i++)
     sleep(500)
 }
 `
-	// Start the script in a different thread
-	executor.RunAsync(context.Background(), script)
-	time.Sleep(time.Second) // Will print 2 times: `Iteration #1` `Iteration #2`
-	executor.Pause()        // We will pause the execution for 1s
-	time.Sleep(time.Second) // ...
-	executor.Resume()       // then resume
-	time.Sleep(time.Second) // Will print 2 more times from where it left: `Iteration #3` `Iteration #4`
-	executor.Stop()         // and stop the script
+    // Start the script in a different thread
+    executor.RunAsync(context.Background(), script)
+    time.Sleep(time.Second) // Will print 2 times: `Iteration #1` `Iteration #2`
+    executor.Pause()        // We will pause the execution for 1s
+    time.Sleep(time.Second) // ...
+    executor.Resume()       // then resume
+    time.Sleep(time.Second) // Will print 2 more times from where it left: `Iteration #3` `Iteration #4`
+    executor.Stop()         // and stop the script
 
-	fmt.Println("-------------------------------------------------------------------------------")
+    fmt.Println("-------------------------------------------------------------------------------")
 
-	// We can validate a script. If the script has syntax error anywhere in it,
-	// Validate will return an error.
-	// Validate does not "run" or "execute" the script.
-	fmt.Println(v.Validate(ctx, script)) // No error printed since the script is valid
+    // We can validate a script. If the script has syntax error anywhere in it,
+    // Validate will return an error.
+    // Validate does not "run" or "execute" the script.
+    fmt.Println(v.Validate(ctx, script)) // No error printed since the script is valid
 
-	// We can get information to know if a function is used in a script
-	// This is useful if we have a "dangerous" function available,
-	// and we want to know if a bytecode script is using it for example.
-	// Output: [true false true] <nil>
-	fmt.Println(v.Has(ctx, script, []any{sleepMs, unused, fmt.Println}))
+    // We can get information to know if a function is used in a script
+    // This is useful if we have a "dangerous" function available,
+    // and we want to know if a bytecode script is using it for example.
+    // Output: [true false true] <nil>
+    fmt.Println(v.Has(ctx, script, []any{sleepMs, unused, fmt.Println}))
 
-	fmt.Println("-------------------------------------------------------------------------------")
+    fmt.Println("-------------------------------------------------------------------------------")
 
-	// We can throttle the speed of a script by introducing a rate limit
-	// on the number of instructions allowed to be executed. Here would
-	// be 10/sec (time.Second is the default RateLimitPeriod)
-	v = vm.New(&vm.Configs{RateLimit: 10})
-	_ = v.Define("println", fmt.Println)
-	script = `
+    // We can throttle the speed of a script by introducing a rate limit
+    // on the number of instructions allowed to be executed. Here would
+    // be 10/sec (time.Second is the default RateLimitPeriod)
+    v = vm.New(&vm.Configs{RateLimit: 10})
+    _ = v.Define("println", fmt.Println)
+    script = `
 for i=0; i<10; i++ {
-	println("Hello world", i)
+    println("Hello world", i)
 }`
-	_, _ = v.Executor().Run(ctx, script)
+    _, _ = v.Executor().Run(ctx, script)
 }
 ```
 
@@ -114,11 +114,11 @@ println(x + y) // 3
 
 // if else statement
 if x < 1 || y < 1 {
-	println(x)
+    println(x)
 } else if x < 1 && y < 1 {
-	println(y)
+    println(y)
 } else {
-	println(x + y)
+    println(x + y)
 }
 
 // array
@@ -136,7 +136,7 @@ println(a.c) // 3
 
 // function
 func a (x) {
-	println(x + 1)
+    println(x + 1)
 }
 a(3) // 4
 ```

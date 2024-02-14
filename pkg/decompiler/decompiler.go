@@ -90,9 +90,7 @@ func decompileExpr(w *bytes.Buffer, expr ast.Expr, deep int) {
 func decompileCForStmt(w *bytes.Buffer, prefix string, s *ast.CForStmt, deep int) {
 	w.WriteString(prefix + "for ")
 	if el, ok := s.Stmt1.(*ast.LetsStmt); ok {
-		joinExpr(w, el.Lhss)
-		w.WriteString(" = ")
-		joinExpr(w, el.Rhss)
+		decompileLetsStmtHelper(w, el)
 	}
 	w.WriteString("; ")
 	decompileExpr(w, s.Expr2, 0)
@@ -158,11 +156,15 @@ func decompileBreakStmt(w *bytes.Buffer, prefix string) {
 	_, _ = w.WriteString(prefix + "break\n")
 }
 
-func decompileLetsStmt(w *bytes.Buffer, prefix string, s *ast.LetsStmt) {
-	w.WriteString(prefix)
+func decompileLetsStmtHelper(w *bytes.Buffer, s *ast.LetsStmt) {
 	joinExpr(w, s.Lhss)
 	w.WriteString(" = ")
 	joinExpr(w, s.Rhss)
+}
+
+func decompileLetsStmt(w *bytes.Buffer, prefix string, s *ast.LetsStmt) {
+	w.WriteString(prefix)
+	decompileLetsStmtHelper(w, s)
 	w.WriteString("\n")
 }
 

@@ -293,12 +293,13 @@ func decompileConstExpr(w *bytes.Buffer, prefix string, e *ast.ConstExpr) {
 func decompileMapExpr(w *bytes.Buffer, prefix string, e *ast.MapExpr) {
 	w.WriteString(prefix)
 	w.WriteString(`{`)
-	//for k, v := range e.MapExpr {
-	//	decompileExpr(w, k, 0)
-	//	w.WriteString(": ")
-	//	decompileExpr(w, v, 0)
-	//	w.WriteString("\n")
-	//}
+	for i, k := range e.Keys {
+		v := e.Values[i]
+		decompileExpr(w, k, 0)
+		w.WriteString(": ")
+		decompileExpr(w, v, 0)
+		w.WriteString("\n")
+	}
 	w.WriteString(`}`)
 }
 

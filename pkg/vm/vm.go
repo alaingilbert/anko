@@ -407,8 +407,12 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	envCopy := e.env
 	rvCh := make(chan Result)
 	vmp := newVmParams(ctx, rvCh, e.stats, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
+	stmt1 := stmt.(*ast.StmtsStmt)
+	if stmt1 == nil {
+		panic("???")
+	}
 	go func() {
-		rv, err := runSingleStmt(vmp, envCopy, stmt)
+		rv, err := runSingleStmt(vmp, envCopy, stmt1)
 		rvCh <- Result{Value: rv, Error: err}
 	}()
 

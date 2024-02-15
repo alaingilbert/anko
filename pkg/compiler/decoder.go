@@ -242,9 +242,9 @@ func decodeIfStmt(r *Decoder) *ast.IfStmt {
 	out := &ast.IfStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.If = decodeExpr(r)
-	out.Then = decodeStmtsStmt(r)
+	out.Then = decodeSingleStmt(r)
 	out.ElseIf = r.readStmtArray()
-	out.Else = decodeStmtsStmt(r)
+	out.Else = decodeSingleStmt(r)
 	return out
 }
 
@@ -262,7 +262,7 @@ func decodeLoopStmt(r *Decoder) *ast.LoopStmt {
 	out := &ast.LoopStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Expr = decodeExpr(r)
-	out.Stmt = decodeStmtsStmt(r)
+	out.Stmt = decodeSingleStmt(r)
 	return out
 }
 
@@ -270,7 +270,7 @@ func decodeForStmt(r *Decoder) *ast.ForStmt {
 	out := &ast.ForStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Value = decodeExpr(r)
-	out.Stmt = decodeStmtsStmt(r)
+	out.Stmt = decodeSingleStmt(r)
 	out.Vars = r.readStringArray()
 	return out
 }
@@ -296,7 +296,7 @@ func decodeModuleStmt(r *Decoder) *ast.ModuleStmt {
 	out := &ast.ModuleStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Name = r.readString()
-	out.Stmt = decodeStmtsStmt(r)
+	out.Stmt = decodeSingleStmt(r)
 	return out
 }
 
@@ -310,7 +310,7 @@ func decodeSelectStmt(r *Decoder) *ast.SelectStmt {
 func decodeSelectBodyStmt(r *Decoder) *ast.SelectBodyStmt {
 	out := &ast.SelectBodyStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
-	out.Default = decodeStmtsStmt(r)
+	out.Default = decodeSingleStmt(r)
 	out.Cases = r.readStmtArray()
 	return out
 }
@@ -319,7 +319,7 @@ func decodeSelectCaseStmt(r *Decoder) *ast.SelectCaseStmt {
 	out := &ast.SelectCaseStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Expr = decodeSingleStmt(r)
-	out.Stmt = decodeStmtsStmt(r)
+	out.Stmt = decodeSingleStmt(r)
 	return out
 }
 
@@ -335,7 +335,7 @@ func decodeSwitchStmt(r *Decoder) *ast.SwitchStmt {
 func decodeSwitchCaseStmt(r *Decoder) *ast.SwitchCaseStmt {
 	out := &ast.SwitchCaseStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
-	out.Stmt = decodeStmtsStmt(r)
+	out.Stmt = decodeSingleStmt(r)
 	out.Exprs = r.readExprArray()
 	return out
 }
@@ -652,7 +652,7 @@ func decodeFuncExpr(r *Decoder) *ast.FuncExpr {
 	out.Name = r.readString()
 	out.VarArg = r.readBool()
 	out.Params = r.readStringArray()
-	out.Stmt = decodeStmtsStmt(r)
+	out.Stmt = decodeSingleStmt(r)
 	return out
 }
 

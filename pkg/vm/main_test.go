@@ -119,7 +119,7 @@ func runTests(t *testing.T, tests []Test, testingOptions *Options) {
 
 func runTest(t *testing.T, test Test, testingOptions *Options) {
 	runTestFromSource(t, test, testingOptions)
-	//runTestFromCompiledSource(t, test, testingOptions)
+	runTestFromCompiledSource(t, test, testingOptions)
 }
 
 func runTestFromCompiledSource(t *testing.T, test Test, testingOptions *Options) {
@@ -192,28 +192,30 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	e := v.Executor()
-	if stmt != nil {
-		value, err = e.Run(ctx, stmt)
-		if test.RunErrorFunc != nil {
-			(*test.RunErrorFunc)(t, err)
-		} else if err != nil && test.RunError != nil {
-			if err.Error() != test.RunError.Error() {
+	if stmt, ok := stmt.(*ast.StmtsStmt); ok {
+		if stmt != nil {
+			value, err = e.Run(ctx, stmt)
+			if test.RunErrorFunc != nil {
+				(*test.RunErrorFunc)(t, err)
+			} else if err != nil && test.RunError != nil {
+				if err.Error() != test.RunError.Error() {
+					t.Errorf("Run error - received: %v - expected: %v - script: %v", err, test.RunError, test.Script)
+					return
+				}
+				var err *Error
+				if err != nil && errors.As(err, &err) {
+					if test.RunErrorLine != 0 && err.Pos.Line != test.RunErrorLine {
+						t.Errorf("Run error line - received: %v - expected: %v - script: %v", err.Pos.Line, test.RunErrorLine, test.Script)
+						return
+					} else if test.RunErrorColumn != 0 && err.Pos.Column != test.RunErrorColumn {
+						t.Errorf("Run error line - received: %v - expected: %v - script: %v", err.Pos.Column, test.RunErrorColumn, test.Script)
+						return
+					}
+				}
+			} else if !errors.Is(err, test.RunError) {
 				t.Errorf("Run error - received: %v - expected: %v - script: %v", err, test.RunError, test.Script)
 				return
 			}
-			var err *Error
-			if err != nil && errors.As(err, &err) {
-				if test.RunErrorLine != 0 && err.Pos.Line != test.RunErrorLine {
-					t.Errorf("Run error line - received: %v - expected: %v - script: %v", err.Pos.Line, test.RunErrorLine, test.Script)
-					return
-				} else if test.RunErrorColumn != 0 && err.Pos.Column != test.RunErrorColumn {
-					t.Errorf("Run error line - received: %v - expected: %v - script: %v", err.Pos.Column, test.RunErrorColumn, test.Script)
-					return
-				}
-			}
-		} else if !errors.Is(err, test.RunError) {
-			t.Errorf("Run error - received: %v - expected: %v - script: %v", err, test.RunError, test.Script)
-			return
 		}
 	}
 

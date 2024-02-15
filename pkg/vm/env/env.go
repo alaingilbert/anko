@@ -16,7 +16,7 @@ import (
 // If stack goes to blocked-scope, it will make new Env.
 type Env struct {
 	parent *Env
-	name   *mtx.RWMtx[string]
+	name   *mtx.Mtx[string]
 	values *mtx.Map[string, reflect.Value]
 	types  *mtx.Map[string, reflect.Type]
 	defers *mtx.Slice[CapturedFunc]

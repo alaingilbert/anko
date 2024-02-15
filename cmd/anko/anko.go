@@ -112,12 +112,7 @@ func runNonInteractive(env *envPkg.Env, appFlags AppFlags) int {
 
 		if appFlags.Compile {
 			if err := compileAndSave(source, appFlags.File); err != nil {
-				var parserErr *parser.Error
-				if errors.As(err, &parserErr) {
-					fmt.Printf("Compile error: %d:%d %s \n", parserErr.Pos.Line, parserErr.Pos.Column, parserErr.Error())
-				} else {
-					fmt.Println("Compile error:", err)
-				}
+				handleErr(os.Stdout, err)
 				return CompileErrExitCode
 			}
 			return OkExitCode

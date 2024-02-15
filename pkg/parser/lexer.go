@@ -30,7 +30,7 @@ func (e *Error) Error() string {
 	return e.Message
 }
 
-// Scanner stores informations for lexer.
+// Scanner stores information for lexer.
 type Scanner struct {
 	src      []rune
 	offset   int

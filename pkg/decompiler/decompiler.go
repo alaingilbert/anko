@@ -8,11 +8,9 @@ import (
 	"strings"
 )
 
-func Decompile(stmts []ast.Stmt) string {
+func Decompile(stmt ast.Stmt) string {
 	buf := new(bytes.Buffer)
-	for _, stmt := range stmts {
-		decompileStmt(buf, stmt, 0)
-	}
+	decompileStmt(buf, stmt, 0)
 	return buf.String()
 }
 
@@ -25,8 +23,6 @@ func decompileStmt(w *bytes.Buffer, stmt ast.Stmt, deep int) {
 		decompileSwitchStmt(w, prefix, s, deep)
 	case *ast.SwitchCaseStmt:
 		decompileSwitchCaseStmt(w, prefix, s, deep)
-	case *ast.SwitchBodyStmt:
-		decompileSwitchBodyStmt(w, s, deep, prefix)
 	case *ast.ExprStmt: // Completed
 		decompileExpr(w, s.Expr, deep)
 	case *ast.LetsStmt: // Completed
@@ -97,10 +93,7 @@ func decompileCForStmt(w *bytes.Buffer, prefix string, s *ast.CForStmt, deep int
 	w.WriteString("; ")
 	decompileExpr(w, s.Expr3, 0)
 	w.WriteString(" {\n")
-	for _, stmt := range s.Stmts {
-		decompileStmt(w, stmt, deep+1)
-		w.WriteString("\n")
-	}
+	decompileStmt(w, s.Stmt, deep+1)
 	w.WriteString(prefix + "}\n")
 }
 
@@ -129,10 +122,7 @@ func decompileForStmt(w *bytes.Buffer, prefix string, s *ast.ForStmt, deep int) 
 	}
 	decompileExpr(w, s.Value, 0)
 	w.WriteString(" {\n")
-	for _, stmt := range s.Stmts {
-		decompileStmt(w, stmt, deep+1)
-		w.WriteString("\n")
-	}
+	decompileStmt(w, s.Stmt, deep+1)
 	w.WriteString(prefix + "}\n")
 }
 
@@ -140,10 +130,7 @@ func decompileLoopStmt(w *bytes.Buffer, prefix string, s *ast.LoopStmt, deep int
 	w.WriteString(prefix + "for ")
 	decompileExpr(w, s.Expr, 0)
 	w.WriteString(" {\n")
-	for _, stmt := range s.Stmts {
-		decompileStmt(w, stmt, deep+1)
-		w.WriteString("\n")
-	}
+	decompileStmt(w, s.Stmt, deep+1)
 	w.WriteString(prefix + "}\n")
 }
 
@@ -171,34 +158,23 @@ func decompileLetsStmt(w *bytes.Buffer, prefix string, s *ast.LetsStmt) {
 	w.WriteString("\n")
 }
 
-func decompileSwitchBodyStmt(w *bytes.Buffer, s *ast.SwitchBodyStmt, deep int, prefix string) {
-	for _, c := range s.Cases {
-		decompileStmt(w, c, deep)
-		w.WriteString("\n")
-	}
-
-	w.WriteString(prefix + "default:\n")
-	for _, d := range s.Default {
-		decompileStmt(w, d, deep+1)
-		w.WriteString("\n")
-	}
-}
-
 func decompileSwitchCaseStmt(w *bytes.Buffer, prefix string, s *ast.SwitchCaseStmt, deep int) {
 	w.WriteString(prefix + "case ")
 	joinExpr(w, s.Exprs)
 	w.WriteString(":\n")
-	for _, s := range s.Stmts {
-		decompileStmt(w, s, deep+1)
-		w.WriteString("\n")
-	}
+	decompileStmt(w, s.Stmt, deep+1)
 }
 
 func decompileSwitchStmt(w *bytes.Buffer, prefix string, s *ast.SwitchStmt, deep int) {
 	w.WriteString(prefix + "switch ")
 	decompileExpr(w, s.Expr, 0)
 	w.WriteString(" {\n")
-	decompileStmt(w, s.Body, deep)
+	for _, c := range s.Cases {
+		decompileStmt(w, c, deep)
+		w.WriteString("\n")
+	}
+	w.WriteString(prefix + "default:\n")
+	decompileStmt(w, s.Default, deep+1)
 	w.WriteString(prefix + "}\n")
 }
 
@@ -206,29 +182,20 @@ func decompileIfStmt(w *bytes.Buffer, prefix string, s *ast.IfStmt, deep int) {
 	w.WriteString(prefix + "if ")
 	decompileExpr(w, s.If, 0)
 	w.WriteString(" {\n")
-	for _, s := range s.Then {
-		decompileStmt(w, s, deep+1)
-		w.WriteString("\n")
-	}
+	decompileStmt(w, s.Then, deep+1)
 	if len(s.ElseIf) > 0 {
 		for _, s := range s.ElseIf {
 			if s, ok := s.(*ast.IfStmt); ok {
 				w.WriteString(prefix + "} else if ")
 				decompileExpr(w, s.If, 0)
 				w.WriteString(" {\n")
-				for _, s := range s.Then {
-					decompileStmt(w, s, deep+1)
-					w.WriteString("\n")
-				}
+				decompileStmt(w, s.Then, deep+1)
 			}
 		}
 	}
-	if len(s.Else) > 0 {
+	if s.Else != nil {
 		w.WriteString(prefix + "} else {\n")
-		for _, s := range s.Else {
-			decompileStmt(w, s, deep+1)
-			w.WriteString("\n")
-		}
+		decompileStmt(w, s.Else, deep+1)
 	}
 	w.WriteString(prefix + "}\n")
 }
@@ -281,10 +248,7 @@ func decompileFuncExpr(w *bytes.Buffer, prefix string, e *ast.FuncExpr, deep int
 	w.WriteString("func " + e.Name + "(")
 	joinStr(w, e.Params)
 	w.WriteString(") {\n")
-	for i := 0; i < len(e.Stmts); i++ {
-		decompileStmt(w, e.Stmts[i], deep+1)
-		w.WriteString("\n")
-	}
+	decompileStmt(w, e.Stmt, deep+1)
 	w.WriteString("}\n")
 }
 

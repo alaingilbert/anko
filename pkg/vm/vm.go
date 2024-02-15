@@ -253,11 +253,11 @@ func defaultCtx(ctx context.Context) context.Context {
 	return ctx
 }
 
-func srcToStmts(src string) ([]ast.Stmt, error) {
+func srcToStmt(src string) (ast.Stmt, error) {
 	return parser.ParseSrc(src)
 }
 
-func decode(by []byte) []ast.Stmt {
+func decode(by []byte) ast.Stmt {
 	return compiler.Decode(by)
 }
 
@@ -269,7 +269,7 @@ func (e *Executor) run(ctx context.Context, input any) (any, error) {
 		return e.executeWithContext(ctx, vv)
 	case []byte:
 		return e.executeCompiledWithContext(ctx, vv)
-	case []ast.Stmt:
+	case ast.Stmt:
 		return e.runWithContext(ctx, vv)
 	default:
 		return nil, ErrInvalidInput
@@ -283,7 +283,7 @@ func (e *Executor) runAsync(ctx context.Context, input any) {
 }
 
 func (e *Executor) executeWithContext(ctx context.Context, src string) (any, error) {
-	stmts, err := srcToStmts(src)
+	stmts, err := srcToStmt(src)
 	if err != nil {
 		return nilValue, err
 	}
@@ -291,7 +291,7 @@ func (e *Executor) executeWithContext(ctx context.Context, src string) (any, err
 }
 
 func (e *Executor) validateWithContext(ctx context.Context, src string) error {
-	stmts, err := srcToStmts(src)
+	stmts, err := srcToStmt(src)
 	if err != nil {
 		return err
 	}
@@ -299,11 +299,11 @@ func (e *Executor) validateWithContext(ctx context.Context, src string) error {
 }
 
 func (e *Executor) hasWithContext(ctx context.Context, src string, targets []any) ([]bool, error) {
-	stmts, err := srcToStmts(src)
+	stmt, err := srcToStmt(src)
 	if err != nil {
 		return nil, err
 	}
-	return e.hasAST(ctx, stmts, targets)
+	return e.hasAST(ctx, stmt, targets)
 }
 
 func (e *Executor) executeCompiledWithContext(ctx context.Context, src []byte) (any, error) {
@@ -318,7 +318,7 @@ func (e *Executor) hasCompiledWithContext(ctx context.Context, src []byte, targe
 	return e.hasAST(ctx, decode(src), targets)
 }
 
-func (e *Executor) runWithContext(ctx context.Context, stmts []ast.Stmt) (any, error) {
+func (e *Executor) runWithContext(ctx context.Context, stmts ast.Stmt) (any, error) {
 	rv, err := e.mainRun(ctx, stmts, false)
 	if errors.Is(err, ErrReturn) {
 		err = nil
@@ -330,7 +330,7 @@ func (e *Executor) runWithContext(ctx context.Context, stmts []ast.Stmt) (any, e
 }
 
 func (e *Executor) validate(ctx context.Context, src string) (any, error) {
-	stmts, err := srcToStmts(src)
+	stmts, err := srcToStmt(src)
 	if err != nil {
 		return nil, err
 	}
@@ -344,8 +344,8 @@ func (e *Executor) validate(ctx context.Context, src string) (any, error) {
 	return rv.Interface(), err
 }
 
-func (e *Executor) hasAST(ctx context.Context, stmts []ast.Stmt, targets []any) (oks []bool, err error) {
-	oks, _, err = e.mainRun1(ctx, stmts, true, targets)
+func (e *Executor) hasAST(ctx context.Context, stmt ast.Stmt, targets []any) (oks []bool, err error) {
+	oks, _, err = e.mainRun1(ctx, stmt, true, targets)
 	return
 }
 
@@ -358,7 +358,7 @@ type vmParams struct {
 	rateLimit     *utils.RateLimitAnything
 	validate      bool
 	has           map[any]bool
-	validateLater map[string][]ast.Stmt
+	validateLater map[string]ast.Stmt
 }
 
 func newVmParams(ctx context.Context,
@@ -369,7 +369,7 @@ func newVmParams(ctx context.Context,
 	rateLimit *utils.RateLimitAnything,
 	validate bool,
 	has map[any]bool,
-	validateLater map[string][]ast.Stmt,
+	validateLater map[string]ast.Stmt,
 ) *vmParams {
 	return &vmParams{
 		ctx:           ctx,
@@ -385,22 +385,22 @@ func newVmParams(ctx context.Context,
 }
 
 // mainRun executes statements in the specified environment.
-func (e *Executor) mainRun(ctx context.Context, stmts []ast.Stmt, validate bool) (reflect.Value, error) {
-	_, rv, err := e.mainRun1(ctx, stmts, validate, nil)
+func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool) (reflect.Value, error) {
+	_, rv, err := e.mainRun1(ctx, stmt, validate, nil)
 	return rv, err
 }
 
-func (e *Executor) mainRunValidate(ctx context.Context, stmts []ast.Stmt) error {
-	_, _, err := e.mainRun1(ctx, stmts, true, nil)
+func (e *Executor) mainRunValidate(ctx context.Context, stmt ast.Stmt) error {
+	_, _, err := e.mainRun1(ctx, stmt, true, nil)
 	return err
 }
 
-func (e *Executor) mainRun1(ctx context.Context, stmts []ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
+func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	// We use rvCh because the script can start goroutines and crash in one of them.
 	// So we need a way to stop the vm from another thread...
 	oks := make([]bool, len(targets))
 	has := make(map[any]bool)
-	validateLater := make(map[string][]ast.Stmt)
+	validateLater := make(map[string]ast.Stmt)
 	for _, vv := range targets {
 		has[fmt.Sprintf("%v", vv)] = false
 	}
@@ -408,7 +408,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmts []ast.Stmt, validate bool
 	rvCh := make(chan Result)
 	vmp := newVmParams(ctx, rvCh, e.stats, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
 	go func() {
-		rv, err := run(vmp, envCopy, stmts)
+		rv, err := runSingleStmt(vmp, envCopy, stmt)
 		rvCh <- Result{Value: rv, Error: err}
 	}()
 
@@ -420,7 +420,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmts []ast.Stmt, validate bool
 	if vmp.validate {
 		for _, s := range vmp.validateLater {
 			newEnv := envCopy.NewEnv()
-			_, err := run(vmp, newEnv, s)
+			_, err := runSingleStmt(vmp, newEnv, s)
 			if err != nil {
 				return nil, nilValue, err
 			}
@@ -431,30 +431,4 @@ func (e *Executor) mainRun1(ctx context.Context, stmts []ast.Stmt, validate bool
 	}
 
 	return oks, result.Value, result.Error
-}
-
-// run executes statements in the specified environment.
-func run(vmp *vmParams, env *envPkg.Env, stmts []ast.Stmt) (reflect.Value, error) {
-	rv := nilValue
-	var err error
-	for _, stmt := range stmts {
-		switch stmt.(type) {
-		case *ast.BreakStmt:
-			return nilValue, ErrBreak
-		case *ast.ContinueStmt:
-			return nilValue, ErrContinue
-		case *ast.ReturnStmt:
-			rv, err = runSingleStmt(vmp, env, stmt)
-			if err != nil {
-				return rv, err
-			}
-			return rv, ErrReturn
-		default:
-			rv, err = runSingleStmt(vmp, env, stmt)
-			if err != nil {
-				return rv, err
-			}
-		}
-	}
-	return rv, nil
 }

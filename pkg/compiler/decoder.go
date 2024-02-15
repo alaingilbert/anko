@@ -134,14 +134,14 @@ func decodeStmtImpl(r *Decoder) ast.StmtImpl {
 	return out
 }
 
-func Decode(in []byte) []ast.Stmt {
+func Decode(in []byte) ast.Stmt {
 	r := NewDecoder(in)
 	r.readMagic()
 	r.readVersion()
 	startIdx := r.readInt32()
 	r.data = make([]byte, int(startIdx))
 	_, _ = r.Read(r.data)
-	return r.readStmtArray()
+	return decodeSingleStmt(r)
 }
 
 func decodeSingleStmt(r *Decoder) ast.Stmt {
@@ -149,6 +149,8 @@ func decodeSingleStmt(r *Decoder) ast.Stmt {
 	switch b {
 	case NilBytecode:
 		return nil
+	case StmtsStmtBytecode:
+		return decodeStmtsStmt(r)
 	case ExprStmtBytecode:
 		return decodeExprStmt(r)
 	case VarStmtBytecode:
@@ -181,8 +183,6 @@ func decodeSingleStmt(r *Decoder) ast.Stmt {
 		return decodeSwitchStmt(r)
 	case SwitchCaseStmtBytecode:
 		return decodeSwitchCaseStmt(r)
-	case SwitchBodyStmtBytecode:
-		return decodeSwitchBodyStmt(r)
 	case GoroutineStmtBytecode:
 		return decodeGoroutineStmt(r)
 	case DeferStmtBytecode:
@@ -197,6 +197,13 @@ func decodeSingleStmt(r *Decoder) ast.Stmt {
 		panic(fmt.Sprintf("invalid (%d)", b))
 	}
 	return &ast.ExprStmt{}
+}
+
+func decodeStmtsStmt(r *Decoder) *ast.StmtsStmt {
+	out := &ast.StmtsStmt{}
+	out.StmtImpl = decodeStmtImpl(r)
+	out.Stmts = r.readStmtArray()
+	return nil
 }
 
 func decodeExprStmt(r *Decoder) *ast.ExprStmt {
@@ -235,9 +242,9 @@ func decodeIfStmt(r *Decoder) *ast.IfStmt {
 	out := &ast.IfStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.If = decodeExpr(r)
-	out.Then = r.readStmtArray()
+	out.Then = decodeStmtsStmt(r)
 	out.ElseIf = r.readStmtArray()
-	out.Else = r.readStmtArray()
+	out.Else = decodeStmtsStmt(r)
 	return out
 }
 
@@ -245,9 +252,9 @@ func decodeTryStmt(r *Decoder) *ast.TryStmt {
 	out := &ast.TryStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Var = r.readString()
-	out.Try = r.readStmtArray()
-	out.Catch = r.readStmtArray()
-	out.Finally = r.readStmtArray()
+	out.Try = decodeStmtsStmt(r)
+	out.Catch = decodeStmtsStmt(r)
+	out.Finally = decodeStmtsStmt(r)
 	return out
 }
 
@@ -255,7 +262,7 @@ func decodeLoopStmt(r *Decoder) *ast.LoopStmt {
 	out := &ast.LoopStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Expr = decodeExpr(r)
-	out.Stmts = r.readStmtArray()
+	out.Stmt = decodeStmtsStmt(r)
 	return out
 }
 
@@ -263,7 +270,7 @@ func decodeForStmt(r *Decoder) *ast.ForStmt {
 	out := &ast.ForStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Value = decodeExpr(r)
-	out.Stmts = r.readStmtArray()
+	out.Stmt = decodeStmtsStmt(r)
 	out.Vars = r.readStringArray()
 	return out
 }
@@ -271,7 +278,7 @@ func decodeForStmt(r *Decoder) *ast.ForStmt {
 func decodeCForStmt(r *Decoder) *ast.CForStmt {
 	out := &ast.CForStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
-	out.Stmts = r.readStmtArray()
+	out.Stmt = decodeSingleStmt(r)
 	out.Stmt1 = decodeSingleStmt(r)
 	out.Expr2 = decodeExpr(r)
 	out.Expr3 = decodeExpr(r)
@@ -289,7 +296,7 @@ func decodeModuleStmt(r *Decoder) *ast.ModuleStmt {
 	out := &ast.ModuleStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Name = r.readString()
-	out.Stmts = r.readStmtArray()
+	out.Stmt = decodeStmtsStmt(r)
 	return out
 }
 
@@ -303,7 +310,7 @@ func decodeSelectStmt(r *Decoder) *ast.SelectStmt {
 func decodeSelectBodyStmt(r *Decoder) *ast.SelectBodyStmt {
 	out := &ast.SelectBodyStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
-	out.Default = r.readStmtArray()
+	out.Default = decodeStmtsStmt(r)
 	out.Cases = r.readStmtArray()
 	return out
 }
@@ -312,7 +319,7 @@ func decodeSelectCaseStmt(r *Decoder) *ast.SelectCaseStmt {
 	out := &ast.SelectCaseStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Expr = decodeSingleStmt(r)
-	out.Stmts = r.readStmtArray()
+	out.Stmt = decodeStmtsStmt(r)
 	return out
 }
 
@@ -320,23 +327,16 @@ func decodeSwitchStmt(r *Decoder) *ast.SwitchStmt {
 	out := &ast.SwitchStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Expr = decodeExpr(r)
-	out.Body = decodeSingleStmt(r)
+	out.Cases = r.readStmtArray()
+	out.Default = decodeSingleStmt(r)
 	return out
 }
 
 func decodeSwitchCaseStmt(r *Decoder) *ast.SwitchCaseStmt {
 	out := &ast.SwitchCaseStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
-	out.Stmts = r.readStmtArray()
+	out.Stmt = decodeStmtsStmt(r)
 	out.Exprs = r.readExprArray()
-	return out
-}
-
-func decodeSwitchBodyStmt(r *Decoder) *ast.SwitchBodyStmt {
-	out := &ast.SwitchBodyStmt{}
-	out.StmtImpl = decodeStmtImpl(r)
-	out.Cases = r.readStmtArray()
-	out.Default = r.readStmtArray()
 	return out
 }
 
@@ -652,7 +652,7 @@ func decodeFuncExpr(r *Decoder) *ast.FuncExpr {
 	out.Name = r.readString()
 	out.VarArg = r.readBool()
 	out.Params = r.readStringArray()
-	out.Stmts = r.readStmtArray()
+	out.Stmt = decodeStmtsStmt(r)
 	return out
 }
 

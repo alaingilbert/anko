@@ -15,11 +15,11 @@ import (
 )
 
 func Compile(src string, obfuscate bool) ([]byte, error) {
-	stmts, err := parser.ParseSrc(src)
+	stmt, err := parser.ParseSrc(src)
 	if err != nil {
 		return nil, err
 	}
-	return EncodeStmts(stmts, obfuscate)
+	return EncodeStmts(stmt, obfuscate)
 }
 
 type Encoder struct {
@@ -40,9 +40,9 @@ func NewEncoder(obfuscate bool) *Encoder {
 	return e
 }
 
-func EncodeStmts(stmts []ast.Stmt, obfuscate bool) ([]byte, error) {
+func EncodeStmts(stmt ast.Stmt, obfuscate bool) ([]byte, error) {
 	b := NewEncoder(obfuscate)
-	encodeStmtArray(b, stmts)
+	encodeSingleStmt(b, stmt)
 
 	e := NewEncoder(obfuscate)
 	writeMagic(e, magic)
@@ -167,6 +167,8 @@ func encodeSingleStmt(w *Encoder, stmt ast.Stmt) {
 	switch stmt := stmt.(type) {
 	case nil:
 		encode(w, NilBytecode)
+	case *ast.StmtsStmt:
+		encodeStmtsStmt(w, stmt)
 	case *ast.ExprStmt:
 		encodeExprStmt(w, stmt)
 	case *ast.VarStmt:
@@ -199,8 +201,6 @@ func encodeSingleStmt(w *Encoder, stmt ast.Stmt) {
 		encodeSwitchStmt(w, stmt)
 	case *ast.SwitchCaseStmt:
 		encodeSwitchCaseStmt(w, stmt)
-	case *ast.SwitchBodyStmt:
-		encodeSwitchBodyStmt(w, stmt)
 	case *ast.GoroutineStmt:
 		encodeGoroutineStmt(w, stmt)
 	case *ast.DeferStmt:
@@ -214,6 +214,12 @@ func encodeSingleStmt(w *Encoder, stmt ast.Stmt) {
 	default:
 		panic("failed")
 	}
+}
+
+func encodeStmtsStmt(w *Encoder, stmt *ast.StmtsStmt) {
+	encode(w, StmtsStmtBytecode)
+	encodeStmtImpl(w, stmt.StmtImpl)
+	encodeStmtArray(w, stmt.Stmts)
 }
 
 func encodeExprStmt(w *Encoder, stmt *ast.ExprStmt) {
@@ -248,39 +254,39 @@ func encodeIfStmt(w *Encoder, stmt *ast.IfStmt) {
 	encode(w, IfStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.If)
-	encodeStmtArray(w, stmt.Then)
+	encodeSingleStmt(w, stmt.Then)
 	encodeStmtArray(w, stmt.ElseIf)
-	encodeStmtArray(w, stmt.Else)
+	encodeSingleStmt(w, stmt.Else)
 }
 
 func encodeTryStmt(w *Encoder, stmt *ast.TryStmt) {
 	encode(w, TryStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeString(w, stmt.Var)
-	encodeStmtArray(w, stmt.Try)
-	encodeStmtArray(w, stmt.Catch)
-	encodeStmtArray(w, stmt.Finally)
+	encodeSingleStmt(w, stmt.Try)
+	encodeSingleStmt(w, stmt.Catch)
+	encodeSingleStmt(w, stmt.Finally)
 }
 
 func encodeLoopStmt(w *Encoder, stmt *ast.LoopStmt) {
 	encode(w, LoopStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Expr)
-	encodeStmtArray(w, stmt.Stmts)
+	encodeSingleStmt(w, stmt.Stmt)
 }
 
 func encodeForStmt(w *Encoder, stmt *ast.ForStmt) {
 	encode(w, ForStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Value)
-	encodeStmtArray(w, stmt.Stmts)
+	encodeSingleStmt(w, stmt.Stmt)
 	encodeStringArray(w, stmt.Vars)
 }
 
 func encodeCForStmt(w *Encoder, stmt *ast.CForStmt) {
 	encode(w, CForStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
-	encodeStmtArray(w, stmt.Stmts)
+	encodeSingleStmt(w, stmt.Stmt)
 	encodeSingleStmt(w, stmt.Stmt1)
 	encodeExpr(w, stmt.Expr2)
 	encodeExpr(w, stmt.Expr3)
@@ -296,7 +302,7 @@ func encodeModuleStmt(w *Encoder, stmt *ast.ModuleStmt) {
 	encode(w, ModuleStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeString(w, stmt.Name)
-	encodeStmtArray(w, stmt.Stmts)
+	encodeSingleStmt(w, stmt.Stmt)
 }
 
 func encodeSelectStmt(w *Encoder, stmt *ast.SelectStmt) {
@@ -308,7 +314,7 @@ func encodeSelectStmt(w *Encoder, stmt *ast.SelectStmt) {
 func encodeSelectBodyStmt(w *Encoder, stmt *ast.SelectBodyStmt) {
 	encode(w, SelectBodyStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
-	encodeStmtArray(w, stmt.Default)
+	encodeSingleStmt(w, stmt.Default)
 	encodeStmtArray(w, stmt.Cases)
 }
 
@@ -316,28 +322,22 @@ func encodeSelectCaseStmt(w *Encoder, stmt *ast.SelectCaseStmt) {
 	encode(w, SelectCaseStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeSingleStmt(w, stmt.Expr)
-	encodeStmtArray(w, stmt.Stmts)
+	encodeSingleStmt(w, stmt.Stmt)
 }
 
 func encodeSwitchStmt(w *Encoder, stmt *ast.SwitchStmt) {
 	encode(w, SwitchStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Expr)
-	encodeSingleStmt(w, stmt.Body)
+	encodeStmtArray(w, stmt.Cases)
+	encodeSingleStmt(w, stmt.Default)
 }
 
 func encodeSwitchCaseStmt(w *Encoder, stmt *ast.SwitchCaseStmt) {
 	encode(w, SwitchCaseStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
-	encodeStmtArray(w, stmt.Stmts)
+	encodeSingleStmt(w, stmt.Stmt)
 	encodeExprArray(w, stmt.Exprs)
-}
-
-func encodeSwitchBodyStmt(w *Encoder, stmt *ast.SwitchBodyStmt) {
-	encode(w, SwitchBodyStmtBytecode)
-	encodeStmtImpl(w, stmt.StmtImpl)
-	encodeStmtArray(w, stmt.Cases)
-	encodeStmtArray(w, stmt.Default)
 }
 
 func encodeGoroutineStmt(w *Encoder, stmt *ast.GoroutineStmt) {
@@ -629,7 +629,7 @@ func encodeFuncExpr(w *Encoder, expr *ast.FuncExpr) {
 	encodeString(w, expr.Name)
 	encodeBool(w, expr.VarArg)
 	encodeStringArray(w, expr.Params)
-	encodeStmtArray(w, expr.Stmts)
+	encodeSingleStmt(w, expr.Stmt)
 }
 
 func encodeAnonCallExpr(w *Encoder, expr *ast.AnonCallExpr) {

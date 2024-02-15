@@ -47,9 +47,9 @@ func main() {
 			fmt.Println("ReadFile error:", err)
 			os.Exit(ReadFileErrExitCode)
 		}
-		stmts := compiler.Decode(sourceBytes)
+		stmt := compiler.Decode(sourceBytes)
 
-		fmt.Println(decompiler.Decompile(stmts))
+		fmt.Println(decompiler.Decompile(stmt))
 		os.Exit(OkExitCode)
 	}
 	if appFlags.FlagExecute != "" || flag.NArg() > 0 {
@@ -227,7 +227,7 @@ func runInteractive(env *envPkg.Env) int {
 		case line == "":
 		default:
 			source := line
-			stmts, err := parser.ParseSrc(source)
+			stmt, err := parser.ParseSrc(source)
 			if err != nil {
 				var e *parser.Error
 				if errors.As(err, &e) {
@@ -249,7 +249,7 @@ func runInteractive(env *envPkg.Env) int {
 			}
 			var v any
 			if err == nil {
-				v, err = executor.Run(nil, stmts)
+				v, err = executor.Run(nil, stmt)
 			}
 			if err != nil {
 				handleErr(os.Stderr, err)

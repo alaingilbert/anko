@@ -72,7 +72,7 @@ func funcExpr(vmp *vmParams, env *env.Env, funcExpr *ast.FuncExpr) (reflect.Valu
 		ctx := in[0].Interface().(context.Context)
 		// run function statements
 		newVmp := newVmParams(ctx, vmp.rvCh, vmp.stats, vmp.mapMutex, vmp.pause, vmp.rateLimit, vmp.validate, vmp.has, vmp.validateLater)
-		rv, err = run(newVmp, newEnv, funcExpr.Stmts)
+		rv, err = runSingleStmt(newVmp, newEnv, funcExpr.Stmt)
 
 		for i := newEnv.Defers().Len() - 1; i >= 0; i-- {
 			cf := newEnv.Defers().Get(i)
@@ -111,7 +111,7 @@ func funcExpr(vmp *vmParams, env *env.Env, funcExpr *ast.FuncExpr) (reflect.Valu
 
 	if vmp.validate {
 		k := utils.Ternary(funcExpr.Name != "", funcExpr.Name, "invar_"+strconv.Itoa(rand.Intn(math.MaxInt32)))
-		vmp.validateLater[k] = funcExpr.Stmts
+		vmp.validateLater[k] = funcExpr.Stmt
 	}
 
 	// return the reflect.Value created

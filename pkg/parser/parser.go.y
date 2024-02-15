@@ -34,7 +34,8 @@ import (
 %type<expr_ident> expr_ident
 
 %union{
-	compstmt               []ast.Stmt
+	compstmt               ast.Stmt
+	stmts                  ast.Stmt
 	stmt_var_or_lets       ast.Stmt
 	stmt_var               ast.Stmt
 	stmt_lets              ast.Stmt
@@ -43,12 +44,11 @@ import (
 	stmt_switch            ast.Stmt
 	stmt_switch_cases      ast.Stmt
 	stmt_switch_case       ast.Stmt
-	stmt_switch_default    []ast.Stmt
+	stmt_switch_default    ast.Stmt
 	stmt_select            ast.Stmt
 	stmt_select_cases      ast.Stmt
 	stmt_select_case       ast.Stmt
-	stmt_select_default    []ast.Stmt
-	stmts                  []ast.Stmt
+	stmt_select_default    ast.Stmt
 	stmt                   ast.Stmt
 	expr                   ast.Expr
 	exprs                  []ast.Expr
@@ -97,20 +97,23 @@ stmts :
 	opt_term stmt
 	{
 		if $2 != nil {
-			$$ = []ast.Stmt{$2}
-		} else {
-			$$ = []ast.Stmt{}
+			$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$2}}
 		}
 		if l, ok := yylex.(*Lexer); ok {
-			l.stmts = $$
+			l.stmt = $$
 		}
 	}
 	| stmts term stmt
 	{
 		if $3 != nil {
-			$$ = append($1, $3)
+			if $1 == nil {
+				$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$3}}
+			} else {
+				stmts := $1.(*ast.StmtsStmt)
+				stmts.Stmts = append(stmts.Stmts, $3)
+			}
 			if l, ok := yylex.(*Lexer); ok {
-				l.stmts = $$
+				l.stmt = $$
 			}
 		}
 	}
@@ -146,7 +149,7 @@ stmt :
 	}
 	| MODULE IDENT '{' compstmt '}'
 	{
-		$$ = &ast.ModuleStmt{Name: $2.Lit, Stmts: $4}
+		$$ = &ast.ModuleStmt{Name: $2.Lit, Stmt: $4}
 		$$.SetPosition($1.Position())
 	}
 	| stmt_if
@@ -154,8 +157,7 @@ stmt :
 		$$ = $1
 		$$.SetPosition($1.Position())
 	}
-	| stmt_for
-	{
+	| stmt_for {
 		$$ = $1
 	}
 	| TRY '{' compstmt '}' CATCH IDENT '{' compstmt '}' FINALLY '{' compstmt '}'
@@ -293,24 +295,66 @@ stmt_if :
 stmt_for :
 	FOR '{' compstmt '}'
 	{
-		$$ = &ast.LoopStmt{Stmts: $3}
+		$$ = &ast.LoopStmt{Stmt: $3}
 		$$.SetPosition($1.Position())
 	}
 	| FOR expr_idents IN expr '{' compstmt '}'
 	{
-		$$ = &ast.ForStmt{Vars: $2, Value: $4, Stmts: $6}
+		if len($2) < 1 {
+			yylex.Error("missing identifier")
+		} else if len($2) > 2 {
+			yylex.Error("too many identifiers")
+		} else {
+			$$ = &ast.ForStmt{Vars: $2, Value: $4, Stmt: $6}
+			$$.SetPosition($1.Position())
+		}
+	}
+	| FOR expr '{' compstmt '}'
+	{
+		$$ = &ast.LoopStmt{Expr: $2, Stmt: $4}
+		$$.SetPosition($1.Position())
+	}
+	| FOR ';' ';' '{' compstmt '}'
+	{
+		$$ = &ast.CForStmt{Stmt: $5}
+		$$.SetPosition($1.Position())
+	}
+	| FOR ';' ';' expr '{' compstmt '}'
+	{
+		$$ = &ast.CForStmt{Expr3: $4, Stmt: $6}
+		$$.SetPosition($1.Position())
+	}
+	| FOR ';' expr ';' '{' compstmt '}'
+	{
+		$$ = &ast.CForStmt{Expr2: $3, Stmt: $6}
+		$$.SetPosition($1.Position())
+	}
+	| FOR ';' expr ';' expr '{' compstmt '}'
+	{
+		$$ = &ast.CForStmt{Expr2: $3, Expr3: $5, Stmt: $7}
+		$$.SetPosition($1.Position())
+	}
+	| FOR stmt_var_or_lets ';' ';' '{' compstmt '}'
+	{
+		$$ = &ast.CForStmt{Stmt1: $2, Stmt: $6}
+		$$.SetPosition($1.Position())
+	}
+	| FOR stmt_var_or_lets ';' ';' expr '{' compstmt '}'
+	{
+		$$ = &ast.CForStmt{Stmt1: $2, Expr3: $5, Stmt: $7}
+		$$.SetPosition($1.Position())
+	}
+	| FOR stmt_var_or_lets ';' expr ';' '{' compstmt '}'
+	{
+		$$ = &ast.CForStmt{Stmt1: $2, Expr2: $4, Stmt: $7}
 		$$.SetPosition($1.Position())
 	}
 	| FOR stmt_var_or_lets ';' expr ';' expr '{' compstmt '}'
 	{
-		$$ = &ast.CForStmt{Stmt1: $2, Expr2: $4, Expr3: $6, Stmts: $8}
+		$$ = &ast.CForStmt{Stmt1: $2, Expr2: $4, Expr3: $6, Stmt: $8}
 		$$.SetPosition($1.Position())
 	}
-	| FOR expr '{' compstmt '}'
-	{
-		$$ = &ast.LoopStmt{Expr: $2, Stmts: $4}
-		$$.SetPosition($1.Position())
-	}
+
 stmt_select :
 	SELECT '{' opt_newlines stmt_select_cases opt_newlines '}'
 	{
@@ -319,39 +363,44 @@ stmt_select :
 	}
 
 stmt_select_cases :
-    /* nothing */
-    {
-        $$ = &ast.SelectBodyStmt{}
-    }
-    | stmt_select_default
-    {
-        $$ = &ast.SelectBodyStmt{Default: $1}
-    }
-    | stmt_select_case
-    {
-        $$ = &ast.SelectBodyStmt{Cases: []ast.Stmt{$1}}
-    }
-    | stmt_select_cases stmt_select_case
-    {
-        body := $$.(*ast.SelectBodyStmt)
-        body.Cases = append(body.Cases, $2)
-    }
-    | stmt_select_cases stmt_select_default
-    {
-        body := $$.(*ast.SelectBodyStmt)
-        if body.Default != nil {
-            yylex.Error("multiple default statement")
-        }
-        body.Default = $2
-    }
+	/* nothing */
+	{
+		$$ = &ast.SelectBodyStmt{}
+	}
+	| stmt_select_default
+	{
+		$$ = &ast.SelectBodyStmt{Default: $1}
+	}
+	| stmt_select_case
+	{
+		$$ = &ast.SelectBodyStmt{Cases: []ast.Stmt{$1}}
+	}
+	| stmt_select_cases stmt_select_case
+	{
+		body := $$.(*ast.SelectBodyStmt)
+		body.Cases = append(body.Cases, $2)
+	}
+	| stmt_select_cases stmt_select_default
+	{
+		body := $$.(*ast.SelectBodyStmt)
+		if body.Default != nil {
+		    yylex.Error("multiple default statement")
+		}
+		body.Default = $2
+	}
 
 
 stmt_select_case :
-    CASE stmt ':' compstmt
-    {
-        $$ = &ast.SelectCaseStmt{Expr: $2, Stmts: $4}
-        $$.SetPosition($1.Position())
-    }
+	CASE stmt ':' compstmt
+	{
+		$$ = &ast.SelectCaseStmt{Expr: $2, Stmt: $4}
+		$$.SetPosition($1.Position())
+	}
+    	| CASE stmt ':' compstmt
+	{
+		$$ = &ast.SelectCaseStmt{Expr: $2, Stmt: $4}
+		$$.SetPosition($1.Position())
+	}
 
 stmt_select_default :
     DEFAULT ':' compstmt
@@ -362,47 +411,50 @@ stmt_select_default :
 stmt_switch :
 	SWITCH expr '{' opt_newlines stmt_switch_cases opt_newlines '}'
 	{
-		$$ = &ast.SwitchStmt{Expr: $2, Body: $5}
+		switchStmt := $5.(*ast.SwitchStmt)
+		switchStmt.Expr = $2
+		$$ = switchStmt
 		$$.SetPosition($1.Position())
 	}
 
 stmt_switch_cases :
 	/* nothing */
 	{
-		$$ = &ast.SwitchBodyStmt{}
+		$$ = &ast.SwitchStmt{}
 	}
 	| stmt_switch_default
 	{
-		$$ = &ast.SwitchBodyStmt{Default: $1}
+		$$ = &ast.SwitchStmt{Default: $1}
 	}
 	| stmt_switch_case
 	{
-		$$ = &ast.SwitchBodyStmt{Cases: []ast.Stmt{$1}}
+		$$ = &ast.SwitchStmt{Cases: []ast.Stmt{$1}}
 	}
 	| stmt_switch_cases stmt_switch_case
 	{
-		body := $$.(*ast.SwitchBodyStmt)
-		body.Cases = append(body.Cases, $2)
+		switchStmt := $1.(*ast.SwitchStmt)
+		switchStmt.Cases = append(switchStmt.Cases, $2)
+		$$ = switchStmt
 	}
 	| stmt_switch_cases stmt_switch_default
 	{
-		body := $$.(*ast.SwitchBodyStmt)
-		if body.Default != nil {
+		switchStmt := $1.(*ast.SwitchStmt)
+		if switchStmt.Default != nil {
 			yylex.Error("multiple default statement")
 		}
-		body.Default = $2
+		switchStmt.Default = $2
 	}
 
 
 stmt_switch_case :
 	CASE expr ':' compstmt
 	{
-		$$ = &ast.SwitchCaseStmt{Exprs: []ast.Expr{$2}, Stmts: $4}
+		$$ = &ast.SwitchCaseStmt{Exprs: []ast.Expr{$2}, Stmt: $4}
 		$$.SetPosition($1.Position())
 	}
 	| CASE exprs ':' compstmt
 	{
-		$$ = &ast.SwitchCaseStmt{Exprs: $2, Stmts: $4}
+		$$ = &ast.SwitchCaseStmt{Exprs: $2, Stmt: $4}
 		$$.SetPosition($1.Position())
 	}
 
@@ -533,22 +585,22 @@ expr :
 	}
 	| FUNC '(' expr_idents ')' '{' compstmt '}'
 	{
-		$$ = &ast.FuncExpr{Params: $3, Stmts: $6}
+		$$ = &ast.FuncExpr{Params: $3, Stmt: $6}
 		$$.SetPosition($1.Position())
 	}
 	| FUNC '(' expr_idents VARARG ')' '{' compstmt '}'
 	{
-		$$ = &ast.FuncExpr{Params: $3, Stmts: $7, VarArg: true}
+		$$ = &ast.FuncExpr{Params: $3, Stmt: $7, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
 	| FUNC IDENT '(' expr_idents ')' '{' compstmt '}'
 	{
-		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Stmts: $7}
+		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Stmt: $7}
 		$$.SetPosition($1.Position())
 	}
 	| FUNC IDENT '(' expr_idents VARARG ')' '{' compstmt '}'
 	{
-		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Stmts: $8, VarArg: true}
+		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Stmt: $8, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
 	| '[' ']'

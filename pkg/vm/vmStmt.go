@@ -15,6 +15,10 @@ func runSingleStmt(vmp *vmParams, env *envPkg.Env, stmt ast.Stmt) (reflect.Value
 	}
 	//fmt.Println("runSingleStmt", reflect.ValueOf(stmt).String())
 	switch stmt := stmt.(type) {
+	case nil:
+		return nilValue, nil
+	case *ast.StmtsStmt:
+		return runStmtsStmt(vmp, env, stmt)
 	case *ast.ExprStmt:
 		return runExprStmt(vmp, env, stmt)
 	case *ast.VarStmt:
@@ -50,6 +54,31 @@ func runSingleStmt(vmp *vmParams, env *envPkg.Env, stmt ast.Stmt) (reflect.Value
 	default:
 		return nilValue, newStringError(stmt, "unknown statement")
 	}
+}
+
+func runStmtsStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.StmtsStmt) (reflect.Value, error) {
+	rv := nilValue
+	var err error
+	for _, s := range stmt.Stmts {
+		switch s.(type) {
+		case *ast.BreakStmt:
+			return nilValue, ErrBreak
+		case *ast.ContinueStmt:
+			return nilValue, ErrContinue
+		case *ast.ReturnStmt:
+			rv, err = runSingleStmt(vmp, env, s)
+			if err != nil {
+				return rv, err
+			}
+			return rv, ErrReturn
+		default:
+			rv, err = runSingleStmt(vmp, env, s)
+			if err != nil {
+				return rv, err
+			}
+		}
+	}
+	return rv, nil
 }
 
 func runExprStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.ExprStmt) (reflect.Value, error) {
@@ -184,7 +213,7 @@ func runIfStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.IfStmt) (reflect.Value,
 	if toBool(rv) {
 		// then
 		newenv := env.NewEnv()
-		rv, err = run(vmp, newenv, stmt.Then)
+		rv, err = runSingleStmt(vmp, newenv, stmt.Then)
 		if err != nil {
 			return rv, newError(stmt, err)
 		}
@@ -205,17 +234,17 @@ func runIfStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.IfStmt) (reflect.Value,
 
 		// else if - then
 		newenv = env.NewEnv()
-		rv, err = run(vmp, newenv, elseIf.Then)
+		rv, err = runSingleStmt(vmp, newenv, elseIf.Then)
 		if err != nil {
 			return rv, newError(elseIf, err)
 		}
 		return rv, nil
 	}
 
-	if len(stmt.Else) > 0 {
+	if stmt.Else != nil {
 		// else
 		newenv := env.NewEnv()
-		rv, err = run(vmp, newenv, stmt.Else)
+		rv, err = runSingleStmt(vmp, newenv, stmt.Else)
 		if err != nil {
 			return rv, newError(stmt, err)
 		}
@@ -226,25 +255,25 @@ func runIfStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.IfStmt) (reflect.Value,
 
 func runTryStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.TryStmt) (reflect.Value, error) {
 	newenv := env.NewEnv()
-	_, err := run(vmp, newenv, stmt.Try)
+	_, err := runSingleStmt(vmp, newenv, stmt.Try)
 	if err != nil {
 		// Catch
 		cenv := env.NewEnv()
 		if stmt.Var != "" {
 			_ = cenv.DefineValue(stmt.Var, reflect.ValueOf(err))
 		}
-		_, e1 := run(vmp, cenv, stmt.Catch)
+		_, e1 := runSingleStmt(vmp, cenv, stmt.Catch)
 		if e1 != nil {
-			err = newError(stmt.Catch[0], e1)
+			err = newError(stmt.Catch, e1)
 		} else {
 			err = nil
 		}
 	}
-	if len(stmt.Finally) > 0 {
+	if stmt.Finally != nil {
 		// Finally
-		_, e2 := run(vmp, newenv, stmt.Finally)
+		_, e2 := runSingleStmt(vmp, newenv, stmt.Finally)
 		if e2 != nil {
-			err = newError(stmt.Finally[0], e2)
+			err = newError(stmt.Finally, e2)
 		}
 	}
 	return nilValue, newError(stmt, err)
@@ -267,8 +296,11 @@ func runLoopStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.LoopStmt) (reflect.Va
 			}
 		}
 
-		rv, err := run(vmp, newenv, stmt.Stmts)
+		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 		if err != nil && !errors.Is(err, ErrContinue) {
+			if errors.Is(err, ErrBreak) {
+				break
+			}
 			if errors.Is(err, ErrBreak) {
 				break
 			}
@@ -316,7 +348,7 @@ func runForStmtSlice(vmp *vmParams, env *envPkg.Env, stmt *ast.ForStmt, val refl
 			iv = iv.Elem()
 		}
 		_ = newenv.DefineValue(stmt.Vars[0], iv)
-		rv, err := run(vmp, newenv, stmt.Stmts)
+		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 		if err != nil && !errors.Is(err, ErrContinue) {
 			if errors.Is(err, ErrBreak) {
 				break
@@ -345,7 +377,7 @@ func runForStmtMap(vmp *vmParams, env *envPkg.Env, stmt *ast.ForStmt, val reflec
 			vmp.mapMutex.Unlock()
 			_ = newenv.DefineValue(stmt.Vars[1], m)
 		}
-		rv, err := run(vmp, newenv, stmt.Stmts)
+		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 		if err != nil && !errors.Is(err, ErrContinue) {
 			if errors.Is(err, ErrBreak) {
 				break
@@ -387,7 +419,7 @@ func runForStmtChan(vmp *vmParams, env *envPkg.Env, stmt *ast.ForStmt, val refle
 			iv = iv.Elem()
 		}
 		_ = newenv.DefineValue(stmt.Vars[0], iv)
-		rv, err := run(vmp, newenv, stmt.Stmts)
+		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 		if err != nil && !errors.Is(err, ErrContinue) {
 			if errors.Is(err, ErrBreak) {
 				break
@@ -423,7 +455,7 @@ func runCForStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.CForStmt) (reflect.Va
 			break
 		}
 
-		rv, err := run(vmp, newenv, stmt.Stmts)
+		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 		if err != nil && !errors.Is(err, ErrContinue) {
 			if errors.Is(err, ErrBreak) {
 				break
@@ -485,7 +517,7 @@ func runThrowStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.ThrowStmt) (reflect.
 
 func runModuleStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.ModuleStmt) (reflect.Value, error) {
 	newenv := env.NewEnv()
-	rv, err := run(vmp, newenv, stmt.Stmts)
+	rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 	if err != nil {
 		return rv, newError(stmt, err)
 	}
@@ -499,7 +531,7 @@ func runSelectStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.SelectStmt) (reflec
 	newenv := env.NewEnv()
 	body := stmt.Body.(*ast.SelectBodyStmt)
 	letsStmts := []*ast.LetsStmt{nil}
-	bodies := [][]ast.Stmt{nil}
+	bodies := []ast.Stmt{nil}
 	cases := []reflect.SelectCase{{
 		Dir:  reflect.SelectRecv,
 		Chan: reflect.ValueOf(vmp.ctx.Done()),
@@ -532,7 +564,7 @@ func runSelectStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.SelectStmt) (reflec
 			return nilValueL, newError(che, err)
 		}
 		letsStmts = append(letsStmts, letStmt)
-		bodies = append(bodies, caseStmt.Stmts)
+		bodies = append(bodies, caseStmt.Stmt)
 		cases = append(cases, reflect.SelectCase{
 			Dir:  reflect.SelectRecv,
 			Chan: v,
@@ -558,7 +590,7 @@ func runSelectStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.SelectStmt) (reflec
 			}
 		}
 		if statements := bodies[chosen]; statements != nil {
-			rv, err = run(vmp, newenv, statements)
+			rv, err = runSingleStmt(vmp, newenv, statements)
 			if err != nil {
 				return rv, err
 			}
@@ -590,30 +622,21 @@ func runSwitchStmt(vmp *vmParams, env *envPkg.Env, stmt *ast.SwitchStmt) (reflec
 		return rv, newError(stmt, err)
 	}
 
-	var caseValue reflect.Value
-	body := stmt.Body.(*ast.SwitchBodyStmt)
-	var statements []ast.Stmt
-	if body.Default != nil {
-		statements = body.Default
-	}
-
-Loop:
-	for _, switchCaseStmt := range body.Cases {
+	for _, switchCaseStmt := range stmt.Cases {
 		caseStmt := switchCaseStmt.(*ast.SwitchCaseStmt)
 		for _, expr := range caseStmt.Exprs {
-			caseValue, err = invokeExpr(vmp, newenv, expr)
+			caseValue, err := invokeExpr(vmp, newenv, expr)
 			if err != nil {
 				return nilValue, newError(expr, err)
 			}
 			if equal(rv, caseValue) {
-				statements = caseStmt.Stmts
-				break Loop
+				return runSingleStmt(vmp, newenv, caseStmt.Stmt)
 			}
 		}
 	}
 
-	if statements != nil {
-		rv, err = run(vmp, newenv, statements)
+	if stmt.Default != nil {
+		rv, err = runSingleStmt(vmp, newenv, stmt.Default)
 		if err != nil {
 			return rv, err
 		}

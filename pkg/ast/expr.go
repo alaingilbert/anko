@@ -180,13 +180,6 @@ type ChanExpr struct {
 	Rhs Expr
 }
 
-// MakeChanExpr provide expression to make chan instance.
-type MakeChanExpr struct {
-	ExprImpl
-	Type     string
-	SizeExpr Expr
-}
-
 // ArrayCount is used in MakeExpr to provide Dimensions
 type ArrayCount struct {
 	Count int

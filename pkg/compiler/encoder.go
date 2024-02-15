@@ -415,8 +415,6 @@ func encodeExpr(w *Encoder, expr ast.Expr) {
 		encodeMakeExpr(w, expr)
 	case *ast.MakeTypeExpr:
 		encodeMakeTypeExpr(w, expr)
-	case *ast.MakeChanExpr:
-		encodeMakeChanExpr(w, expr)
 	case *ast.ChanExpr:
 		encodeChanExpr(w, expr)
 	case *ast.FuncExpr:
@@ -616,13 +614,6 @@ func encodeMakeTypeExpr(w *Encoder, expr *ast.MakeTypeExpr) {
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Name)
 	encodeExpr(w, expr.Type)
-}
-
-func encodeMakeChanExpr(w *Encoder, expr *ast.MakeChanExpr) {
-	encode(w, MakeChanExprBytecode)
-	encodeExprImpl(w, expr.ExprImpl)
-	encodeString(w, expr.Type)
-	encodeExpr(w, expr.SizeExpr)
 }
 
 func encodeChanExpr(w *Encoder, expr *ast.ChanExpr) {

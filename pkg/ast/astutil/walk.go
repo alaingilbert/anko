@@ -238,8 +238,6 @@ func walkExpr(expr ast.Expr, f WalkFunc, deep int) error {
 		if err := walkExpr(expr.Lhs, f, deep); err != nil {
 			return err
 		}
-	case *ast.MakeChanExpr:
-		return walkExpr(expr.SizeExpr, f, deep)
 	case *ast.MakeExpr:
 		if err := walkExpr(expr.LenExpr, f, deep); err != nil {
 			return err

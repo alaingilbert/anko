@@ -428,8 +428,6 @@ func decodeExpr(r *Decoder) ast.Expr {
 		return decodeMakeExpr(r)
 	case MakeTypeExprBytecode:
 		return decodeMakeTypeExpr(r)
-	case MakeChanExprBytecode:
-		return decodeMakeChanExpr(r)
 	case ChanExprBytecode:
 		return decodeChanExpr(r)
 	case FuncExprBytecode:
@@ -637,14 +635,6 @@ func decodeMakeTypeExpr(r *Decoder) *ast.MakeTypeExpr {
 	out.ExprImpl = decodeExprImpl(r)
 	out.Name = r.readString()
 	out.Type = decodeExpr(r)
-	return out
-}
-
-func decodeMakeChanExpr(r *Decoder) *ast.MakeChanExpr {
-	out := &ast.MakeChanExpr{}
-	out.ExprImpl = decodeExprImpl(r)
-	out.Type = r.readString()
-	out.SizeExpr = decodeExpr(r)
 	return out
 }
 

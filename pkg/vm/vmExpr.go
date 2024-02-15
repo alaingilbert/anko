@@ -61,8 +61,6 @@ func invokeExpr(vmp *vmParams, env *envPkg.Env, expr ast.Expr) (reflect.Value, e
 		return invokeMakeExpr(vmp, env, e)
 	case *ast.MakeTypeExpr:
 		return invokeMakeTypeExpr(vmp, e, env, expr)
-	case *ast.MakeChanExpr:
-		return invokeMakeChanExpr(vmp, e, env, expr)
 	case *ast.ChanExpr:
 		return invokeChanExpr(vmp, e, env, expr)
 	case *ast.FuncExpr:
@@ -998,28 +996,6 @@ func invokeMakeTypeExpr(vmp *vmParams, e *ast.MakeTypeExpr, env *envPkg.Env, exp
 	_ = env.DefineReflectType(e.Name, rv.Type())
 
 	return reflect.ValueOf(rv.Type()), nil
-}
-
-func invokeMakeChanExpr(vmp *vmParams, e *ast.MakeChanExpr, env *envPkg.Env, expr ast.Expr) (reflect.Value, error) {
-	//t, err := getTypeFromEnv(env, e.Type)
-	//if err != nil {
-	//	return nilValue, newError(e, err)
-	//}
-	//if t == nil {
-	//	return nilValue, newErrorf(expr, "type cannot be nil for make chan")
-	//}
-	//
-	//var size int
-	//if e.SizeExpr != nil {
-	//	rv, err := invokeExpr(vmp, env, e.SizeExpr)
-	//	if err != nil {
-	//		return nilValue, newError(e.SizeExpr, err)
-	//	}
-	//	size = int(toInt64(rv))
-	//}
-	//
-	//return reflect.MakeChan(reflect.ChanOf(reflect.BothDir, t), size), nil
-	return nilValue, nil
 }
 
 func invokeChanExpr(vmp *vmParams, e *ast.ChanExpr, env *envPkg.Env, expr ast.Expr) (reflect.Value, error) {

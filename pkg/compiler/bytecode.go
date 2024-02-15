@@ -56,9 +56,9 @@ const (
 	NilCoalescingOpExprBytecode bytecode = 92 // "??"
 	LenExprBytecode             bytecode = 93
 	//NewExprBytecode             bytecode = 94
-	MakeExprBytecode       bytecode = 95
-	MakeTypeExprBytecode   bytecode = 96
-	MakeChanExprBytecode   bytecode = 97
+	MakeExprBytecode     bytecode = 95
+	MakeTypeExprBytecode bytecode = 96
+	//MakeChanExprBytecode   bytecode = 97
 	ChanExprBytecode       bytecode = 98
 	FuncExprBytecode       bytecode = 99
 	AnonCallExprBytecode   bytecode = 100

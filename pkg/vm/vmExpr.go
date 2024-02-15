@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"context"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
@@ -20,11 +19,11 @@ func invokeExpr(vmp *vmParams, env *envPkg.Env, expr ast.Expr) (reflect.Value, e
 
 	switch e := expr.(type) {
 	case *ast.NumberExpr:
-		return invokeNumberExpr(vmp.ctx, env, e)
+		return invokeNumberExpr(vmp, env, e)
 	case *ast.IdentExpr:
-		return invokeIdentExpr(vmp.ctx, env, e)
+		return invokeIdentExpr(vmp, env, e)
 	case *ast.StringExpr:
-		return invokeStringExpr(vmp.ctx, env, e)
+		return invokeStringExpr(vmp, env, e)
 	case *ast.ArrayExpr:
 		return invokeArrayExpr(vmp, env, e)
 	case *ast.MapExpr:
@@ -50,7 +49,7 @@ func invokeExpr(vmp *vmParams, env *envPkg.Env, expr ast.Expr) (reflect.Value, e
 	case *ast.BinOpExpr:
 		return invokeBinOpExpr(vmp, e, env, expr)
 	case *ast.ConstExpr:
-		return invokeConstExpr(vmp.ctx, env, e)
+		return invokeConstExpr(vmp, env, e)
 	case *ast.TernaryOpExpr:
 		return invokeTernaryOpExpr(vmp, env, e)
 	case *ast.NilCoalescingOpExpr:
@@ -80,7 +79,7 @@ func invokeExpr(vmp *vmParams, env *envPkg.Env, expr ast.Expr) (reflect.Value, e
 	}
 }
 
-func invokeNumberExpr(ctx context.Context, env *envPkg.Env, e *ast.NumberExpr) (reflect.Value, error) {
+func invokeNumberExpr(_ *vmParams, env *envPkg.Env, e *ast.NumberExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	if strings.Contains(e.Lit, ".") || strings.Contains(e.Lit, "e") {
 		v, err := strconv.ParseFloat(e.Lit, 64)
@@ -102,11 +101,11 @@ func invokeNumberExpr(ctx context.Context, env *envPkg.Env, e *ast.NumberExpr) (
 	return reflect.ValueOf(i), nil
 }
 
-func invokeIdentExpr(ctx context.Context, env *envPkg.Env, e *ast.IdentExpr) (reflect.Value, error) {
+func invokeIdentExpr(_ *vmParams, env *envPkg.Env, e *ast.IdentExpr) (reflect.Value, error) {
 	return env.GetValue(e.Lit)
 }
 
-func invokeStringExpr(ctx context.Context, env *envPkg.Env, e *ast.StringExpr) (reflect.Value, error) {
+func invokeStringExpr(_ *vmParams, _ *envPkg.Env, e *ast.StringExpr) (reflect.Value, error) {
 	return reflect.ValueOf(e.Lit), nil
 }
 
@@ -833,7 +832,7 @@ func invokeBinOpExpr(vmp *vmParams, e *ast.BinOpExpr, env *envPkg.Env, expr ast.
 	}
 }
 
-func invokeConstExpr(_ context.Context, _ *envPkg.Env, e *ast.ConstExpr) (reflect.Value, error) {
+func invokeConstExpr(_ *vmParams, _ *envPkg.Env, e *ast.ConstExpr) (reflect.Value, error) {
 	switch e.Value {
 	case "true":
 		return trueValue, nil

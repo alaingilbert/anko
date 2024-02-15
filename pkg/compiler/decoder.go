@@ -252,9 +252,9 @@ func decodeTryStmt(r *Decoder) *ast.TryStmt {
 	out := &ast.TryStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Var = r.readString()
-	out.Try = decodeStmtsStmt(r)
-	out.Catch = decodeStmtsStmt(r)
-	out.Finally = decodeStmtsStmt(r)
+	out.Try = decodeSingleStmt(r)
+	out.Catch = decodeSingleStmt(r)
+	out.Finally = decodeSingleStmt(r)
 	return out
 }
 

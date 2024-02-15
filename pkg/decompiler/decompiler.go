@@ -124,6 +124,9 @@ func joinExpr(w *bytes.Buffer, arr []ast.Expr) {
 func decompileForStmt(w *bytes.Buffer, prefix string, s *ast.ForStmt, deep int) {
 	w.WriteString(prefix + "for ")
 	joinStr(w, s.Vars)
+	if len(s.Vars) > 0 {
+		w.WriteString(" in ")
+	}
 	decompileExpr(w, s.Value, 0)
 	w.WriteString(" {\n")
 	for _, stmt := range s.Stmts {

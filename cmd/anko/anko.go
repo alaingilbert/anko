@@ -303,6 +303,7 @@ func compileAndSave(source, fileName string) error {
 	fileName = strings.Replace(fileName, ankoFileExt, ankoBytecodeExt, 1)
 	out, err := compiler.Compile(source, false)
 	if err != nil {
+		fmt.Println(err.(*parser.Error).Pos)
 		return err
 	}
 	if err := os.WriteFile(fileName, out, 0744); err != nil {

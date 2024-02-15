@@ -411,8 +411,6 @@ func encodeExpr(w *Encoder, expr ast.Expr) {
 		encodeNilCoalescingOpExpr(w, expr)
 	case *ast.LenExpr:
 		encodeLenExpr(w, expr)
-	case *ast.NewExpr:
-		encodeNewExpr(w, expr)
 	case *ast.MakeExpr:
 		encodeMakeExpr(w, expr)
 	case *ast.MakeTypeExpr:
@@ -581,12 +579,6 @@ func encodeLenExpr(w *Encoder, expr *ast.LenExpr) {
 	encode(w, LenExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Expr)
-}
-
-func encodeNewExpr(w *Encoder, expr *ast.NewExpr) {
-	encode(w, NewExprBytecode)
-	encodeExprImpl(w, expr.ExprImpl)
-	encodeString(w, expr.Type)
 }
 
 func encodeMakeExpr(w *Encoder, expr *ast.MakeExpr) {

@@ -180,12 +180,6 @@ type ChanExpr struct {
 	Rhs Expr
 }
 
-// NewExpr provide expression to make new instance.
-type NewExpr struct {
-	ExprImpl
-	Type string
-}
-
 // MakeChanExpr provide expression to make chan instance.
 type MakeChanExpr struct {
 	ExprImpl

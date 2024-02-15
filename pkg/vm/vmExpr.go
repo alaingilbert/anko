@@ -57,8 +57,6 @@ func invokeExpr(vmp *vmParams, env *envPkg.Env, expr ast.Expr) (reflect.Value, e
 		return invokeNilCoalescingOpExpr(vmp, env, e)
 	case *ast.LenExpr:
 		return invokeLenExpr(vmp, env, e)
-	case *ast.NewExpr:
-		return invokeNewExpr(vmp.ctx, e, env, expr)
 	case *ast.MakeExpr:
 		return invokeMakeExpr(vmp, env, e)
 	case *ast.MakeTypeExpr:
@@ -837,7 +835,7 @@ func invokeBinOpExpr(vmp *vmParams, e *ast.BinOpExpr, env *envPkg.Env, expr ast.
 	}
 }
 
-func invokeConstExpr(ctx context.Context, env *envPkg.Env, e *ast.ConstExpr) (reflect.Value, error) {
+func invokeConstExpr(_ context.Context, _ *envPkg.Env, e *ast.ConstExpr) (reflect.Value, error) {
 	switch e.Value {
 	case "true":
 		return trueValue, nil
@@ -895,18 +893,6 @@ func invokeLenExpr(vmp *vmParams, env *envPkg.Env, e *ast.LenExpr) (reflect.Valu
 	default:
 		return nilValue, newStringError(e, "type "+rv.Kind().String()+" does not support len operation")
 	}
-}
-
-func invokeNewExpr(ctx context.Context, e *ast.NewExpr, env *envPkg.Env, expr ast.Expr) (reflect.Value, error) {
-	//t, err := getTypeFromString(env, e.Type)
-	//if err != nil {
-	//	return nilValue, newError(e, err)
-	//}
-	//if t == nil {
-	//	return nilValue, newErrorf(expr, "type cannot be nil for new")
-	//}
-	//return reflect.New(t), nil
-	return nilValue, nil
 }
 
 func invokeMakeExpr(vmp *vmParams, env *envPkg.Env, e *ast.MakeExpr) (reflect.Value, error) {

@@ -213,7 +213,6 @@ func walkExpr(expr ast.Expr, f WalkFunc, deep int) error {
 		if err := walkExprs(expr.Rhss, f, deep); err != nil {
 			return err
 		}
-	case *ast.NewExpr:
 	case *ast.BinOpExpr:
 		if err := walkExpr(expr.Lhs, f, deep); err != nil {
 			return err

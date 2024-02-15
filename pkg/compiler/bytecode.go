@@ -55,17 +55,17 @@ const (
 	TernaryOpExprBytecode       bytecode = 91 // "? :"
 	NilCoalescingOpExprBytecode bytecode = 92 // "??"
 	LenExprBytecode             bytecode = 93
-	NewExprBytecode             bytecode = 94
-	MakeExprBytecode            bytecode = 95
-	MakeTypeExprBytecode        bytecode = 96
-	MakeChanExprBytecode        bytecode = 97
-	ChanExprBytecode            bytecode = 98
-	FuncExprBytecode            bytecode = 99
-	AnonCallExprBytecode        bytecode = 100
-	CallExprBytecode            bytecode = 101
-	IncludeExprBytecode         bytecode = 102
-	BinaryOperatorBytecode      bytecode = 103 // "+" "-" "*" "/" "%" "**" "<<" ">>" "==" "!=" ">" ">=" "<" "<=" "|" "||" "&" "&&"
-	ConstExprBytecode           bytecode = 104
+	//NewExprBytecode             bytecode = 94
+	MakeExprBytecode       bytecode = 95
+	MakeTypeExprBytecode   bytecode = 96
+	MakeChanExprBytecode   bytecode = 97
+	ChanExprBytecode       bytecode = 98
+	FuncExprBytecode       bytecode = 99
+	AnonCallExprBytecode   bytecode = 100
+	CallExprBytecode       bytecode = 101
+	IncludeExprBytecode    bytecode = 102
+	BinaryOperatorBytecode bytecode = 103 // "+" "-" "*" "/" "%" "**" "<<" ">>" "==" "!=" ">" ">=" "<" "<=" "|" "||" "&" "&&"
+	ConstExprBytecode      bytecode = 104
 )
 
 // String ...

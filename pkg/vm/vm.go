@@ -283,19 +283,19 @@ func (e *Executor) runAsync(ctx context.Context, input any) {
 }
 
 func (e *Executor) executeWithContext(ctx context.Context, src string) (any, error) {
-	stmts, err := srcToStmt(src)
+	stmt, err := srcToStmt(src)
 	if err != nil {
 		return nilValue, err
 	}
-	return e.runWithContext(ctx, stmts)
+	return e.runWithContext(ctx, stmt)
 }
 
 func (e *Executor) validateWithContext(ctx context.Context, src string) error {
-	stmts, err := srcToStmt(src)
+	stmt, err := srcToStmt(src)
 	if err != nil {
 		return err
 	}
-	return e.mainRunValidate(ctx, stmts)
+	return e.mainRunValidate(ctx, stmt)
 }
 
 func (e *Executor) hasWithContext(ctx context.Context, src string, targets []any) ([]bool, error) {

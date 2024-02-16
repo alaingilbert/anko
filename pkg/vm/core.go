@@ -10,6 +10,7 @@ import (
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/alaingilbert/anko/pkg/parser"
 )
@@ -39,7 +40,13 @@ func dbgFn(v any) {
 		print(e.String())
 		return
 	}
-	println(vmUtils.FormatValue(reflect.ValueOf(v)))
+	val := reflect.ValueOf(v)
+	out := vmUtils.FormatValue(val)
+	if val.Kind() != reflect.Func {
+		replaceInterface := func(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
+		out += fmt.Sprintf(" | %s", replaceInterface(reflect.TypeOf(v).String()))
+	}
+	println(out)
 }
 
 // Given a map, returns its keys

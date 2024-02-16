@@ -1355,6 +1355,16 @@ func TestEnv_DefineValue(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestEnv_Set(t *testing.T) {
+	env := NewEnv()
+	err := env.Set("a", reflect.ValueOf("a"))
+	assert.Error(t, err)
+	_ = env.define("a", "a")
+	err = env.Set("a", reflect.ValueOf("a"))
+	assert.NoError(t, err)
+	assert.Equal(t, 1, env.Values().Len())
+}
+
 func TestEnv_SetValue(t *testing.T) {
 	env := NewEnv()
 	err := env.SetValue("a", reflect.ValueOf("a"))

@@ -94,6 +94,8 @@ func (e *Env) Get(k string) (any, error) { return e.get(k) }
 
 func (e *Env) GetValue(k string) (reflect.Value, error) { return e.getValue(k) }
 
+func (e *Env) Set(k string, v any) error { return e.set(k, v) }
+
 func (e *Env) SetValue(k string, v reflect.Value) error { return e.setValue(k, v) }
 
 // DefineGlobal defines symbol in global scope.
@@ -358,7 +360,11 @@ func (e *Env) getValue(k string) (reflect.Value, error) {
 func (e *Env) set(k string, v any) error {
 	val := nilValue
 	if v != nil {
-		val = reflect.ValueOf(v)
+		if rv, ok := v.(reflect.Value); !ok {
+			val = reflect.ValueOf(v)
+		} else {
+			val = rv
+		}
 	}
 	return e.setValue(k, val)
 }

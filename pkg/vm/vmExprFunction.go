@@ -17,7 +17,7 @@ import (
 
 // funcExpr creates a function that reflect Call can use.
 // When called, it will run runVMFunction, to run the function statements
-func funcExpr(vmp *vmParams, env *env.Env, funcExpr *ast.FuncExpr) (reflect.Value, error) {
+func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	// create the inTypes needed by reflect.FuncOf
 	inTypes := make([]reflect.Type, len(funcExpr.Params)+1, len(funcExpr.Params)+1)
@@ -119,7 +119,7 @@ func funcExpr(vmp *vmParams, env *env.Env, funcExpr *ast.FuncExpr) (reflect.Valu
 }
 
 // anonCallExpr handles ast.AnonCallExpr which calls a function anonymously
-func anonCallExpr(vmp *vmParams, env *env.Env, e *ast.AnonCallExpr) (reflect.Value, error) {
+func anonCallExpr(vmp *vmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Value, error) {
 	f, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
 		return nilValue, newError(e, err)
@@ -139,7 +139,7 @@ func anonCallExpr(vmp *vmParams, env *env.Env, e *ast.AnonCallExpr) (reflect.Val
 }
 
 // callExpr handles *ast.CallExpr which calls a function
-func callExpr(vmp *vmParams, env *env.Env, callExpr *ast.CallExpr) (rv reflect.Value, err error) {
+func callExpr(vmp *vmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.Value, err error) {
 	// Note that if the function type looks the same as the VM function type, the returned values will probably be wrong
 	nilValueL := nilValue
 
@@ -269,7 +269,7 @@ func checkIfRunVMFunction(rt reflect.Type) bool {
 
 // makeCallArgs creates the arguments reflect.Value slice for the four different kinds of functions.
 // Also returns true if CallSlice should be used on the arguments, or false if Call should be used.
-func makeCallArgs(vmp *vmParams, env *env.Env, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr) ([]reflect.Value, bool, error) {
+func makeCallArgs(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr) ([]reflect.Value, bool, error) {
 	// number of arguments
 	numInReal := rt.NumIn()
 	numIn := numInReal
@@ -351,7 +351,7 @@ func makeCallArgs(vmp *vmParams, env *env.Env, rt reflect.Type, isRunVMFunction 
 	return makeCallArgsFnVarCallVar(vmp, env, rt, arg, callExpr, numInReal, indexInReal, indexExpr, args)
 }
 
-func makeCallArgsFnNotVarCallNotVar(vmp *vmParams, env *env.Env, rt reflect.Type, isRunVMFunction bool,
+func makeCallArgsFnNotVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool,
 	callExpr *ast.CallExpr, indexInReal, indexExpr int, args []reflect.Value) ([]reflect.Value, bool, error) {
 	// function is not variadic and call is not variadic
 	// add last arguments and return
@@ -373,7 +373,7 @@ func makeCallArgsFnNotVarCallNotVar(vmp *vmParams, env *env.Env, rt reflect.Type
 	return args, false, nil
 }
 
-func makeCallArgsFnNotVarCallVar(vmp *vmParams, env *env.Env, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr,
+func makeCallArgsFnNotVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr,
 	numInReal, indexInReal, indexExpr, numIn, indexIn, numExprs int, args []reflect.Value) ([]reflect.Value, bool, error) {
 	// function is not variadic and call is variadic
 	subExpr := callExpr.SubExprs[indexExpr]
@@ -413,7 +413,7 @@ func makeCallArgsNoMoreExprs(args []reflect.Value) ([]reflect.Value, bool, error
 	return args, false, nil
 }
 
-func makeCallArgsDoNotCare(vmp *vmParams, env *env.Env, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr,
+func makeCallArgsDoNotCare(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr,
 	indexInReal, indexExpr int, args []reflect.Value) ([]reflect.Value, bool, error) {
 	// there are more arguments after this one, so does not matter if call is variadic or not
 	// add the last argument then return what we have and let reflect Call handle if call is variadic or not
@@ -435,7 +435,7 @@ func makeCallArgsDoNotCare(vmp *vmParams, env *env.Env, rt reflect.Type, isRunVM
 	return args, false, nil
 }
 
-func makeCallArgsFnVarCallNotVar(vmp *vmParams, env *env.Env, rt reflect.Type, numInReal, indexInReal, indexExpr, numExprs int,
+func makeCallArgsFnVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type, numInReal, indexInReal, indexExpr, numExprs int,
 	callExpr *ast.CallExpr, args []reflect.Value) ([]reflect.Value, bool, error) {
 	// function is variadic and call is not variadic
 	sliceType := rt.In(numInReal - 1).Elem()
@@ -456,7 +456,7 @@ func makeCallArgsFnVarCallNotVar(vmp *vmParams, env *env.Env, rt reflect.Type, n
 	return args, false, nil
 }
 
-func makeCallArgsFnVarCallVar(vmp *vmParams, env *env.Env, rt reflect.Type, arg reflect.Value,
+func makeCallArgsFnVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, arg reflect.Value,
 	callExpr *ast.CallExpr, numInReal, indexInReal, indexExpr int, args []reflect.Value) ([]reflect.Value, bool, error) {
 	// function is variadic and call is variadic
 	// the only time we return CallSlice is true

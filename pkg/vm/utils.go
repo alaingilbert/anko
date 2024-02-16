@@ -198,7 +198,7 @@ func appendSlice(expr ast.Expr, lhsV reflect.Value, rhsV reflect.Value) (reflect
 	return nilValueL, newStringError(expr, "invalid type conversion")
 }
 
-func getTypeFromEnv(env *envPkg.Env, typeStruct *ast.TypeStruct) (reflect.Type, error) {
+func getTypeFromEnv(env envPkg.IEnv, typeStruct *ast.TypeStruct) (reflect.Type, error) {
 	e, err := env.GetEnvFromPath(typeStruct.Env)
 	if err != nil {
 		return nil, err

@@ -255,7 +255,7 @@ func runInteractive(env *envPkg.Env) int {
 				handleErr(os.Stderr, err)
 				continue
 			}
-			if e, ok := v.(*envPkg.Env); ok {
+			if e, ok := v.(envPkg.IEnv); ok {
 				fmt.Printf("%s\n", e.Name())
 			} else {
 				fmt.Printf("%s\n", vmUtils.FormatValue(reflect.ValueOf(v)))
@@ -273,7 +273,7 @@ func rebuildCompleter(e envPkg.IEnv) {
 	e.Values().Each(func(s string, value reflect.Value) {
 		keys = append(keys, s)
 		if value.IsValid() {
-			if ee, ok := value.Interface().(*envPkg.Env); ok {
+			if ee, ok := value.Interface().(envPkg.IEnv); ok {
 				ee.Values().Each(func(ss string, _ reflect.Value) {
 					keys = append(keys, s+"."+ss)
 				})

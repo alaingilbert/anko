@@ -13,7 +13,7 @@ import (
 func TestSetError(t *testing.T) {
 	envParent := NewEnv()
 	envChild := envParent.NewEnv()
-	err := envChild.Set("a", "a")
+	err := envChild.set("a", "a")
 	if err == nil {
 		t.Errorf("Set error - received: %v - expected: %v", err, fmt.Errorf("unknown symbol 'a'"))
 	} else if err.Error() != "unknown symbol 'a'" {
@@ -258,7 +258,7 @@ func TestDefineModify(t *testing.T) {
 
 		// DefineModify changeTest
 		for _, changeTest := range changeTests {
-			err = env.Set(test.varName, changeTest.varDefineValue)
+			err = env.set(test.varName, changeTest.varDefineValue)
 			if err != nil && changeTest.defineError != nil {
 				if err.Error() != changeTest.defineError.Error() {
 					t.Errorf("DefineModify changeTest %v - Set error - received: %v - expected: %v", test.testInfo, err, changeTest.defineError)
@@ -316,7 +316,7 @@ func TestDefineModify(t *testing.T) {
 		}
 
 		for _, changeTest := range changeTests {
-			err = envParent.Set(test.varName, changeTest.varDefineValue)
+			err = envParent.set(test.varName, changeTest.varDefineValue)
 			if err != nil && changeTest.defineError != nil {
 				if err.Error() != changeTest.defineError.Error() {
 					t.Errorf("DefineModify envParent changeTest %v - Set error - received: %v - expected: %v", test.testInfo, err, changeTest.defineError)
@@ -374,7 +374,7 @@ func TestDefineModify(t *testing.T) {
 		}
 
 		for _, changeTest := range changeTests {
-			err = envChild.Set(test.varName, changeTest.varDefineValue)
+			err = envChild.set(test.varName, changeTest.varDefineValue)
 			if err != nil && changeTest.defineError != nil {
 				if err.Error() != changeTest.defineError.Error() {
 					t.Errorf("DefineModify envChild changeTest %v - Set error - received: %v - expected: %v", test.testInfo, err, changeTest.defineError)
@@ -1064,7 +1064,7 @@ func TestRaceSetSameVariable(t *testing.T) {
 		waitGroup.Add(1)
 		go func(i int) {
 			<-waitChan
-			err := env.Set("a", i)
+			err := env.set("a", i)
 			if err != nil {
 				t.Errorf("Set error: %v", err)
 			}
@@ -1103,7 +1103,7 @@ func TestRaceSetSameVariableNewEnv(t *testing.T) {
 		go func(i int) {
 			<-waitChan
 			env = env.NewEnv().NewEnv()
-			err := env.Set("a", i)
+			err := env.set("a", i)
 			if err != nil {
 				t.Errorf("Set error: %v", err)
 			}
@@ -1130,7 +1130,7 @@ func raceDefineAndSetSameVariable(t *testing.T) {
 		waitGroup.Add(1)
 		go func() {
 			<-waitChan
-			err := envParent.Set("a", 1)
+			err := envParent.set("a", 1)
 			if err != nil && err.Error() != "unknown symbol 'a'" {
 				t.Errorf("Set error: %v", err)
 			}
@@ -1148,7 +1148,7 @@ func raceDefineAndSetSameVariable(t *testing.T) {
 		waitGroup.Add(1)
 		go func() {
 			<-waitChan
-			err := envChild.Set("a", 3)
+			err := envChild.set("a", 3)
 			if err != nil && err.Error() != "unknown symbol 'a'" {
 				t.Errorf("Set error: %v", err)
 			}
@@ -1203,7 +1203,7 @@ func BenchmarkSet(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		err = env.Set("a", 1)
+		err = env.set("a", 1)
 		if err != nil {
 			b.Errorf("Set error: %v", err)
 		}
@@ -1224,14 +1224,14 @@ func TestCopy(t *testing.T) {
 	if v, e := copyEnv.Get("a"); e != nil || v != "a" {
 		t.Errorf("copy doesn't retain original values")
 	}
-	_ = copyEnv.Set("a", "b")
+	_ = copyEnv.set("a", "b")
 	if v, e := env.Get("a"); e != nil || v != "a" {
 		t.Errorf("original was modified")
 	}
 	if v, e := copyEnv.Get("a"); e != nil || v != "b" {
 		t.Errorf("copy kept the old value")
 	}
-	_ = env.Set("a", "c")
+	_ = env.set("a", "c")
 	if v, e := env.Get("a"); e != nil || v != "c" {
 		t.Errorf("original was not modified")
 	}
@@ -1241,7 +1241,7 @@ func TestCopy(t *testing.T) {
 	if v, e := copyEnv.Get("b"); e != nil || v != "a" {
 		t.Errorf("copy parent doesn't retain original value")
 	}
-	_ = parent.Set("b", "b")
+	_ = parent.set("b", "b")
 	if v, e := copyEnv.Get("b"); e != nil || v != "b" {
 		t.Errorf("copy parent not modified")
 	}
@@ -1255,14 +1255,14 @@ func TestDeepCopy(t *testing.T) {
 	if v, e := copyEnv.Get("a"); e != nil || v != "a" {
 		t.Errorf("copy doesn't retain original values")
 	}
-	_ = parent.Set("a", "b")
+	_ = parent.set("a", "b")
 	if v, e := env.Get("a"); e != nil || v != "b" {
 		t.Errorf("son was not modified")
 	}
 	if v, e := copyEnv.Get("a"); e != nil || v != "a" {
 		t.Errorf("copy got the new value")
 	}
-	_ = parent.Set("a", "c")
+	_ = parent.set("a", "c")
 	if v, e := env.Get("a"); e != nil || v != "c" {
 		t.Errorf("original was not modified")
 	}

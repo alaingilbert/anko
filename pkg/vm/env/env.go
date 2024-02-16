@@ -90,7 +90,7 @@ func (e *Env) NewEnv() *Env {
 // This is a shortcut for calling e.NewEnv then Define that new Env.
 func (e *Env) NewModule(symbol string) (*Env, error) {
 	module := e.NewEnv()
-	if err := e.Define(symbol, module); err != nil {
+	if err := e.define(symbol, module); err != nil {
 		return nil, err
 	}
 	module.name.Store(symbol)
@@ -163,7 +163,7 @@ func (e *Env) AddPackage(name string, methods map[string]any, types map[string]a
 	pack := e.NewEnv()
 
 	for methodName, methodValue := range methods {
-		err = pack.Define(methodName, methodValue)
+		err = pack.define(methodName, methodValue)
 		if err != nil {
 			return pack, err
 		}
@@ -176,7 +176,7 @@ func (e *Env) AddPackage(name string, methods map[string]any, types map[string]a
 	}
 
 	// can ignore error from Define because of check at the start of the function
-	_ = e.Define(name, pack)
+	_ = e.define(name, pack)
 	return pack, nil
 }
 
@@ -285,7 +285,7 @@ func (e *Env) GetValue(k string) (reflect.Value, error) {
 
 // Set modifies value which specified as symbol. It goes to upper scope until
 // found or returns error.
-func (e *Env) Set(k string, v any) error {
+func (e *Env) set(k string, v any) error {
 	val := nilValue
 	if v != nil {
 		val = reflect.ValueOf(v)
@@ -307,12 +307,12 @@ func (e *Env) SetValue(k string, v reflect.Value) error {
 
 // DefineGlobal defines symbol in global scope.
 func (e *Env) DefineGlobal(k string, v any) error {
-	return e.getRootEnv().Define(k, v)
+	return e.getRootEnv().define(k, v)
 }
 
 // DefineGlobalValue defines symbol in global scope.
 func (e *Env) DefineGlobalValue(k string, v reflect.Value) error {
-	return e.getRootEnv().DefineValue(k, v)
+	return e.getRootEnv().defineValue(k, v)
 }
 
 // DefineGlobalType defines type in global scope.
@@ -327,15 +327,23 @@ func (e *Env) DefineGlobalReflectType(k string, t reflect.Type) error {
 
 // Define defines symbol in current scope.
 func (e *Env) Define(k string, v any) error {
+	return e.define(k, v)
+}
+
+func (e *Env) define(k string, v any) error {
 	val := nilValue
 	if v != nil {
 		val = reflect.ValueOf(v)
 	}
-	return e.DefineValue(k, val)
+	return e.defineValue(k, val)
 }
 
 // DefineValue defines symbol in current scope.
 func (e *Env) DefineValue(k string, v reflect.Value) error {
+	return e.defineValue(k, v)
+}
+
+func (e *Env) defineValue(k string, v reflect.Value) error {
 	if !isSymbolNameValid(k) {
 		return newUnknownSymbol(k)
 	}

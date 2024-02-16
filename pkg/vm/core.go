@@ -134,7 +134,7 @@ func loadFn(e *Executor, ctx context.Context, validate bool) func(s string) any 
 			}
 			panic(err)
 		}
-		rv, err := e.Run(ctx, stmts)
+		rv, err := e.runWithContext(ctx, stmts)
 		if err != nil {
 			panic(err)
 		}

@@ -47,7 +47,7 @@ func invokeExpr(vmp *vmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, e
 	case *ast.LetsExpr:
 		return invokeLetsExpr(vmp, env, e)
 	case *ast.BinOpExpr:
-		return invokeBinOpExpr(vmp, e, env, expr)
+		return invokeBinOpExpr(vmp, env, e, expr)
 	case *ast.ConstExpr:
 		return invokeConstExpr(vmp, env, e)
 	case *ast.TernaryOpExpr:
@@ -59,9 +59,9 @@ func invokeExpr(vmp *vmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, e
 	case *ast.MakeExpr:
 		return invokeMakeExpr(vmp, env, e)
 	case *ast.MakeTypeExpr:
-		return invokeMakeTypeExpr(vmp, e, env, expr)
+		return invokeMakeTypeExpr(vmp, env, e, expr)
 	case *ast.ChanExpr:
-		return invokeChanExpr(vmp, e, env, expr)
+		return invokeChanExpr(vmp, env, e, expr)
 	case *ast.FuncExpr:
 		return invokeFuncExpr(vmp, env, e)
 	case *ast.AnonCallExpr:
@@ -726,7 +726,7 @@ func invokeLetsExpr(vmp *vmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Va
 	return rvs[len(rvs)-1], nil
 }
 
-func invokeBinOpExpr(vmp *vmParams, e *ast.BinOpExpr, env envPkg.IEnv, expr ast.Expr) (reflect.Value, error) {
+func invokeBinOpExpr(vmp *vmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.Expr) (reflect.Value, error) {
 	nilValueL := nilValue
 	lhsV := nilValueL
 	rhsV := nilValueL
@@ -981,7 +981,7 @@ func invokeMakeExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 	//return reflect.MakeSlice(reflect.SliceOf(t), alen, acap), nil
 }
 
-func invokeMakeTypeExpr(vmp *vmParams, e *ast.MakeTypeExpr, env envPkg.IEnv, expr ast.Expr) (reflect.Value, error) {
+func invokeMakeTypeExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MakeTypeExpr, expr ast.Expr) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, e.Type)
 	if err != nil {
 		return nilValue, newError(e, err)
@@ -997,7 +997,7 @@ func invokeMakeTypeExpr(vmp *vmParams, e *ast.MakeTypeExpr, env envPkg.IEnv, exp
 	return reflect.ValueOf(rv.Type()), nil
 }
 
-func invokeChanExpr(vmp *vmParams, e *ast.ChanExpr, env envPkg.IEnv, expr ast.Expr) (reflect.Value, error) {
+func invokeChanExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Expr) (reflect.Value, error) {
 	rhs, err := invokeExpr(vmp, env, e.Rhs)
 	if err != nil {
 		return nilValue, newError(e.Rhs, err)

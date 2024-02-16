@@ -1741,9 +1741,9 @@ func TestTest(t *testing.T) {
 	e1 := v.Executor()
 	_, _ = e1.Run(nil, "a = 1")
 	assert.Equal(t, int64(1), utils.Must(e1.GetEnv().Get("a")).(int64))
-	assert.Error(t, utils.MustErr(v.GetEnv().Get("b")))
+	assert.Error(t, utils.MustErr(v.env.Get("b")))
 	e2 := v.Executor()
 	_, _ = e2.Run(nil, "b = 2")
-	assert.Error(t, utils.MustErr(v.GetEnv().Get("a")))
+	assert.Error(t, utils.MustErr(v.env.Get("a")))
 	assert.Equal(t, int64(2), utils.Must(e2.GetEnv().Get("b")).(int64))
 }

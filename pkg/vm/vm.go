@@ -24,8 +24,6 @@ type IVM interface {
 	Define(k string, v any) error
 	DefineType(k string, v any) error
 	AddPackage(name string, methods map[string]any, types map[string]any) (*envPkg.Env, error)
-
-	GetEnv() envPkg.IEnv
 }
 
 // Compile time checks to ensure type satisfies IVM interface
@@ -195,10 +193,6 @@ func (v *VM) Has(ctx context.Context, val any, targets []any) ([]bool, error) {
 
 func (v *VM) AddPackage(name string, methods map[string]any, types map[string]any) (*envPkg.Env, error) {
 	return v.env.AddPackage(name, methods, types)
-}
-
-func (v *VM) GetEnv() envPkg.IEnv {
-	return v.env
 }
 
 func (v *VM) Define(k string, val any) error {

@@ -7,23 +7,24 @@ import (
 	"strings"
 )
 
+func ReplaceInterface(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
+
 func FormatValue(value reflect.Value) string {
 	if !value.IsValid() {
 		return "<nil>"
 	}
-	replaceInterface := func(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
 	if value.Kind() == reflect.Func {
 		numIn := value.Type().NumIn()
 		inParams := make([]string, numIn)
 		for i := 0; i < numIn; i++ {
 			inParams[i] = value.Type().In(i).String()
-			inParams[i] = replaceInterface(inParams[i])
+			inParams[i] = ReplaceInterface(inParams[i])
 		}
 		numOut := value.Type().NumOut()
 		outParams := make([]string, numOut)
 		for i := 0; i < numOut; i++ {
 			outParams[i] = value.Type().Out(i).String()
-			outParams[i] = replaceInterface(outParams[i])
+			outParams[i] = ReplaceInterface(outParams[i])
 		}
 
 		inParamsStr := utils.Ternary(numIn > 0, strings.Join(inParams, ", "), "")
@@ -38,6 +39,6 @@ func FormatValue(value reflect.Value) string {
 		return sign
 	}
 	s := fmt.Sprintf("%#v", value)
-	s = replaceInterface(s)
+	s = ReplaceInterface(s)
 	return s
 }

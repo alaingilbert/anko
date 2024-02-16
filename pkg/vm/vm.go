@@ -9,6 +9,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/parser"
 	"github.com/alaingilbert/anko/pkg/utils"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	"github.com/alaingilbert/anko/pkg/vm/stateCh"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -46,7 +47,7 @@ var _ IExecutor = (*Executor)(nil)
 
 type Executor struct {
 	env       *envPkg.Env
-	pause     *StateCh
+	pause     *stateCh.StateCh
 	stats     *stats
 	rateLimit *utils.RateLimitAnything
 	mapMutex  *sync.Mutex
@@ -187,7 +188,7 @@ func (v *VM) executor() *Executor {
 	if v.defineImport {
 		DefineImport(e.env)
 	}
-	e.pause = NewStateCh(true)
+	e.pause = stateCh.NewStateCh(true)
 	e.stats = &stats{}
 	e.mapMutex = &sync.Mutex{}
 	if v.rateLimit > 0 {
@@ -362,7 +363,7 @@ type vmParams struct {
 	rvCh          chan Result
 	stats         *stats
 	mapMutex      *sync.Mutex
-	pause         *StateCh
+	pause         *stateCh.StateCh
 	rateLimit     *utils.RateLimitAnything
 	validate      bool
 	has           map[any]bool
@@ -373,7 +374,7 @@ func newVmParams(ctx context.Context,
 	rvCh chan Result,
 	stats *stats,
 	mapMutex *sync.Mutex,
-	pause *StateCh,
+	pause *stateCh.StateCh,
 	rateLimit *utils.RateLimitAnything,
 	validate bool,
 	has map[any]bool,

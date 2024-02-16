@@ -7,8 +7,8 @@ import (
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/compiler"
 	"github.com/alaingilbert/anko/pkg/parser"
-	"github.com/alaingilbert/anko/pkg/utils"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	"github.com/alaingilbert/anko/pkg/vm/ratelimitanything"
 	"github.com/alaingilbert/anko/pkg/vm/stateCh"
 	"reflect"
 	"sync"
@@ -49,7 +49,7 @@ type Executor struct {
 	env       envPkg.IEnv
 	pause     *stateCh.StateCh
 	stats     *stats
-	rateLimit *utils.RateLimitAnything
+	rateLimit *ratelimitanything.RateLimitAnything
 	mapMutex  *sync.Mutex
 	cancel    context.CancelFunc
 }
@@ -83,7 +83,7 @@ func NewExecutor(cfg *ExecutorConfig) *Executor {
 	e.stats = &stats{}
 	e.mapMutex = &sync.Mutex{}
 	if cfg.RateLimit > 0 {
-		e.rateLimit = utils.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
+		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
 	}
 	return e
 }
@@ -387,7 +387,7 @@ type vmParams struct {
 	stats         *stats
 	mapMutex      *sync.Mutex
 	pause         *stateCh.StateCh
-	rateLimit     *utils.RateLimitAnything
+	rateLimit     *ratelimitanything.RateLimitAnything
 	validate      bool
 	has           map[any]bool
 	validateLater map[string]ast.Stmt
@@ -398,7 +398,7 @@ func newVmParams(ctx context.Context,
 	stats *stats,
 	mapMutex *sync.Mutex,
 	pause *stateCh.StateCh,
-	rateLimit *utils.RateLimitAnything,
+	rateLimit *ratelimitanything.RateLimitAnything,
 	validate bool,
 	has map[any]bool,
 	validateLater map[string]ast.Stmt,

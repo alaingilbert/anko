@@ -246,7 +246,7 @@ func decompileAnonCallExpr(w *bytes.Buffer, prefix string, e *ast.AnonCallExpr) 
 func decompileFuncExpr(w *bytes.Buffer, prefix string, e *ast.FuncExpr, deep int) {
 	w.WriteString(prefix)
 	w.WriteString("func " + e.Name + "(")
-	joinStr(w, e.Params)
+	//joinStr(w, e.Params)
 	w.WriteString(") {\n")
 	decompileStmt(w, e.Stmt, deep+1)
 	w.WriteString("}\n")

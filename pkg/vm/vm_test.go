@@ -1628,6 +1628,28 @@ func TestEnvRef(t *testing.T) {
 	runTests(t, tests, nil)
 }
 
+func TestFuncTypedParams(t *testing.T) {
+	_ = os.Setenv("ANKO_DEBUG", "1")
+	tests := []Test{
+		{Script: `func a(x:int64){return x}; a(1)`, RunOutput: int64(1)},
+		{Script: `func a(x:int64){return x}; a("1")`, RunError: fmt.Errorf("function wants argument type int64 but received type string")},
+		{Script: `func a(x:string){return x}; a(1)`, RunError: fmt.Errorf("function wants argument type string but received type int64")},
+		{Script: `func a(x:string){return x}; a("1")`, RunOutput: "1"},
+		{Script: `func a(b, x:int64){return x}; a("", 1)`, RunOutput: int64(1)},
+		{Script: `func a(b, x:int64){return x}; a("", "1")`, RunError: fmt.Errorf("function wants argument type int64 but received type string")},
+		{Script: `func a(x:int64, b){return x}; a(1, "")`, RunOutput: int64(1)},
+		{Script: `func a(x:int64, b){return x}; a("1", "")`, RunError: fmt.Errorf("function wants argument type int64 but received type string")},
+		{Script: `func a(x...){return x}; a([]string{"1","2","3"}...)`, RunOutput: []any{"1", "2", "3"}},
+		{Script: `func a(x:int64...){return x}; a([]int64{1,2,3}...)`, RunOutput: []int64{1, 2, 3}},
+		{Script: `func a(x:string...){return x}; a([]string{"1","2","3"}...)`, RunOutput: []string{"1", "2", "3"}},
+		{Script: `func a(x:string...){return x}; a([]int64{1,2,3}...)`, RunError: fmt.Errorf("function wants argument type []string but received type []int64")},
+		{Script: `func a(x:int64...){return x}; a(1,2,3)`, RunOutput: []int64{1, 2, 3}},
+		{Script: `func a(x:int64...){return x}; a(1,"2",3)`, RunError: fmt.Errorf("function wants argument type []int64 but received type string")},
+		{Script: `func a(x:int64, y:int64, z:int64){return x}; a([]int64{1,2,3}...)`, RunOutput: int64(1)},
+	}
+	runTests(t, tests, nil)
+}
+
 func TestExecuteError(t *testing.T) {
 	script := "a]]"
 	_, err := New(nil).Executor().Run(nil, script)

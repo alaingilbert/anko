@@ -142,12 +142,18 @@ type SliceExpr struct {
 	End   Expr
 }
 
+// ParamExpr ...
+type ParamExpr struct {
+	Name     string
+	TypeData *TypeStruct
+}
+
 // FuncExpr provide function expression.
 type FuncExpr struct {
 	ExprImpl
 	Name   string
 	Stmt   Stmt
-	Params []string
+	Params []*ParamExpr
 	VarArg bool
 }
 

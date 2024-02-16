@@ -10,4 +10,7 @@ func init() {
 		"LookPath":    exec.LookPath,
 		"Command":     exec.Command,
 	})
+	PackageTypes.Insert("os/exec", map[string]any{
+		"Cmd": exec.Cmd{},
+	})
 }

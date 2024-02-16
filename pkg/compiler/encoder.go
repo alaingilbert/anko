@@ -472,6 +472,7 @@ func encodeArrayExpr(w *Encoder, expr *ast.ArrayExpr) {
 	encode(w, ArrayExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExprArray(w, expr.Exprs)
+	encodeTypeStruct(w, expr.TypeData)
 }
 
 func encodeMapExpr(w *Encoder, expr *ast.MapExpr) {
@@ -628,8 +629,20 @@ func encodeFuncExpr(w *Encoder, expr *ast.FuncExpr) {
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeString(w, expr.Name)
 	encodeBool(w, expr.VarArg)
-	encodeStringArray(w, expr.Params)
+	encodeParamExprArray(w, expr.Params)
 	encodeSingleStmt(w, expr.Stmt)
+}
+
+func encodeParamExprArray(w *Encoder, exprs []*ast.ParamExpr) {
+	encode(w, int32(len(exprs)))
+	for _, e := range exprs {
+		encodeParamExpr(w, e)
+	}
+}
+
+func encodeParamExpr(w *Encoder, expr *ast.ParamExpr) {
+	encodeString(w, expr.Name)
+	encodeTypeStruct(w, expr.TypeData)
 }
 
 func encodeAnonCallExpr(w *Encoder, expr *ast.AnonCallExpr) {

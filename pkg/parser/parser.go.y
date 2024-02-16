@@ -26,6 +26,7 @@ import (
 %type<exprs> exprs
 %type<expr> expr
 %type<expr_idents> expr_idents
+%type<func_expr_idents> func_expr_idents
 %type<type_data> type_data
 %type<type_data_struct> type_data_struct
 %type<slice_count> slice_count
@@ -53,6 +54,7 @@ import (
 	expr                   ast.Expr
 	exprs                  []ast.Expr
 	expr_idents            []string
+	func_expr_idents       []*ast.ParamExpr
 	expr_map               *ast.MapExpr
 	type_data              *ast.TypeStruct
         type_data_struct       *ast.TypeStruct
@@ -480,6 +482,33 @@ expr_idents :
 		$$ = append($1, $4.Lit)
 	}
 
+func_expr_idents :
+	{
+		$$ = []*ast.ParamExpr{}
+	}
+	| IDENT
+	{
+		$$ = []*ast.ParamExpr{&ast.ParamExpr{Name: $1.Lit}}
+	}
+	| IDENT ':' type_data
+	{
+		$$ = []*ast.ParamExpr{&ast.ParamExpr{Name: $1.Lit, TypeData: $3}}
+	}
+	| func_expr_idents ',' opt_newlines IDENT
+	{
+		if len($1) == 0 {
+			yylex.Error("syntax error: unexpected ','")
+		}
+		$$ = append($1, &ast.ParamExpr{Name: $4.Lit})
+	}
+	| func_expr_idents ',' opt_newlines IDENT ':' type_data
+	{
+		if len($1) == 0 {
+			yylex.Error("syntax error: unexpected ','")
+		}
+		$$ = append($1, &ast.ParamExpr{Name: $4.Lit, TypeData: $6})
+	}
+
 exprs :
 	{
 		$$ = nil
@@ -583,22 +612,22 @@ expr :
 		$$ = &ast.MemberExpr{Expr: $1, Name: $3.Lit}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC '(' expr_idents ')' '{' compstmt '}'
+	| FUNC '(' func_expr_idents ')' '{' compstmt '}'
 	{
 		$$ = &ast.FuncExpr{Params: $3, Stmt: $6}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC '(' expr_idents VARARG ')' '{' compstmt '}'
+	| FUNC '(' func_expr_idents VARARG ')' '{' compstmt '}'
 	{
 		$$ = &ast.FuncExpr{Params: $3, Stmt: $7, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC IDENT '(' expr_idents ')' '{' compstmt '}'
+	| FUNC IDENT '(' func_expr_idents ')' '{' compstmt '}'
 	{
 		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Stmt: $7}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC IDENT '(' expr_idents VARARG ')' '{' compstmt '}'
+	| FUNC IDENT '(' func_expr_idents VARARG ')' '{' compstmt '}'
 	{
 		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Stmt: $8, VarArg: true}
 		$$.SetPosition($1.Position())

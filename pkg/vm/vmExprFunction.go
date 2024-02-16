@@ -24,10 +24,23 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 	// for runVMFunction first arg is always context
 	inTypes[0] = contextType
 	for i := 1; i < len(inTypes); i++ {
-		inTypes[i] = reflectValueType
+		if funcExpr.Params[i-1].TypeData != nil {
+			t, err := makeType(vmp, env, funcExpr.Params[i-1].TypeData)
+			if err != nil {
+				return nilValue, err
+			}
+			inTypes[i] = t
+		} else {
+			inTypes[i] = reflectValueType
+		}
 	}
 	if funcExpr.VarArg {
-		inTypes[len(inTypes)-1] = interfaceSliceType
+		lastType := inTypes[len(inTypes)-1]
+		if lastType == reflectValueType {
+			inTypes[len(inTypes)-1] = interfaceSliceType
+		} else {
+			inTypes[len(inTypes)-1] = reflect.SliceOf(lastType)
+		}
 	}
 	// create funcType, output is always slice of reflect.Type with two values
 	funcType := reflect.FuncOf(inTypes, []reflect.Type{reflectValueType, reflectValueType}, funcExpr.VarArg)
@@ -44,8 +57,13 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 		newEnv := env.NewEnv()
 		// add Params to newEnv, except last Params
 		for i := 0; i < len(funcExpr.Params)-1; i++ {
-			rv = in[i+1].Interface().(reflect.Value)
-			err = newEnv.DefineValue(funcExpr.Params[i], rv)
+			var ok bool
+			inInterface := in[i+1].Interface()
+			if rv, ok = inInterface.(reflect.Value); ok {
+				err = newEnv.DefineValue(funcExpr.Params[i].Name, rv)
+			} else {
+				err = newEnv.DefineValue(funcExpr.Params[i].Name, reflect.ValueOf(inInterface))
+			}
 			if err != nil {
 				return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 			}
@@ -55,14 +73,19 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 			if funcExpr.VarArg {
 				// function is variadic, add last Params to newEnv without convert to Interface and then reflect.Value
 				rv = in[len(funcExpr.Params)]
-				err = newEnv.DefineValue(funcExpr.Params[len(funcExpr.Params)-1], rv)
+				err = newEnv.DefineValue(funcExpr.Params[len(funcExpr.Params)-1].Name, rv)
 				if err != nil {
 					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 				}
 			} else {
 				// function is not variadic, add last Params to newEnv
-				rv = in[len(funcExpr.Params)].Interface().(reflect.Value)
-				err = newEnv.DefineValue(funcExpr.Params[len(funcExpr.Params)-1], rv)
+				inInterface := in[len(funcExpr.Params)].Interface()
+				if newRv, ok := inInterface.(reflect.Value); ok {
+					rv = newRv
+				} else {
+					rv = reflect.ValueOf(inInterface)
+				}
+				err = newEnv.DefineValue(funcExpr.Params[len(funcExpr.Params)-1].Name, rv)
 				if err != nil {
 					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 				}
@@ -248,22 +271,22 @@ func checkIfRunVMFunction(rt reflect.Type) bool {
 	if rt.NumIn() < 1 || rt.In(0) != contextType || rt.NumOut() != 2 || rt.Out(0) != reflectValueType || rt.Out(1) != reflectValueType {
 		return false
 	}
-	if rt.NumIn() > 1 {
-		if rt.IsVariadic() {
-			if rt.In(rt.NumIn()-1) != interfaceSliceType {
-				return false
-			}
-		} else {
-			if rt.In(rt.NumIn()-1) != reflectValueType {
-				return false
-			}
-		}
-		for i := 1; i < rt.NumIn()-1; i++ {
-			if rt.In(i) != reflectValueType {
-				return false
-			}
-		}
-	}
+	//if rt.NumIn() > 1 {
+	//	if rt.IsVariadic() {
+	//		if rt.In(rt.NumIn()-1) != interfaceSliceType {
+	//			return false
+	//		}
+	//	} else {
+	//		if rt.In(rt.NumIn()-1) != reflectValueType {
+	//			return false
+	//		}
+	//	}
+	//	for i := 1; i < rt.NumIn()-1; i++ {
+	//		if rt.In(i) != reflectValueType {
+	//			return false
+	//		}
+	//	}
+	//}
 	return true
 }
 
@@ -327,8 +350,17 @@ func makeCallArgs(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 			return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
 		}
 		if isRunVMFunction {
-			types = append(types, arg.Type())
-			args = append(args, reflect.ValueOf(arg))
+			if rt.In(indexInReal) != reflectValueType {
+				if arg.Type() != rt.In(indexInReal) {
+					err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
+					return []reflect.Value{}, []reflect.Type{}, false, err
+				}
+				types = append(types, arg.Type())
+				args = append(args, arg)
+			} else {
+				args = append(args, reflect.ValueOf(arg))
+				types = append(types, arg.Type())
+			}
 		} else {
 			arg, err = convertReflectValueToType(vmp, arg, rt.In(indexInReal))
 			if err != nil {
@@ -367,8 +399,17 @@ func makeCallArgsFnNotVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type
 		return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
 	}
 	if isRunVMFunction {
-		args = append(args, reflect.ValueOf(arg))
-		types = append(types, arg.Type())
+		if rt.In(indexInReal) != reflectValueType {
+			if arg.Type() != rt.In(indexInReal) {
+				err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
+				return []reflect.Value{}, []reflect.Type{}, false, err
+			}
+			args = append(args, arg)
+			types = append(types, arg.Type())
+		} else {
+			args = append(args, reflect.ValueOf(arg))
+			types = append(types, arg.Type())
+		}
 	} else {
 		arg, err = convertReflectValueToType(vmp, arg, rt.In(indexInReal))
 		if err != nil {
@@ -400,8 +441,17 @@ func makeCallArgsFnNotVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, i
 	indexSlice := 0
 	for indexInReal < numInReal {
 		if isRunVMFunction {
-			args = append(args, reflect.ValueOf(arg.Index(indexSlice)))
-			types = append(types, arg.Index(indexSlice).Type())
+			if rt.In(indexInReal) != reflectValueType {
+				if arg.Index(indexSlice).Type() != rt.In(indexInReal) {
+					err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Index(indexSlice).Type().String())
+					return []reflect.Value{}, []reflect.Type{}, false, err
+				}
+				args = append(args, arg.Index(indexSlice))
+				types = append(types, arg.Index(indexSlice).Type())
+			} else {
+				args = append(args, reflect.ValueOf(arg.Index(indexSlice)))
+				types = append(types, arg.Index(indexSlice).Type())
+			}
 		} else {
 			arg, err = convertReflectValueToType(vmp, arg.Index(indexSlice), rt.In(indexInReal))
 			if err != nil {
@@ -482,6 +532,10 @@ func makeCallArgsFnVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, arg 
 	arg, err = invokeExpr(vmp, env, subExpr)
 	if err != nil {
 		return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
+	}
+	if sliceType != interfaceSliceType && arg.Type() != sliceType {
+		err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
+		return []reflect.Value{}, []reflect.Type{}, false, err
 	}
 	arg, err = convertReflectValueToType(vmp, arg, sliceType)
 	if err != nil {

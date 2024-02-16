@@ -472,6 +472,7 @@ func decodeArrayExpr(r *Decoder) *ast.ArrayExpr {
 	out := &ast.ArrayExpr{}
 	out.ExprImpl = decodeExprImpl(r)
 	out.Exprs = r.readExprArray()
+	out.TypeData = decodeTypeStruct(r)
 	return out
 }
 
@@ -651,8 +652,25 @@ func decodeFuncExpr(r *Decoder) *ast.FuncExpr {
 	out.ExprImpl = decodeExprImpl(r)
 	out.Name = r.readString()
 	out.VarArg = r.readBool()
-	out.Params = r.readStringArray()
+	out.Params = r.readParamExprArray()
 	out.Stmt = decodeSingleStmt(r)
+	return out
+}
+
+func (d *Decoder) readParamExprArray() []*ast.ParamExpr {
+	nbElems := d.readInt32()
+	out := make([]*ast.ParamExpr, 0)
+	for i := 0; int32(i) < nbElems; i++ {
+		expr := decodeParamExpr(d)
+		out = append(out, expr)
+	}
+	return out
+}
+
+func decodeParamExpr(d *Decoder) *ast.ParamExpr {
+	out := &ast.ParamExpr{}
+	out.Name = d.readString()
+	out.TypeData = decodeTypeStruct(d)
 	return out
 }
 

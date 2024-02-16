@@ -1,4 +1,5 @@
 // Package core implements core interface for anko script.
+
 package vm
 
 import (

@@ -46,12 +46,46 @@ type IExecutor interface {
 var _ IExecutor = (*Executor)(nil)
 
 type Executor struct {
-	env       *envPkg.Env
+	env       envPkg.IEnv
 	pause     *stateCh.StateCh
 	stats     *stats
 	rateLimit *utils.RateLimitAnything
 	mapMutex  *sync.Mutex
 	cancel    context.CancelFunc
+}
+
+type ExecutorConfig struct {
+	DoNotDeepCopyEnv bool
+	ImportCore       bool
+	DefineImport     bool
+	RateLimit        int
+	RateLimitPeriod  time.Duration
+	Env              envPkg.IEnv
+}
+
+func NewExecutor(cfg *ExecutorConfig) *Executor {
+	if cfg == nil {
+		return nil
+	}
+	e := &Executor{}
+	if cfg.DoNotDeepCopyEnv {
+		e.env = cfg.Env
+	} else {
+		e.env = cfg.Env.DeepCopy()
+	}
+	if cfg.ImportCore {
+		Import(e.env)
+	}
+	if cfg.DefineImport {
+		DefineImport(e.env)
+	}
+	e.pause = stateCh.NewStateCh(true)
+	e.stats = &stats{}
+	e.mapMutex = &sync.Mutex{}
+	if cfg.RateLimit > 0 {
+		e.rateLimit = utils.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
+	}
+	return e
 }
 
 func (e *Executor) Stop() {
@@ -89,7 +123,7 @@ func (e *Executor) GetEnv() envPkg.IEnv {
 }
 
 type Configs struct {
-	Env              *envPkg.Env
+	Env              envPkg.IEnv
 	RateLimit        int
 	RateLimitPeriod  time.Duration
 	DefineImport     bool
@@ -98,7 +132,7 @@ type Configs struct {
 }
 
 type VM struct {
-	env              *envPkg.Env
+	env              envPkg.IEnv
 	rateLimit        int
 	rateLimitPeriod  time.Duration
 	importCore       bool
@@ -107,7 +141,7 @@ type VM struct {
 }
 
 func New(configs *Configs) *VM {
-	var env *envPkg.Env
+	var env envPkg.IEnv
 	if configs == nil || configs.Env == nil {
 		env = envPkg.NewEnv()
 	} else {
@@ -176,25 +210,14 @@ func (v *VM) DefineType(k string, val any) error {
 }
 
 func (v *VM) executor() *Executor {
-	e := &Executor{}
-	if v.doNotDeepCopyEnv {
-		e.env = v.env
-	} else {
-		e.env = v.env.DeepCopy()
-	}
-	if v.importCore {
-		Import(e.env)
-	}
-	if v.defineImport {
-		DefineImport(e.env)
-	}
-	e.pause = stateCh.NewStateCh(true)
-	e.stats = &stats{}
-	e.mapMutex = &sync.Mutex{}
-	if v.rateLimit > 0 {
-		e.rateLimit = utils.NewRateLimitAnything(int64(v.rateLimit), v.rateLimitPeriod)
-	}
-	return e
+	return NewExecutor(&ExecutorConfig{
+		DoNotDeepCopyEnv: v.doNotDeepCopyEnv,
+		ImportCore:       v.importCore,
+		DefineImport:     v.defineImport,
+		RateLimit:        v.rateLimit,
+		RateLimitPeriod:  v.rateLimitPeriod,
+		Env:              v.env,
+	})
 }
 
 func (v *VM) validate(ctx context.Context, val any) error {
@@ -421,7 +444,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 		panic("???")
 	}
 	go func() {
-		rv, err := runSingleStmt(vmp, envCopy, stmt1)
+		rv, err := runSingleStmt(vmp, envCopy.(*envPkg.Env), stmt1)
 		rvCh <- Result{Value: rv, Error: err}
 	}()
 

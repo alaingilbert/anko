@@ -13,7 +13,7 @@ import (
 )
 
 // Import defines core language builtins - keys, range, println,  etc.
-func Import(env *env.Env) *env.Env {
+func Import(env env.IEnv) env.IEnv {
 	_ = env.Define("keys", keysFn)
 	_ = env.Define("range", rangeFn)
 	_ = env.Define("typeOf", typeOfFn)
@@ -105,7 +105,7 @@ func chanOfFn(t reflect.Type) reflect.Value {
 }
 
 // Returns either or not a value (variable) is defined in our env
-func definedFn(env *env.Env) func(s string) bool {
+func definedFn(env env.IEnv) func(s string) bool {
 	return func(s string) bool {
 		_, err := env.Get(s)
 		return err == nil
@@ -113,7 +113,7 @@ func definedFn(env *env.Env) func(s string) bool {
 }
 
 // Dynamically load a file and execute it, return the RV value
-func loadFn(env *env.Env) func(s string) any {
+func loadFn(env env.IEnv) func(s string) any {
 	return func(s string) any {
 		body, err := os.ReadFile(s)
 		if err != nil {

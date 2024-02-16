@@ -284,12 +284,12 @@ func makeValueDefault(t reflect.Type) (reflect.Value, error) {
 }
 
 // DefineImport defines the vm import command that will import packages and package types when wanted
-func DefineImport(e *envPkg.Env) {
+func DefineImport(e envPkg.IEnv) {
 	_ = e.Define("import", importFn(e))
 }
 
-func importFn(e *envPkg.Env) func(string) *envPkg.Env {
-	return func(source string) *envPkg.Env {
+func importFn(e envPkg.IEnv) func(string) envPkg.IEnv {
+	return func(source string) envPkg.IEnv {
 		methods, ok := packages.Packages.Get(source)
 		if !ok {
 			panic(fmt.Sprintf("package '%s' not found", source))

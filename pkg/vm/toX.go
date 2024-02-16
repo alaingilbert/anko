@@ -10,7 +10,7 @@ import (
 )
 
 // ImportToX adds all the toX to the env given
-func ImportToX(env *envPkg.Env) {
+func ImportToX(env envPkg.IEnv) {
 	_ = env.Define("toBool", toBoolFn)
 	_ = env.Define("toString", toStringFn)
 	_ = env.Define("toInt", toIntFn)

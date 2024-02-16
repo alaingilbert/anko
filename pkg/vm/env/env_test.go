@@ -3,6 +3,7 @@ package env
 import (
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"
 	"sync"
@@ -1272,4 +1273,10 @@ func TestDeepCopy(t *testing.T) {
 	if _, e := copyEnv.Get("b"); e == nil {
 		t.Errorf("copy parent was modified")
 	}
+}
+
+func TestGetParentValue(t *testing.T) {
+	env := NewEnv()
+	val, _ := env.Type("bool")
+	assert.Equal(t, "bool", val.String())
 }

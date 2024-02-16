@@ -3,6 +3,7 @@ package astutil
 import (
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/alaingilbert/anko/pkg/ast"
@@ -236,4 +237,38 @@ func TestBadCode(t *testing.T) {
 			t.Fatalf("code %q should fail", code)
 		}
 	}
+}
+
+func TestErrors(t *testing.T) {
+	type errStmtStruct struct{ ast.Stmt }
+	type errExprStruct struct{ ast.Expr }
+	errStmt := &errStmtStruct{}
+	errExpr := &errExprStruct{}
+	fn := func(any, int) error { return nil }
+	err := walkStmt(&ast.StmtsStmt{Stmts: []ast.Stmt{errStmt}}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.LetMapItemStmt{Lhss: []ast.Expr{errExpr}}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.LetMapItemStmt{Rhs: errExpr}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.LetsStmt{Lhss: []ast.Expr{errExpr}}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.LetsStmt{Rhss: []ast.Expr{errExpr}}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.IfStmt{If: errExpr}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.IfStmt{Then: errStmt}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.IfStmt{ElseIf: []ast.Stmt{errStmt}}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.IfStmt{Else: errStmt}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.TryStmt{Try: errStmt}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.TryStmt{Catch: errStmt}, fn, 0)
+	assert.Error(t, err)
+	err = walkStmt(&ast.TryStmt{Finally: errStmt}, fn, 0)
+	assert.Error(t, err)
+	err = walkExpr(&ast.ItemExpr{Value: errExpr}, fn, 0)
+	assert.Error(t, err)
 }

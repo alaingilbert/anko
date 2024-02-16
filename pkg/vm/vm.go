@@ -48,7 +48,7 @@ type Executor struct {
 	pause     *stateCh.StateCh
 	stats     *stats
 	rateLimit *ratelimitanything.RateLimitAnything
-	mapMutex  *sync.Mutex
+	mapMutex  *mapLocker
 	cancel    context.CancelFunc
 }
 
@@ -79,7 +79,7 @@ func NewExecutor(cfg *ExecutorConfig) *Executor {
 	}
 	e.pause = stateCh.NewStateCh(true)
 	e.stats = &stats{}
-	e.mapMutex = &sync.Mutex{}
+	e.mapMutex = &mapLocker{}
 	if cfg.RateLimit > 0 {
 		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
 	}
@@ -375,11 +375,16 @@ func (e *Executor) hasAST(ctx context.Context, stmt ast.Stmt, targets []any) (ok
 	return
 }
 
+type mapLocker struct{ sync.Mutex }
+
+func (m *mapLocker) Lock()   { m.Mutex.Lock() }
+func (m *mapLocker) Unlock() { m.Mutex.Unlock() }
+
 type vmParams struct {
 	ctx           context.Context
 	rvCh          chan Result
 	stats         *stats
-	mapMutex      *sync.Mutex
+	mapMutex      *mapLocker
 	pause         *stateCh.StateCh
 	rateLimit     *ratelimitanything.RateLimitAnything
 	validate      bool
@@ -390,7 +395,7 @@ type vmParams struct {
 func newVmParams(ctx context.Context,
 	rvCh chan Result,
 	stats *stats,
-	mapMutex *sync.Mutex,
+	mapMutex *mapLocker,
 	pause *stateCh.StateCh,
 	rateLimit *ratelimitanything.RateLimitAnything,
 	validate bool,

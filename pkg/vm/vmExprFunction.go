@@ -204,7 +204,7 @@ func callExpr(vmp *vmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 				rvs := callFn(args)
 				// call processCallReturnValues to process runVMFunction return values
 				// returns normal VM reflect.Value form
-				_, err := processCallReturnValues(rvs, true, false)
+				_, err := processCallReturnValues(rvs, checkIfRunVMFunction(f.Type()), false)
 				if err != nil {
 					vmp.rvCh <- Result{Value: nilValueL, Error: err}
 				}

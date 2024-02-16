@@ -345,19 +345,27 @@ func (e *Env) DefineValue(k string, v reflect.Value) error {
 
 // Delete deletes symbol in current scope.
 func (e *Env) Delete(k string) error {
+	return e.delete(k)
+}
+
+// DeleteGlobal deletes the first matching symbol found in current or parent scope.
+func (e *Env) DeleteGlobal(k string) error {
+	return e.deleteGlobal(k)
+}
+
+func (e *Env) deleteGlobal(k string) error {
+	if e.parent == nil || e.values.ContainsKey(k) {
+		return e.delete(k)
+	}
+	return e.parent.deleteGlobal(k)
+}
+
+func (e *Env) delete(k string) error {
 	if !isSymbolNameValid(k) {
 		return newUnknownSymbol(k)
 	}
 	e.values.Delete(k)
 	return nil
-}
-
-// DeleteGlobal deletes the first matching symbol found in current or parent scope.
-func (e *Env) DeleteGlobal(k string) error {
-	if e.parent == nil || e.values.ContainsKey(k) {
-		return e.Delete(k)
-	}
-	return e.parent.DeleteGlobal(k)
 }
 
 func (e *Env) getRootEnv() (root *Env) {

@@ -134,20 +134,20 @@ func convertMap(ctx context.Context, rv reflect.Value, rt reflect.Type) (reflect
 	// At some point there will be a MapRange that could be used.
 	// https://github.com/golang/go/issues/11104
 	// In the meantime using MapKeys, which will costly for large maps.
-	mapKeys := rv.MapKeys()
-	for i := 0; i < len(mapKeys); i++ {
-		newKey, err := convertReflectValueToType(ctx, mapKeys[i], rtKey)
+	it := rv.MapRange()
+	for it.Next() {
+		oldKey := it.Key()
+		oldVal := it.Value()
+		newKey, err := convertReflectValueToType(ctx, oldKey, rtKey)
 		if err != nil {
 			return rv, err
 		}
-		value := rv.MapIndex(mapKeys[i])
-		value, err = convertReflectValueToType(ctx, value, rtElem)
+		oldVal, err = convertReflectValueToType(ctx, oldVal, rtElem)
 		if err != nil {
 			return rv, err
 		}
-		newMap.SetMapIndex(newKey, value)
+		newMap.SetMapIndex(newKey, oldVal)
 	}
-
 	return newMap, nil
 }
 

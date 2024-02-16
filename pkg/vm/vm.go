@@ -150,6 +150,30 @@ func (v *VM) Executor() IExecutor {
 	return v.executor()
 }
 
+func (v *VM) Validate(ctx context.Context, val any) error {
+	return v.validate(ctx, val)
+}
+
+func (v *VM) Has(ctx context.Context, val any, targets []any) ([]bool, error) {
+	return v.has(ctx, val, targets)
+}
+
+func (v *VM) AddPackage(name string, methods map[string]any, types map[string]any) (*envPkg.Env, error) {
+	return v.env.AddPackage(name, methods, types)
+}
+
+func (v *VM) GetEnv() envPkg.IEnv {
+	return v.env
+}
+
+func (v *VM) Define(k string, val any) error {
+	return v.env.Define(k, val)
+}
+
+func (v *VM) DefineType(k string, val any) error {
+	return v.env.DefineType(k, val)
+}
+
 func (v *VM) executor() *Executor {
 	e := &Executor{}
 	if v.doNotDeepCopyEnv {
@@ -172,7 +196,7 @@ func (v *VM) executor() *Executor {
 	return e
 }
 
-func (v *VM) Validate(ctx context.Context, val any) error {
+func (v *VM) validate(ctx context.Context, val any) error {
 	ctx = defaultCtx(ctx)
 	e := v.executor()
 	switch vv := val.(type) {
@@ -185,7 +209,7 @@ func (v *VM) Validate(ctx context.Context, val any) error {
 	}
 }
 
-func (v *VM) Has(ctx context.Context, val any, targets []any) ([]bool, error) {
+func (v *VM) has(ctx context.Context, val any, targets []any) ([]bool, error) {
 	ctx = defaultCtx(ctx)
 	e := v.executor()
 	switch vv := val.(type) {
@@ -196,22 +220,6 @@ func (v *VM) Has(ctx context.Context, val any, targets []any) ([]bool, error) {
 	default:
 		return nil, ErrInvalidInput
 	}
-}
-
-func (v *VM) AddPackage(name string, methods map[string]any, types map[string]any) (*envPkg.Env, error) {
-	return v.env.AddPackage(name, methods, types)
-}
-
-func (v *VM) GetEnv() envPkg.IEnv {
-	return v.env
-}
-
-func (v *VM) Define(k string, val any) error {
-	return v.env.Define(k, val)
-}
-
-func (v *VM) DefineType(k string, val any) error {
-	return v.env.DefineType(k, val)
 }
 
 type Result struct {

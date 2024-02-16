@@ -24,7 +24,7 @@ type IVM interface {
 	DefineType(k string, v any) error
 	AddPackage(name string, methods map[string]any, types map[string]any) (*envPkg.Env, error)
 
-	GetEnv() *envPkg.Env
+	GetEnv() envPkg.IEnv
 }
 
 // Compile time checks to ensure type satisfies IVM interface
@@ -39,7 +39,7 @@ type IExecutor interface {
 	IsPaused() bool
 	GetCycles() int64
 
-	GetEnv() *envPkg.Env
+	GetEnv() envPkg.IEnv
 }
 
 var _ IExecutor = (*Executor)(nil)
@@ -83,7 +83,7 @@ func (e *Executor) GetCycles() int64 {
 	return atomic.LoadInt64(&e.stats.Cycles)
 }
 
-func (e *Executor) GetEnv() *envPkg.Env {
+func (e *Executor) GetEnv() envPkg.IEnv {
 	return e.env
 }
 
@@ -202,7 +202,7 @@ func (v *VM) AddPackage(name string, methods map[string]any, types map[string]an
 	return v.env.AddPackage(name, methods, types)
 }
 
-func (v *VM) GetEnv() *envPkg.Env {
+func (v *VM) GetEnv() envPkg.IEnv {
 	return v.env
 }
 

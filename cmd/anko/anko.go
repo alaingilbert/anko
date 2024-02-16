@@ -267,7 +267,7 @@ exit:
 	return OkExitCode
 }
 
-func rebuildCompleter(e *envPkg.Env) {
+func rebuildCompleter(e envPkg.IEnv) {
 	newArr := base
 	keys := make([]string, 0)
 	e.Values().Each(func(s string, value reflect.Value) {

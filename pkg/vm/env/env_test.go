@@ -1374,3 +1374,8 @@ func TestEnv_SetValue(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 1, env.Values().Len())
 }
+
+func TestEnv_Name(t *testing.T) {
+	env := NewEnv()
+	assert.Equal(t, "n/a", env.Name())
+}

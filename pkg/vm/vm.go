@@ -430,6 +430,13 @@ func (e *Executor) mainRunValidate(ctx context.Context, stmt ast.Stmt) error {
 func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	// We use rvCh because the script can start goroutines and crash in one of them.
 	// So we need a way to stop the vm from another thread...
+	stmt1 := stmt.(*ast.StmtsStmt)
+	if stmt1 == nil {
+		return nil, nilValue, ErrInvalidInput
+	}
+
+	runSingleStmtL := runSingleStmt
+
 	oks := make([]bool, len(targets))
 	has := make(map[any]bool)
 	validateLater := make(map[string]ast.Stmt)
@@ -439,15 +446,9 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	envCopy := e.env
 	rvCh := make(chan Result)
 	vmp := newVmParams(ctx, rvCh, e.stats, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
-	stmt1 := stmt.(*ast.StmtsStmt)
-	if stmt1 == nil {
-		return nil, nilValue, ErrInvalidInput
-	}
-
-	runSingleStmtL := runSingleStmt
 
 	go func() {
-		rv, err := runSingleStmtL(vmp, envCopy.(*envPkg.Env), stmt1)
+		rv, err := runSingleStmtL(vmp, envCopy, stmt1)
 		rvCh <- Result{Value: rv, Error: err}
 	}()
 

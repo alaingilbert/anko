@@ -443,8 +443,11 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	if stmt1 == nil {
 		return nil, nilValue, ErrInvalidInput
 	}
+
+	runSingleStmtL := runSingleStmt
+
 	go func() {
-		rv, err := runSingleStmt(vmp, envCopy.(*envPkg.Env), stmt1)
+		rv, err := runSingleStmtL(vmp, envCopy.(*envPkg.Env), stmt1)
 		rvCh <- Result{Value: rv, Error: err}
 	}()
 
@@ -456,7 +459,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	if vmp.validate {
 		for _, s := range vmp.validateLater {
 			newEnv := envCopy.NewEnv()
-			_, err := runSingleStmt(vmp, newEnv, s)
+			_, err := runSingleStmtL(vmp, newEnv, s)
 			if err != nil {
 				return nil, nilValue, err
 			}

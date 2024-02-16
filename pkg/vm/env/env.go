@@ -41,6 +41,38 @@ type CapturedFunc struct {
 	CallSlice bool
 }
 
+type IEnv interface {
+	AddPackage(name string, methods map[string]any, types map[string]any) (*Env, error)
+	Addr(k string) (reflect.Value, error)
+	Copy() *Env
+	DeepCopy() *Env
+	Defers() *mtx.Slice[CapturedFunc]
+	Define(k string, v any) error
+	DefineGlobal(k string, v any) error
+	DefineGlobalReflectType(k string, t reflect.Type) error
+	DefineGlobalType(k string, t any) error
+	DefineGlobalValue(k string, v reflect.Value) error
+	DefineReflectType(k string, t reflect.Type) error
+	DefineType(k string, t any) error
+	DefineValue(k string, v reflect.Value) error
+	Delete(k string) error
+	DeleteGlobal(k string) error
+	Get(k string) (any, error)
+	GetEnvFromPath(path []string) (*Env, error)
+	GetValue(k string) (reflect.Value, error)
+	Name() string
+	NewEnv() *Env
+	NewModule(symbol string) (*Env, error)
+	Set(k string, v any) error
+	SetValue(k string, v reflect.Value) error
+	String() string
+	Type(k string) (reflect.Type, error)
+	Types() *mtx.Map[string, reflect.Type]
+	Values() *mtx.Map[string, reflect.Value]
+}
+
+var _ IEnv = (*Env)(nil)
+
 // Env provides interface to run VM. This mean function scope and blocked-scope.
 // If stack goes to blocked-scope, it will make new Env.
 type Env struct {

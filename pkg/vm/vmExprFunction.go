@@ -325,7 +325,7 @@ func makeCallArgs(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 		if isRunVMFunction {
 			args = append(args, reflect.ValueOf(arg))
 		} else {
-			arg, err = convertReflectValueToType(vmp.ctx, arg, rt.In(indexInReal))
+			arg, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, arg, rt.In(indexInReal))
 			if err != nil {
 				err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
 				return []reflect.Value{}, false, err
@@ -363,7 +363,7 @@ func makeCallArgsFnNotVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type
 	if isRunVMFunction {
 		args = append(args, reflect.ValueOf(arg))
 	} else {
-		arg, err = convertReflectValueToType(vmp.ctx, arg, rt.In(indexInReal))
+		arg, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, arg, rt.In(indexInReal))
 		if err != nil {
 			err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
 			return []reflect.Value{}, false, err
@@ -394,7 +394,7 @@ func makeCallArgsFnNotVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, i
 		if isRunVMFunction {
 			args = append(args, reflect.ValueOf(arg.Index(indexSlice)))
 		} else {
-			arg, err = convertReflectValueToType(vmp.ctx, arg.Index(indexSlice), rt.In(indexInReal))
+			arg, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, arg.Index(indexSlice), rt.In(indexInReal))
 			if err != nil {
 				err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
 				return []reflect.Value{}, false, err
@@ -425,7 +425,7 @@ func makeCallArgsDoNotCare(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVM
 	if isRunVMFunction {
 		args = append(args, reflect.ValueOf(arg))
 	} else {
-		arg, err = convertReflectValueToType(vmp.ctx, arg, rt.In(indexInReal))
+		arg, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, arg, rt.In(indexInReal))
 		if err != nil {
 			err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
 			return []reflect.Value{}, false, err
@@ -445,7 +445,7 @@ func makeCallArgsFnVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type, n
 		if err != nil {
 			return []reflect.Value{}, false, newError(subExpr, err)
 		}
-		arg, err = convertReflectValueToType(vmp.ctx, arg, sliceType)
+		arg, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, arg, sliceType)
 		if err != nil {
 			err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
 			return []reflect.Value{}, false, err
@@ -470,7 +470,7 @@ func makeCallArgsFnVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, arg 
 	if err != nil {
 		return []reflect.Value{}, false, newError(subExpr, err)
 	}
-	arg, err = convertReflectValueToType(vmp.ctx, arg, sliceType)
+	arg, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, arg, sliceType)
 	if err != nil {
 		err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
 		return []reflect.Value{}, false, err

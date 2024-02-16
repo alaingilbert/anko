@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 // reflectValueSliceToInterfaceSlice convert from a slice of reflect.Value to a interface slice
@@ -29,7 +30,7 @@ func reflectValueSliceToInterfaceSlice(valueSlice []reflect.Value) reflect.Value
 
 // convertReflectValueToType trys to covert the reflect.Value to the reflect.Type
 // if it can not, it returns the original rv and an error
-func convertReflectValueToType(ctx context.Context, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
+func convertReflectValueToType(ctx context.Context, m sync.Locker, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	if !rv.IsValid() {
 		// if not valid return a valid reflect.Value of the reflect.Type
 		return makeValue(rt)
@@ -45,20 +46,20 @@ func convertReflectValueToType(ctx context.Context, rv reflect.Value, rt reflect
 	if (rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array) &&
 		(rt.Kind() == reflect.Slice || rt.Kind() == reflect.Array) {
 		// covert slice or array
-		return convertSliceOrArray(ctx, rv, rt)
+		return convertSliceOrArray(ctx, m, rv, rt)
 	}
 	if rv.Kind() == rt.Kind() {
 		// kind matches
 		switch rv.Kind() {
 		case reflect.Map:
 			// convert map
-			return convertMap(ctx, rv, rt)
+			return convertMap(ctx, m, rv, rt)
 		case reflect.Func:
 			// for runVMFunction conversions, call convertVMFunctionToType
-			return convertVMFunctionToType(ctx, rv, rt)
+			return convertVMFunctionToType(ctx, m, rv, rt)
 		case reflect.Pointer:
 			// both rv and rt are pointers, convert what they are pointing to
-			value, err := convertReflectValueToType(ctx, rv.Elem(), rt.Elem())
+			value, err := convertReflectValueToType(ctx, m, rv.Elem(), rt.Elem())
 			if err != nil {
 				return rv, err
 			}
@@ -78,7 +79,7 @@ func convertReflectValueToType(ctx context.Context, rv reflect.Value, rt reflect
 			return reflect.Zero(rt), nil
 		}
 		// try to convert the element
-		return convertReflectValueToType(ctx, rv.Elem(), rt)
+		return convertReflectValueToType(ctx, m, rv.Elem(), rt)
 	}
 
 	// TODO: need to handle the case where either rv or rt are a pointer but not both
@@ -87,7 +88,7 @@ func convertReflectValueToType(ctx context.Context, rv reflect.Value, rt reflect
 }
 
 // convertSliceOrArray trys to covert the reflect.Value slice or array to the slice or array reflect.Type
-func convertSliceOrArray(ctx context.Context, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
+func convertSliceOrArray(ctx context.Context, m sync.Locker, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	rtElemType := rt.Elem()
 
 	// try to covert elements to new slice/array
@@ -107,7 +108,7 @@ func convertSliceOrArray(ctx context.Context, rv reflect.Value, rt reflect.Type)
 			// is there a way for new slice/array not to be settable?
 			return rv, fmt.Errorf("invalid type conversion")
 		}
-		v, err = convertReflectValueToType(ctx, rv.Index(i), rtElemType)
+		v, err = convertReflectValueToType(ctx, m, rv.Index(i), rtElemType)
 		if err != nil {
 			return rv, err
 		}
@@ -119,7 +120,7 @@ func convertSliceOrArray(ctx context.Context, rv reflect.Value, rt reflect.Type)
 }
 
 // convertMap trys to covert the reflect.Value map to the map reflect.Type
-func convertMap(ctx context.Context, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
+func convertMap(ctx context.Context, m sync.Locker, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	rtKey := rt.Key()
 	rtElem := rt.Elem()
 
@@ -138,11 +139,11 @@ func convertMap(ctx context.Context, rv reflect.Value, rt reflect.Type) (reflect
 	for it.Next() {
 		oldKey := it.Key()
 		oldVal := it.Value()
-		newKey, err := convertReflectValueToType(ctx, oldKey, rtKey)
+		newKey, err := convertReflectValueToType(ctx, m, oldKey, rtKey)
 		if err != nil {
 			return rv, err
 		}
-		oldVal, err = convertReflectValueToType(ctx, oldVal, rtElem)
+		oldVal, err = convertReflectValueToType(ctx, m, oldVal, rtElem)
 		if err != nil {
 			return rv, err
 		}
@@ -154,7 +155,7 @@ func convertMap(ctx context.Context, rv reflect.Value, rt reflect.Type) (reflect
 // convertVMFunctionToType is for translating a runVMFunction into the correct type
 // so, it can be passed to a Go function argument with the correct static types
 // it creates a translation function runVMConvertFunction
-func convertVMFunctionToType(ctx context.Context, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
+func convertVMFunctionToType(ctx context.Context, m sync.Locker, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	// only translates runVMFunction type
 	if !checkIfRunVMFunction(rv.Type()) {
 		return rv, fmt.Errorf("invalid type conversion")
@@ -195,7 +196,7 @@ func convertVMFunctionToType(ctx context.Context, rv reflect.Value, rt reflect.T
 		if rtNumOut < 2 {
 			// Go function wants one return value
 			// will try to covert to reflect.Value correct type and return
-			rv, err = convertReflectValueToType(ctx, rv, rt.Out(0))
+			rv, err = convertReflectValueToType(ctx, m, rv, rt.Out(0))
 			if err != nil {
 				panic("function wants return type " + rt.Out(0).String() + " but received type " + rv.Type().String())
 			}
@@ -218,7 +219,7 @@ func convertVMFunctionToType(ctx context.Context, rv reflect.Value, rt reflect.T
 		// try to covert each value in slice to wanted type and put into a reflect.Value slice
 		rvs = make([]reflect.Value, rtNumOut)
 		for i := 0; i < rv.Len(); i++ {
-			rvs[i], err = convertReflectValueToType(ctx, rv.Index(i), rt.Out(i))
+			rvs[i], err = convertReflectValueToType(ctx, m, rv.Index(i), rt.Out(i))
 			if err != nil {
 				panic("function wants return type " + rt.Out(i).String() + " but received type " + rvs[i].Type().String())
 			}

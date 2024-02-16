@@ -247,7 +247,7 @@ func invokeArrayExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ArrayExpr) (reflect.
 		if err != nil {
 			return nilValue, err
 		}
-		rv, err = convertReflectValueToType(vmp.ctx, rv, valueType)
+		rv, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, valueType)
 		if err != nil {
 			return nilValue, newStringError(e, "cannot use type "+rv.Type().String()+" as type "+valueType.String()+" as slice value")
 		}
@@ -1042,7 +1042,7 @@ func invokeChanExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 					}
 				}
 			} else {
-				rhs, err = convertReflectValueToType(vmp.ctx, rhs, chanType)
+				rhs, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rhs, chanType)
 				if err != nil {
 					return nilValue, newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
 				}
@@ -1154,7 +1154,7 @@ func invokeDeleteExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DeleteExpr) (reflec
 			return nilValueL, nil
 		}
 		if whatExpr.Type().Key() != keyExpr.Type() {
-			keyExpr, err = convertReflectValueToType(vmp.ctx, keyExpr, whatExpr.Type().Key())
+			keyExpr, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, keyExpr, whatExpr.Type().Key())
 			if err != nil {
 				return nilValueL, newStringError(e, "cannot use type "+whatExpr.Type().Key().String()+" as type "+keyExpr.Type().String()+" in delete")
 			}

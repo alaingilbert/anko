@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"context"
 	"fmt"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"reflect"
@@ -58,7 +57,7 @@ func invokeLetMemberExpr(vmp *vmParams, env envPkg.IEnv, rv reflect.Value, lhs *
 
 	switch v.Kind() {
 	case reflect.Struct:
-		return invokeLetMemberStructExpr(vmp.ctx, v, rv, lhs)
+		return invokeLetMemberStructExpr(vmp, v, rv, lhs)
 	case reflect.Map:
 		return invokeLetMemberMapExpr(vmp, env, v, rv, lhs)
 	default:
@@ -66,7 +65,7 @@ func invokeLetMemberExpr(vmp *vmParams, env envPkg.IEnv, rv reflect.Value, lhs *
 	}
 }
 
-func invokeLetMemberStructExpr(ctx context.Context, v, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
+func invokeLetMemberStructExpr(vmp *vmParams, v, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	field, found := v.Type().FieldByName(lhs.Name)
 	if !found {
@@ -80,7 +79,7 @@ func invokeLetMemberStructExpr(ctx context.Context, v, rv reflect.Value, lhs *as
 		return nilValueL, newStringError(lhs, "struct member '"+lhs.Name+"' cannot be assigned")
 	}
 
-	rv, err = convertReflectValueToType(ctx, rv, v.Type())
+	rv, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, v.Type())
 	if err != nil {
 		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String()+" for struct")
 	}
@@ -92,7 +91,7 @@ func invokeLetMemberStructExpr(ctx context.Context, v, rv reflect.Value, lhs *as
 func invokeLetMemberMapExpr(vmp *vmParams, env envPkg.IEnv, v, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	if v.Type().Elem() != interfaceType && v.Type().Elem() != rv.Type() {
-		rv, err = convertReflectValueToType(vmp.ctx, rv, v.Type().Elem())
+		rv, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, v.Type().Elem())
 		if err != nil {
 			return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
 		}
@@ -200,7 +199,7 @@ func invokeLetItemMapExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.V
 	}()
 	var errr error
 	if v.Type().Key() != interfaceType && v.Type().Key() != index.Type() {
-		index, errr = convertReflectValueToType(vmp.ctx, index, v.Type().Key())
+		index, errr = convertReflectValueToType(vmp.ctx, vmp.mapMutex, index, v.Type().Key())
 		if errr != nil {
 			vv = nilValue
 			err = newStringError(lhs, "index type "+index.Type().String()+" cannot be used for map index type "+v.Type().Key().String())
@@ -208,7 +207,7 @@ func invokeLetItemMapExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.V
 		}
 	}
 	if v.Type().Elem() != interfaceType && v.Type().Elem() != rv.Type() {
-		rv, errr = convertReflectValueToType(vmp.ctx, rv, v.Type().Elem())
+		rv, errr = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, v.Type().Elem())
 		if errr != nil {
 			vv = nilValue
 			err = newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
@@ -229,7 +228,7 @@ func invokeLetItemMapExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.V
 
 func invokeLetItemStringExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
-	rv, err = convertReflectValueToType(vmp.ctx, rv, v.Type())
+	rv, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, v.Type())
 	if err != nil {
 		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String())
 	}

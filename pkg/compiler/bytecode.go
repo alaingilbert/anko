@@ -71,6 +71,8 @@ const (
 // String ...
 func (b bytecode) String() string {
 	switch b {
+	case StringExprBytecode:
+		return "StringExprBytecode"
 	case StmtsStmtBytecode:
 		return "StmtsStmtBytecode"
 	case ExprStmtBytecode:

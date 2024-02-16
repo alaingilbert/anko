@@ -1280,3 +1280,65 @@ func TestGetParentValue(t *testing.T) {
 	val, _ := env.Type("bool")
 	assert.Equal(t, "bool", val.String())
 }
+
+func TestEnv_String(t *testing.T) {
+	env := NewEnv()
+	_ = env.Define("a", 1)
+	_ = env.Define("b", func() {})
+	_, _ = env.NewModule("c")
+	_ = env.DefineType("t", "bool")
+	_ = env.DefineType("u", "bool")
+	assert.Equal(t, "No parent\na = 1\nb = func()\nc = module<c>\nt = string\nu = string\n", env.String())
+}
+
+func TestEnv_AddPackage(t *testing.T) {
+	env := NewEnv()
+	_, _ = env.AddPackage("a", map[string]any{"m1": 1}, map[string]any{"t1": "bool"})
+	val, _ := env.Get("a")
+	pack := val.(*Env)
+	assert.Equal(t, 1, pack.Values().Len())
+
+	_, err := env.AddPackage("a.b", map[string]any{}, map[string]any{})
+	assert.Error(t, err)
+
+	_, err = env.AddPackage("a", map[string]any{"in.valid": 1}, map[string]any{})
+	assert.Error(t, err)
+
+	_, err = env.AddPackage("a", map[string]any{}, map[string]any{"in.valid": "bool"})
+	assert.Error(t, err)
+}
+
+func TestEnv_NewModule(t *testing.T) {
+	env := NewEnv()
+	_, err := env.NewModule("in.valid")
+	assert.Error(t, err)
+}
+
+func TestEnv_GetEnvFromPath(t *testing.T) {
+	env := NewEnv()
+	_, err := env.GetEnvFromPath([]string{})
+	assert.NoError(t, err)
+	_, err = env.GetEnvFromPath([]string{"a"})
+	assert.Error(t, err)
+	_, _ = env.NewModule("a")
+	_, err = env.GetEnvFromPath([]string{"a"})
+	assert.NoError(t, err)
+}
+
+func TestEnv_DefineGlobalValue(t *testing.T) {
+	env := NewEnv()
+	newEnv1 := env.NewEnv()
+	_ = newEnv1.DefineGlobalValue("a", reflect.ValueOf(1))
+	val, _ := env.Get("a")
+	assert.Equal(t, 1, val)
+}
+
+func TestEnv_Types(t *testing.T) {
+	env := NewEnv()
+	assert.Equal(t, 0, env.Types().Len())
+}
+
+func TestEnv_Defers(t *testing.T) {
+	env := NewEnv()
+	assert.Equal(t, 0, env.Defers().Len())
+}

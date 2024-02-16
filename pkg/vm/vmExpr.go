@@ -932,49 +932,9 @@ func invokeMakeExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 			aLen = toInt(rv)
 		}
 		return reflect.MakeChan(t, aLen), nil
+	default:
+		return makeValue(t)
 	}
-	return makeValue(t)
-
-	//t, err := getTypeFromString(env, e.Type)
-	//if err != nil {
-	//	return nilValue, newError(e, err)
-	//}
-	//if t == nil {
-	//	return nilValue, newErrorf(expr, "type cannot be nil for make")
-	//}
-	//
-	//for i := 1; i < e.Dimensions; i++ {
-	//	t = reflect.SliceOf(t)
-	//}
-	//if e.Dimensions < 1 {
-	//	v, err := makeValue(t)
-	//	if err != nil {
-	//		return nilValue, newError(e, err)
-	//	}
-	//	return v, nil
-	//}
-	//
-	//var alen int
-	//if e.LenExpr != nil {
-	//	rv, err := invokeExpr(vmp, env, e.LenExpr)
-	//	if err != nil {
-	//		return nilValue, newError(e.LenExpr, err)
-	//	}
-	//	alen = toInt(rv)
-	//}
-	//
-	//var acap int
-	//if e.CapExpr != nil {
-	//	rv, err := invokeExpr(vmp, env, e.CapExpr)
-	//	if err != nil {
-	//		return nilValue, newError(e.CapExpr, err)
-	//	}
-	//	acap = toInt(rv)
-	//} else {
-	//	acap = alen
-	//}
-	//
-	//return reflect.MakeSlice(reflect.SliceOf(t), alen, acap), nil
 }
 
 func invokeMakeTypeExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MakeTypeExpr, expr ast.Expr) (reflect.Value, error) {

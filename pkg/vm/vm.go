@@ -44,15 +44,17 @@ type IExecutor interface {
 var _ IExecutor = (*Executor)(nil)
 
 type Executor struct {
-	env       envPkg.IEnv
-	pause     *stateCh.StateCh
-	stats     *stats
-	rateLimit *ratelimitanything.RateLimitAnything
-	mapMutex  *mapLocker
-	cancel    context.CancelFunc
+	env              envPkg.IEnv
+	pause            *stateCh.StateCh
+	stats            *stats
+	rateLimit        *ratelimitanything.RateLimitAnything
+	doNotProtectMaps bool
+	mapMutex         *mapLocker
+	cancel           context.CancelFunc
 }
 
 type ExecutorConfig struct {
+	DoNotProtectMaps bool
 	DoNotDeepCopyEnv bool
 	ImportCore       bool
 	DefineImport     bool
@@ -79,6 +81,7 @@ func NewExecutor(cfg *ExecutorConfig) *Executor {
 	}
 	e.pause = stateCh.NewStateCh(true)
 	e.stats = &stats{}
+	e.doNotProtectMaps = cfg.DoNotProtectMaps
 	e.mapMutex = &mapLocker{}
 	if cfg.RateLimit > 0 {
 		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
@@ -127,6 +130,7 @@ type Configs struct {
 	DefineImport     bool
 	ImportCore       bool
 	DoNotDeepCopyEnv bool
+	DoNotProtectMaps bool
 }
 
 type VM struct {
@@ -136,6 +140,7 @@ type VM struct {
 	importCore       bool
 	defineImport     bool
 	doNotDeepCopyEnv bool
+	doNotProtectMaps bool
 }
 
 func New(configs *Configs) *VM {
@@ -169,6 +174,10 @@ func New(configs *Configs) *VM {
 	if configs != nil {
 		doNotDeepCopyEnv = configs.DoNotDeepCopyEnv
 	}
+	var doNotProtectMaps bool
+	if configs != nil {
+		doNotProtectMaps = configs.DoNotProtectMaps
+	}
 	return &VM{
 		env:              env,
 		rateLimit:        rateLimit,
@@ -176,6 +185,7 @@ func New(configs *Configs) *VM {
 		importCore:       importCore,
 		defineImport:     defineImport,
 		doNotDeepCopyEnv: doNotDeepCopyEnv,
+		doNotProtectMaps: doNotProtectMaps,
 	}
 }
 
@@ -205,6 +215,7 @@ func (v *VM) DefineType(k string, val any) error {
 
 func (v *VM) executor() *Executor {
 	return NewExecutor(&ExecutorConfig{
+		DoNotProtectMaps: v.doNotProtectMaps,
 		DoNotDeepCopyEnv: v.doNotDeepCopyEnv,
 		ImportCore:       v.importCore,
 		DefineImport:     v.defineImport,
@@ -381,20 +392,22 @@ func (m *mapLocker) Lock()   { m.Mutex.Lock() }
 func (m *mapLocker) Unlock() { m.Mutex.Unlock() }
 
 type vmParams struct {
-	ctx           context.Context
-	rvCh          chan Result
-	stats         *stats
-	mapMutex      *mapLocker
-	pause         *stateCh.StateCh
-	rateLimit     *ratelimitanything.RateLimitAnything
-	validate      bool
-	has           map[any]bool
-	validateLater map[string]ast.Stmt
+	ctx              context.Context
+	rvCh             chan Result
+	stats            *stats
+	doNotProtectMaps bool
+	mapMutex         *mapLocker
+	pause            *stateCh.StateCh
+	rateLimit        *ratelimitanything.RateLimitAnything
+	validate         bool
+	has              map[any]bool
+	validateLater    map[string]ast.Stmt
 }
 
 func newVmParams(ctx context.Context,
 	rvCh chan Result,
 	stats *stats,
+	doNotProtectMaps bool,
 	mapMutex *mapLocker,
 	pause *stateCh.StateCh,
 	rateLimit *ratelimitanything.RateLimitAnything,
@@ -403,15 +416,16 @@ func newVmParams(ctx context.Context,
 	validateLater map[string]ast.Stmt,
 ) *vmParams {
 	return &vmParams{
-		ctx:           ctx,
-		rvCh:          rvCh,
-		stats:         stats,
-		mapMutex:      mapMutex,
-		pause:         pause,
-		rateLimit:     rateLimit,
-		validate:      validate,
-		has:           has,
-		validateLater: validateLater,
+		ctx:              ctx,
+		rvCh:             rvCh,
+		stats:            stats,
+		doNotProtectMaps: doNotProtectMaps,
+		mapMutex:         mapMutex,
+		pause:            pause,
+		rateLimit:        rateLimit,
+		validate:         validate,
+		has:              has,
+		validateLater:    validateLater,
 	}
 }
 
@@ -444,7 +458,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	}
 	envCopy := e.env
 	rvCh := make(chan Result)
-	vmp := newVmParams(ctx, rvCh, e.stats, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
+	vmp := newVmParams(ctx, rvCh, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
 
 	go func() {
 		rv, err := runSingleStmtL(vmp, envCopy, stmt1)

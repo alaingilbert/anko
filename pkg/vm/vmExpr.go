@@ -247,7 +247,7 @@ func invokeArrayExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ArrayExpr) (reflect.
 		if err != nil {
 			return nilValue, err
 		}
-		rv, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, valueType)
+		rv, err = convertReflectValueToType(vmp, rv, valueType)
 		if err != nil {
 			return nilValue, newStringError(e, "cannot use type "+rv.Type().String()+" as type "+valueType.String()+" as slice value")
 		}
@@ -333,7 +333,7 @@ func invokeDeferExprMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DerefExpr,
 		} else if v.Kind() == reflect.Map {
 			// From reflect MapIndex:
 			// It returns the zero Value if key is not found in the map or if v represents a nil map.
-			m = readMapIndex(v, reflect.ValueOf(ee.Name), vmp.mapMutex)
+			m = readMapIndex(v, reflect.ValueOf(ee.Name), vmp)
 		} else {
 			return nilValue, newStringError(e, fmt.Sprintf("invalid operation '%s'", ee.Name))
 		}
@@ -405,7 +405,7 @@ func invokeAddrExprMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.AddrExpr, e
 		} else if v.Kind() == reflect.Map {
 			// From reflect MapIndex:
 			// It returns the zero Value if key is not found in the map or if v represents a nil map.
-			m = readMapIndex(v, reflect.ValueOf(ee.Name), vmp.mapMutex)
+			m = readMapIndex(v, reflect.ValueOf(ee.Name), vmp)
 		} else {
 			return nilValue, newStringError(e, fmt.Sprintf("invalid operation '%s'", ee.Name))
 		}
@@ -1002,7 +1002,7 @@ func invokeChanExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 					}
 				}
 			} else {
-				rhs, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rhs, chanType)
+				rhs, err = convertReflectValueToType(vmp, rhs, chanType)
 				if err != nil {
 					return nilValue, newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
 				}
@@ -1114,12 +1114,12 @@ func invokeDeleteExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DeleteExpr) (reflec
 			return nilValueL, nil
 		}
 		if whatExpr.Type().Key() != keyExpr.Type() {
-			keyExpr, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, keyExpr, whatExpr.Type().Key())
+			keyExpr, err = convertReflectValueToType(vmp, keyExpr, whatExpr.Type().Key())
 			if err != nil {
 				return nilValueL, newStringError(e, "cannot use type "+whatExpr.Type().Key().String()+" as type "+keyExpr.Type().String()+" in delete")
 			}
 		}
-		setMapIndex(whatExpr, keyExpr, reflect.Value{}, vmp.mapMutex)
+		setMapIndex(whatExpr, keyExpr, reflect.Value{}, vmp)
 		return nilValueL, nil
 	default:
 		return nilValueL, newStringError(e, "first argument to delete cannot be type "+whatExpr.Kind().String())

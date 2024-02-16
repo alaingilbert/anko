@@ -79,7 +79,7 @@ func invokeLetMemberStructExpr(vmp *vmParams, v, rv reflect.Value, lhs *ast.Memb
 		return nilValueL, newStringError(lhs, "struct member '"+lhs.Name+"' cannot be assigned")
 	}
 
-	rv, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, v.Type())
+	rv, err = convertReflectValueToType(vmp, rv, v.Type())
 	if err != nil {
 		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String()+" for struct")
 	}
@@ -91,17 +91,17 @@ func invokeLetMemberStructExpr(vmp *vmParams, v, rv reflect.Value, lhs *ast.Memb
 func invokeLetMemberMapExpr(vmp *vmParams, env envPkg.IEnv, v, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	if v.Type().Elem() != interfaceType && v.Type().Elem() != rv.Type() {
-		rv, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, v.Type().Elem())
+		rv, err = convertReflectValueToType(vmp, rv, v.Type().Elem())
 		if err != nil {
 			return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
 		}
 	}
 	if v.IsNil() {
 		v = reflect.MakeMap(v.Type())
-		setMapIndex(v, reflect.ValueOf(lhs.Name), rv, vmp.mapMutex)
+		setMapIndex(v, reflect.ValueOf(lhs.Name), rv, vmp)
 		return invokeLetExpr(vmp, env, lhs.Expr, v)
 	}
-	setMapIndex(v, reflect.ValueOf(lhs.Name), rv, vmp.mapMutex)
+	setMapIndex(v, reflect.ValueOf(lhs.Name), rv, vmp)
 	return v, nil
 }
 
@@ -199,7 +199,7 @@ func invokeLetItemMapExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.V
 	}()
 	var errr error
 	if v.Type().Key() != interfaceType && v.Type().Key() != index.Type() {
-		index, errr = convertReflectValueToType(vmp.ctx, vmp.mapMutex, index, v.Type().Key())
+		index, errr = convertReflectValueToType(vmp, index, v.Type().Key())
 		if errr != nil {
 			vv = nilValue
 			err = newStringError(lhs, "index type "+index.Type().String()+" cannot be used for map index type "+v.Type().Key().String())
@@ -207,7 +207,7 @@ func invokeLetItemMapExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.V
 		}
 	}
 	if v.Type().Elem() != interfaceType && v.Type().Elem() != rv.Type() {
-		rv, errr = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, v.Type().Elem())
+		rv, errr = convertReflectValueToType(vmp, rv, v.Type().Elem())
 		if errr != nil {
 			vv = nilValue
 			err = newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
@@ -217,18 +217,18 @@ func invokeLetItemMapExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.V
 
 	if v.IsNil() {
 		v = reflect.MakeMap(v.Type())
-		setMapIndex(v, index, rv, vmp.mapMutex)
+		setMapIndex(v, index, rv, vmp)
 		vv, err = invokeLetExpr(vmp, env, lhs.Value, v)
 		return
 	}
-	setMapIndex(v, index, rv, vmp.mapMutex)
+	setMapIndex(v, index, rv, vmp)
 	vv = v
 	return
 }
 
 func invokeLetItemStringExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
-	rv, err = convertReflectValueToType(vmp.ctx, vmp.mapMutex, rv, v.Type())
+	rv, err = convertReflectValueToType(vmp, rv, v.Type())
 	if err != nil {
 		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String())
 	}

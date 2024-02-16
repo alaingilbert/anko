@@ -40,7 +40,6 @@ func main() {
 	var exitCode int
 	var appFlags AppFlags
 	args := parseFlags(&appFlags)
-	env := setupEnv(args)
 	if appFlags.Decompile {
 		sourceBytes, err := os.ReadFile(appFlags.File)
 		if err != nil {
@@ -53,9 +52,9 @@ func main() {
 		os.Exit(OkExitCode)
 	}
 	if appFlags.FlagExecute != "" || flag.NArg() > 0 {
-		exitCode = runNonInteractive(env, appFlags)
+		exitCode = runNonInteractive(args, appFlags)
 	} else {
-		exitCode = runInteractive(env)
+		exitCode = runInteractive(args)
 	}
 	os.Exit(exitCode)
 }
@@ -82,14 +81,6 @@ func parseFlags(appFlags *AppFlags) (args []string) {
 	return
 }
 
-func setupEnv(args []string) *envPkg.Env {
-	env := envPkg.NewEnv()
-	_ = env.Define("args", args)
-	vm.Import(env)
-	vm.DefineImport(env)
-	return env
-}
-
 const (
 	OkExitCode          = 0
 	ReadFileErrExitCode = 2
@@ -98,7 +89,7 @@ const (
 	ScannerErrExitCode  = 12
 )
 
-func runNonInteractive(env *envPkg.Env, appFlags AppFlags) int {
+func runNonInteractive(args []string, appFlags AppFlags) int {
 	var source string
 	if appFlags.FlagExecute != "" {
 		source = appFlags.FlagExecute
@@ -119,7 +110,9 @@ func runNonInteractive(env *envPkg.Env, appFlags AppFlags) int {
 		}
 	}
 
-	executor := vm.New(&vm.Configs{Env: env}).Executor()
+	v := vm.New(&vm.Configs{ImportCore: true, DefineImport: true})
+	_ = v.Define("args", args)
+	executor := v.Executor()
 	fileExt := filepath.Ext(appFlags.File)
 	var err error
 	if appFlags.FlagExecute != "" || fileExt == ankoFileExt {
@@ -173,7 +166,7 @@ func filterInput(r rune) (rune, bool) {
 	return r, true
 }
 
-func runInteractive(env *envPkg.Env) int {
+func runInteractive(args []string) int {
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:          "\033[31m»\033[0m ",
 		HistoryFile:     "/tmp/readline.tmp",
@@ -191,7 +184,9 @@ func runInteractive(env *envPkg.Env) int {
 	//l.CaptureExitSignal()
 
 	log.SetOutput(l.Stderr())
-	executor := vm.New(&vm.Configs{Env: env}).Executor()
+	v := vm.New(&vm.Configs{ImportCore: true, DefineImport: true})
+	_ = v.Define("args", args)
+	executor := v.Executor()
 	rebuildCompleter(executor.GetEnv())
 	for {
 		line, err := l.Readline()

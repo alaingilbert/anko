@@ -33,23 +33,22 @@ func TestMain(m *testing.M) {
 func TestRunNonInteractiveFile(t *testing.T) {
 	_, filename, _, _ := runtime.Caller(0)
 	testDir := filepath.Join(filepath.Dir(filename), "..", "..", "pkg", "vm", "testdata")
-	env := setupEnv(nil)
 
 	file := filepath.Join(testDir, "not-found.ank")
-	exitCode := runNonInteractive(env, AppFlags{File: file})
+	exitCode := runNonInteractive(nil, AppFlags{File: file})
 	if exitCode != ReadFileErrExitCode {
 		t.Fatalf("exitCode - received: %v - expected: %v", exitCode, 2)
 	}
 
 	file = filepath.Join(testDir, "broken.ank")
-	exitCode = runNonInteractive(env, AppFlags{File: file})
+	exitCode = runNonInteractive(nil, AppFlags{File: file})
 	os.Args = []string{os.Args[0]}
 	if exitCode != ExecuteErrExitCode {
 		t.Fatalf("exitCode - received: %v - expected: %v", exitCode, 4)
 	}
 
 	file = filepath.Join(testDir, "test.ank")
-	exitCode = runNonInteractive(env, AppFlags{File: file})
+	exitCode = runNonInteractive(nil, AppFlags{File: file})
 	os.Args = []string{os.Args[0]}
 	if exitCode != OkExitCode {
 		t.Fatalf("exitCode - received: %v - expected: %v", exitCode, 0)
@@ -59,16 +58,14 @@ func TestRunNonInteractiveFile(t *testing.T) {
 }
 
 func TestRunNonInteractiveExecute(t *testing.T) {
-	env := setupEnv(nil)
-
 	flagExecute := "1 + 1"
-	exitCode := runNonInteractive(env, AppFlags{FlagExecute: flagExecute})
+	exitCode := runNonInteractive(nil, AppFlags{FlagExecute: flagExecute})
 	if exitCode != 0 {
 		t.Fatalf("exitCode - received: %v - expected: %v", exitCode, 0)
 	}
 
 	flagExecute = "1++"
-	exitCode = runNonInteractive(env, AppFlags{FlagExecute: flagExecute})
+	exitCode = runNonInteractive(nil, AppFlags{FlagExecute: flagExecute})
 	if exitCode != 4 {
 		t.Fatalf("exitCode - received: %v - expected: %v", exitCode, 4)
 	}
@@ -157,7 +154,7 @@ func runInteractiveTests(t *testing.T, tests []testInteractive) {
 	go readerToChan(t, chanQuit, readerErr, chanErr)
 	go readerToChan(t, chanQuit, readerOut, chanOut)
 
-	go runInteractive(setupEnv(nil))
+	go runInteractive(nil)
 
 	time.Sleep(readTimeout)
 	// basic read and write to make sure things are working

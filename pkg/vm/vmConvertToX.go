@@ -137,13 +137,7 @@ func convertMap(ctx context.Context, m sync.Locker, rv reflect.Value, rt reflect
 	// In the meantime using MapKeys, which will costly for large maps.
 
 	it := rv.MapRange()
-	for {
-		m.Lock()
-		if !it.Next() {
-			m.Unlock()
-			break
-		}
-		m.Unlock()
+	for mapIterNext(it, m) {
 		oldKey := it.Key()
 		oldVal := it.Value()
 		newKey, err := convertReflectValueToType(ctx, m, oldKey, rtKey)

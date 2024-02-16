@@ -121,6 +121,12 @@ func setMapIndex(aMap, key, value reflect.Value, m sync.Locker) {
 	aMap.SetMapIndex(key, value)
 }
 
+func mapIterNext(mapIter *reflect.MapIter, m sync.Locker) bool {
+	m.Lock()
+	defer m.Unlock()
+	return mapIter.Next()
+}
+
 func getMapIndex(vmp *vmParams, key reflect.Value, aMap reflect.Value) reflect.Value {
 	nilValueL := nilValue
 	if !aMap.IsValid() || aMap.IsNil() {

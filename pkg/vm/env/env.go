@@ -354,10 +354,7 @@ func (e *Env) Delete(k string) error {
 
 // DeleteGlobal deletes the first matching symbol found in current or parent scope.
 func (e *Env) DeleteGlobal(k string) error {
-	if e.parent == nil {
-		return e.Delete(k)
-	}
-	if e.values.ContainsKey(k) {
+	if e.parent == nil || e.values.ContainsKey(k) {
 		return e.Delete(k)
 	}
 	return e.parent.DeleteGlobal(k)

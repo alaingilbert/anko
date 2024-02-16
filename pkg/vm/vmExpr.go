@@ -333,9 +333,7 @@ func invokeDeferExprMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DerefExpr,
 		} else if v.Kind() == reflect.Map {
 			// From reflect MapIndex:
 			// It returns the zero Value if key is not found in the map or if v represents a nil map.
-			vmp.mapMutex.Lock()
-			m = v.MapIndex(reflect.ValueOf(ee.Name))
-			vmp.mapMutex.Unlock()
+			m = readMapIndex(v, reflect.ValueOf(ee.Name), vmp.mapMutex)
 		} else {
 			return nilValue, newStringError(e, fmt.Sprintf("invalid operation '%s'", ee.Name))
 		}
@@ -407,9 +405,7 @@ func invokeAddrExprMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.AddrExpr, e
 		} else if v.Kind() == reflect.Map {
 			// From reflect MapIndex:
 			// It returns the zero Value if key is not found in the map or if v represents a nil map.
-			vmp.mapMutex.Lock()
-			m = v.MapIndex(reflect.ValueOf(ee.Name))
-			vmp.mapMutex.Unlock()
+			m = readMapIndex(v, reflect.ValueOf(ee.Name), vmp.mapMutex)
 		} else {
 			return nilValue, newStringError(e, fmt.Sprintf("invalid operation '%s'", ee.Name))
 		}
@@ -1163,9 +1159,7 @@ func invokeDeleteExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DeleteExpr) (reflec
 				return nilValueL, newStringError(e, "cannot use type "+whatExpr.Type().Key().String()+" as type "+keyExpr.Type().String()+" in delete")
 			}
 		}
-		vmp.mapMutex.Lock()
-		whatExpr.SetMapIndex(keyExpr, reflect.Value{})
-		vmp.mapMutex.Unlock()
+		setMapIndex(whatExpr, keyExpr, reflect.Value{}, vmp.mapMutex)
 		return nilValueL, nil
 	default:
 		return nilValueL, newStringError(e, "first argument to delete cannot be type "+whatExpr.Kind().String())

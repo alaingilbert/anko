@@ -6,6 +6,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/packages"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"reflect"
+	"sync"
 )
 
 func isNil(v reflect.Value) bool {
@@ -108,6 +109,18 @@ func equal(lhsV, rhsV reflect.Value) bool {
 	return reflect.DeepEqual(lhsV, rhsV)
 }
 
+func readMapIndex(aMap, key reflect.Value, m sync.Locker) (out reflect.Value) {
+	m.Lock()
+	defer m.Unlock()
+	return aMap.MapIndex(key)
+}
+
+func setMapIndex(aMap, key, value reflect.Value, m sync.Locker) {
+	m.Lock()
+	defer m.Unlock()
+	aMap.SetMapIndex(key, value)
+}
+
 func getMapIndex(vmp *vmParams, key reflect.Value, aMap reflect.Value) reflect.Value {
 	nilValueL := nilValue
 	if !aMap.IsValid() || aMap.IsNil() {
@@ -126,9 +139,7 @@ func getMapIndex(vmp *vmParams, key reflect.Value, aMap reflect.Value) reflect.V
 
 	// From reflect MapIndex:
 	// It returns the zero Value if key is not found in the map or if v represents a nil map.
-	vmp.mapMutex.Lock()
-	defer vmp.mapMutex.Unlock()
-	value := aMap.MapIndex(key)
+	value := readMapIndex(aMap, key, vmp.mapMutex)
 
 	if value.IsValid() && value.CanInterface() && aMap.Type().Elem() == interfaceType && !value.IsNil() {
 		value = reflect.ValueOf(value.Interface())

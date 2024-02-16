@@ -99,14 +99,10 @@ func invokeLetMemberMapExpr(vmp *vmParams, env envPkg.IEnv, v, rv reflect.Value,
 	}
 	if v.IsNil() {
 		v = reflect.MakeMap(v.Type())
-		vmp.mapMutex.Lock()
-		defer vmp.mapMutex.Unlock()
-		v.SetMapIndex(reflect.ValueOf(lhs.Name), rv)
+		setMapIndex(v, reflect.ValueOf(lhs.Name), rv, vmp.mapMutex)
 		return invokeLetExpr(vmp, env, lhs.Expr, v)
 	}
-	vmp.mapMutex.Lock()
-	defer vmp.mapMutex.Unlock()
-	v.SetMapIndex(reflect.ValueOf(lhs.Name), rv)
+	setMapIndex(v, reflect.ValueOf(lhs.Name), rv, vmp.mapMutex)
 	return v, nil
 }
 
@@ -222,15 +218,11 @@ func invokeLetItemMapExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.V
 
 	if v.IsNil() {
 		v = reflect.MakeMap(v.Type())
-		vmp.mapMutex.Lock()
-		defer vmp.mapMutex.Unlock()
-		v.SetMapIndex(index, rv)
+		setMapIndex(v, index, rv, vmp.mapMutex)
 		vv, err = invokeLetExpr(vmp, env, lhs.Value, v)
 		return
 	}
-	vmp.mapMutex.Lock()
-	defer vmp.mapMutex.Unlock()
-	v.SetMapIndex(index, rv)
+	setMapIndex(v, index, rv, vmp.mapMutex)
 	vv = v
 	return
 }

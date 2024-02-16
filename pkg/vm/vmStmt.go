@@ -372,9 +372,7 @@ func runForStmtMap(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 		}
 		_ = newenv.DefineValue(stmt.Vars[0], keys[i])
 		if len(stmt.Vars) > 1 {
-			vmp.mapMutex.Lock()
-			m := val.MapIndex(keys[i])
-			vmp.mapMutex.Unlock()
+			m := readMapIndex(val, keys[i], vmp.mapMutex)
 			_ = newenv.DefineValue(stmt.Vars[1], m)
 		}
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)

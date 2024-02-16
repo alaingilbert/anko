@@ -24,7 +24,7 @@ func TestSetError(t *testing.T) {
 func TestAddrError(t *testing.T) {
 	envParent := NewEnv()
 	envChild := envParent.NewEnv()
-	_, err := envChild.Addr("a")
+	_, err := envChild.addr("a")
 	if err == nil {
 		t.Errorf("Addr error - received: %v - expected: %v", err, fmt.Errorf("undefined symbol 'a'"))
 	} else if err.Error() != "undefined symbol 'a'" {
@@ -167,7 +167,7 @@ func TestDefineAndGet(t *testing.T) {
 		envParent := NewEnv()
 		envChild := envParent.NewEnv()
 
-		err = envChild.DefineGlobal(test.varName, test.varDefineValue)
+		err = envChild.defineGlobal(test.varName, test.varDefineValue)
 		if err != nil && test.defineError != nil {
 			if err.Error() != test.defineError.Error() {
 				t.Errorf("DefineAndGet DefineGlobal %v - Define error - received: %v - expected: %v", test.testInfo, err, test.defineError)
@@ -570,7 +570,7 @@ func TestDefineType(t *testing.T) {
 		envParent := NewEnv()
 		envChild := envParent.NewEnv()
 
-		err = envChild.DefineGlobalType(test.varName, test.varDefineValue)
+		err = envChild.defineGlobalType(test.varName, test.varDefineValue)
 		if err != nil && test.defineError != nil {
 			if err.Error() != test.defineError.Error() {
 				t.Errorf("DefineGlobalType %v - Define error - received: %v - expected: %v", test.testInfo, err, test.defineError)
@@ -623,7 +623,7 @@ func TestDefineType(t *testing.T) {
 		envParent := NewEnv()
 		envChild := envParent.NewEnv()
 
-		err = envChild.DefineGlobalReflectType(test.varName, reflect.TypeOf(test.varDefineValue))
+		err = envChild.defineGlobalReflectType(test.varName, reflect.TypeOf(test.varDefineValue))
 		if err != nil && test.defineError != nil {
 			if err.Error() != test.defineError.Error() {
 				t.Errorf("DefineGlobalReflectType %v - Define error - received: %v - expected: %v", test.testInfo, err, test.defineError)
@@ -753,7 +753,7 @@ func TestAddr(t *testing.T) {
 			continue
 		}
 
-		_, err = envChild.Addr(test.varName)
+		_, err = envChild.addr(test.varName)
 		if err != nil && test.addrError != nil {
 			if err.Error() != test.addrError.Error() {
 				t.Errorf("TestAddr %v - Addr error - received: %v - expected: %v", test.testInfo, err, test.addrError)
@@ -1220,7 +1220,7 @@ func TestCopy(t *testing.T) {
 	_ = parent.Define("b", "a")
 	env := parent.NewEnv()
 	_ = env.Define("a", "a")
-	copyEnv := env.Copy()
+	copyEnv := env.copy()
 	if v, e := copyEnv.Get("a"); e != nil || v != "a" {
 		t.Errorf("copy doesn't retain original values")
 	}
@@ -1357,10 +1357,10 @@ func TestEnv_DefineValue(t *testing.T) {
 
 func TestEnv_Set(t *testing.T) {
 	env := NewEnv()
-	err := env.Set("a", reflect.ValueOf("a"))
+	err := env.set("a", reflect.ValueOf("a"))
 	assert.Error(t, err)
 	_ = env.define("a", "a")
-	err = env.Set("a", reflect.ValueOf("a"))
+	err = env.set("a", reflect.ValueOf("a"))
 	assert.NoError(t, err)
 	assert.Equal(t, 1, env.Values().Len())
 }

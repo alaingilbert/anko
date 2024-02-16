@@ -43,14 +43,9 @@ type CapturedFunc struct {
 
 type IEnv interface {
 	AddPackage(name string, methods map[string]any, types map[string]any) (*Env, error)
-	Addr(k string) (reflect.Value, error)
-	Copy() *Env
 	DeepCopy() *Env
 	Defers() *mtx.Slice[CapturedFunc]
 	Define(k string, v any) error
-	DefineGlobal(k string, v any) error
-	DefineGlobalReflectType(k string, t reflect.Type) error
-	DefineGlobalType(k string, t any) error
 	DefineGlobalValue(k string, v reflect.Value) error
 	DefineReflectType(k string, t reflect.Type) error
 	DefineType(k string, t any) error
@@ -63,7 +58,6 @@ type IEnv interface {
 	Name() string
 	NewEnv() *Env
 	NewModule(symbol string) (*Env, error)
-	Set(k string, v any) error
 	SetValue(k string, v reflect.Value) error
 	String() string
 	Type(k string) (reflect.Type, error)
@@ -114,7 +108,7 @@ func (e *Env) String() string { return e.string() }
 
 // Addr returns pointer value which specified symbol. It goes to upper scope until
 // found or returns error.
-func (e *Env) Addr(k string) (reflect.Value, error) { return e.addr(k) }
+//func (e *Env) Addr(k string) (reflect.Value, error) { return e.addr(k) }
 
 // Type returns type which specified symbol. It goes to upper scope until
 // found or returns error.
@@ -126,23 +120,23 @@ func (e *Env) Get(k string) (any, error) { return e.get(k) }
 
 func (e *Env) GetValue(k string) (reflect.Value, error) { return e.getValue(k) }
 
-func (e *Env) Set(k string, v any) error { return e.set(k, v) }
+//func (e *Env) Set(k string, v any) error { return e.set(k, v) }
 
 func (e *Env) SetValue(k string, v reflect.Value) error { return e.setValue(k, v) }
 
 // DefineGlobal defines symbol in global scope.
-func (e *Env) DefineGlobal(k string, v any) error { return e.defineGlobal(k, v) }
+//func (e *Env) DefineGlobal(k string, v any) error { return e.defineGlobal(k, v) }
 
 // DefineGlobalValue defines symbol in global scope.
 func (e *Env) DefineGlobalValue(k string, v reflect.Value) error { return e.defineGlobalValue(k, v) }
 
 // DefineGlobalType defines type in global scope.
-func (e *Env) DefineGlobalType(k string, t any) error { return e.defineGlobalType(k, t) }
+//func (e *Env) DefineGlobalType(k string, t any) error { return e.defineGlobalType(k, t) }
 
 // DefineGlobalReflectType defines type in global scope.
-func (e *Env) DefineGlobalReflectType(k string, t reflect.Type) error {
-	return e.defineGlobalReflectType(k, t)
-}
+//func (e *Env) DefineGlobalReflectType(k string, t reflect.Type) error {
+//	return e.defineGlobalReflectType(k, t)
+//}
 
 // Define defines symbol in current scope.
 func (e *Env) Define(k string, v any) error { return e.define(k, v) }
@@ -163,7 +157,7 @@ func (e *Env) DefineType(k string, t any) error { return e.defineType(k, t) }
 func (e *Env) DefineReflectType(k string, t reflect.Type) error { return e.defineReflectType(k, t) }
 
 // Copy the state of the virtual machine environment
-func (e *Env) Copy() *Env { return e.copy() }
+//func (e *Env) Copy() *Env { return e.copy() }
 
 // DeepCopy copy recursively the state of the virtual machine environment
 func (e *Env) DeepCopy() *Env { return e.deepCopy() }
@@ -303,7 +297,7 @@ func (e *Env) string() string {
 		if value.Kind() == reflect.Ptr {
 			if value.IsValid() && value.CanInterface() {
 				if ee, ok := value.Interface().(*Env); ok {
-					valuesArr = append(valuesArr, []string{symbol, ee.Name()})
+					valuesArr = append(valuesArr, []string{symbol, ee.getName()})
 					return
 				}
 			}
@@ -384,7 +378,7 @@ func (e *Env) getValue(k string) (reflect.Value, error) {
 	if e.parent == nil {
 		return nilValue, fmt.Errorf("undefined symbol '%s'", k)
 	}
-	return e.parent.GetValue(k)
+	return e.parent.getValue(k)
 }
 
 // Set modifies value which specified as symbol. It goes to upper scope until

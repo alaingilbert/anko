@@ -441,7 +441,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	vmp := newVmParams(ctx, rvCh, e.stats, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
 	stmt1 := stmt.(*ast.StmtsStmt)
 	if stmt1 == nil {
-		panic("???")
+		return nil, nilValue, ErrInvalidInput
 	}
 	go func() {
 		rv, err := runSingleStmt(vmp, envCopy.(*envPkg.Env), stmt1)

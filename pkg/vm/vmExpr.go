@@ -1148,10 +1148,7 @@ func invokeDeleteExpr(vmp *vmParams, env *envPkg.Env, e *ast.DeleteExpr) (reflec
 
 	switch whatExpr.Kind() {
 	case reflect.String:
-		if e.KeyExpr == nil {
-			return nilValueL, env.Delete(whatExpr.String())
-		}
-		if keyExpr.Kind() == reflect.Bool && keyExpr.Bool() {
+		if e.KeyExpr != nil && keyExpr.Kind() == reflect.Bool && keyExpr.Bool() {
 			return nilValueL, env.DeleteGlobal(whatExpr.String())
 		}
 		return nilValueL, env.Delete(whatExpr.String())

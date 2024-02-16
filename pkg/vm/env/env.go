@@ -12,28 +12,6 @@ import (
 	"strings"
 )
 
-// Env provides interface to run VM. This mean function scope and blocked-scope.
-// If stack goes to blocked-scope, it will make new Env.
-type Env struct {
-	parent *Env
-	name   *mtx.Mtx[string]
-	values *mtx.Map[string, reflect.Value]
-	types  *mtx.Map[string, reflect.Type]
-	defers *mtx.Slice[CapturedFunc]
-}
-
-func (e *Env) Values() *mtx.Map[string, reflect.Value] {
-	return e.values
-}
-
-func (e *Env) Types() *mtx.Map[string, reflect.Type] {
-	return e.types
-}
-
-func (e *Env) Defers() *mtx.Slice[CapturedFunc] {
-	return e.defers
-}
-
 var basicTypes = map[string]reflect.Type{
 	"interface": reflect.ValueOf([]any{int64(1)}).Index(0).Type(),
 	"any":       reflect.ValueOf([]any{int64(1)}).Index(0).Type(),
@@ -63,6 +41,131 @@ type CapturedFunc struct {
 	CallSlice bool
 }
 
+// Env provides interface to run VM. This mean function scope and blocked-scope.
+// If stack goes to blocked-scope, it will make new Env.
+type Env struct {
+	parent *Env
+	name   *mtx.Mtx[string]
+	values *mtx.Map[string, reflect.Value]
+	types  *mtx.Map[string, reflect.Type]
+	defers *mtx.Slice[CapturedFunc]
+}
+
+// NewEnv creates new global scope.
+func NewEnv() *Env { return newEnv() }
+
+// NewEnv creates new child scope.
+func (e *Env) NewEnv() *Env { return e.newEnv() }
+
+// NewModule creates new child scope and define it as a symbol.
+// This is a shortcut for calling e.NewEnv then Define that new Env.
+func (e *Env) NewModule(symbol string) (*Env, error) { return e.newModule(symbol) }
+
+func (e *Env) Values() *mtx.Map[string, reflect.Value] { return e.values }
+
+func (e *Env) Types() *mtx.Map[string, reflect.Type] { return e.types }
+
+func (e *Env) Defers() *mtx.Slice[CapturedFunc] { return e.defers }
+
+// GetEnvFromPath returns Env from path
+func (e *Env) GetEnvFromPath(path []string) (*Env, error) { return e.getEnvFromPath(path) }
+
+// AddPackage creates a new env with a name that has methods and types in it. Created under the parent env
+func (e *Env) AddPackage(name string, methods map[string]any, types map[string]any) (*Env, error) {
+	return e.addPackage(name, methods, types)
+}
+
+func (e *Env) Name() string { return e.getName() }
+
+// String returns string of values and types in current scope.
+func (e *Env) String() string { return e.string() }
+
+// Addr returns pointer value which specified symbol. It goes to upper scope until
+// found or returns error.
+func (e *Env) Addr(k string) (reflect.Value, error) { return e.addr(k) }
+
+// Type returns type which specified symbol. It goes to upper scope until
+// found or returns error.
+func (e *Env) Type(k string) (reflect.Type, error) { return e.typ(k) }
+
+// Get returns value which specified symbol. It goes to upper scope until
+// found or returns error.
+func (e *Env) Get(k string) (any, error) { return e.get(k) }
+
+func (e *Env) GetValue(k string) (reflect.Value, error) { return e.getValue(k) }
+
+func (e *Env) SetValue(k string, v reflect.Value) error { return e.setValue(k, v) }
+
+// DefineGlobal defines symbol in global scope.
+func (e *Env) DefineGlobal(k string, v any) error { return e.defineGlobal(k, v) }
+
+// DefineGlobalValue defines symbol in global scope.
+func (e *Env) DefineGlobalValue(k string, v reflect.Value) error { return e.defineGlobalValue(k, v) }
+
+// DefineGlobalType defines type in global scope.
+func (e *Env) DefineGlobalType(k string, t any) error { return e.defineGlobalType(k, t) }
+
+// DefineGlobalReflectType defines type in global scope.
+func (e *Env) DefineGlobalReflectType(k string, t reflect.Type) error {
+	return e.defineGlobalReflectType(k, t)
+}
+
+// Define defines symbol in current scope.
+func (e *Env) Define(k string, v any) error { return e.define(k, v) }
+
+// DefineValue defines symbol in current scope.
+func (e *Env) DefineValue(k string, v reflect.Value) error { return e.defineValue(k, v) }
+
+// Delete deletes symbol in current scope.
+func (e *Env) Delete(k string) error { return e.delete(k) }
+
+// DeleteGlobal deletes the first matching symbol found in current or parent scope.
+func (e *Env) DeleteGlobal(k string) error { return e.deleteGlobal(k) }
+
+// DefineType defines type in current scope.
+func (e *Env) DefineType(k string, t any) error { return e.defineType(k, t) }
+
+// DefineReflectType defines type in current scope.
+func (e *Env) DefineReflectType(k string, t reflect.Type) error { return e.defineReflectType(k, t) }
+
+// Copy the state of the virtual machine environment
+func (e *Env) Copy() *Env { return e.copy() }
+
+// DeepCopy copy recursively the state of the virtual machine environment
+func (e *Env) DeepCopy() *Env { return e.deepCopy() }
+
+//-----------------------------------------------------------------------------
+
+func (e *Env) defineGlobal(k string, v any) error {
+	return e.getRootEnv().define(k, v)
+}
+
+func (e *Env) defineGlobalValue(k string, v reflect.Value) error {
+	return e.getRootEnv().defineValue(k, v)
+}
+
+func (e *Env) defineGlobalType(k string, t any) error {
+	return e.getRootEnv().DefineType(k, t)
+}
+
+func (e *Env) defineGlobalReflectType(k string, t reflect.Type) error {
+	return e.getRootEnv().defineReflectType(k, t)
+}
+
+func isSymbolNameValid(name string) bool {
+	return !strings.Contains(name, ".")
+}
+
+type ErrUnknownSymbol struct{ name string }
+
+func (e *ErrUnknownSymbol) Error() string {
+	return fmt.Sprintf("unknown symbol '%s'", e.name)
+}
+
+func newUnknownSymbol(name string) *ErrUnknownSymbol {
+	return &ErrUnknownSymbol{name: name}
+}
+
 func newEnv() *Env {
 	return &Env{
 		parent: nil,
@@ -73,22 +176,13 @@ func newEnv() *Env {
 	}
 }
 
-// NewEnv creates new global scope.
-func NewEnv() *Env {
-	env := newEnv()
-	return env
-}
-
-// NewEnv creates new child scope.
-func (e *Env) NewEnv() *Env {
+func (e *Env) newEnv() *Env {
 	env := newEnv()
 	env.parent = e
 	return env
 }
 
-// NewModule creates new child scope and define it as a symbol.
-// This is a shortcut for calling e.NewEnv then Define that new Env.
-func (e *Env) NewModule(symbol string) (*Env, error) {
+func (e *Env) newModule(symbol string) (*Env, error) {
 	module := e.NewEnv()
 	if err := e.define(symbol, module); err != nil {
 		return nil, err
@@ -122,8 +216,7 @@ func (e *Env) findModule(name string) *Env {
 	}
 }
 
-// GetEnvFromPath returns Env from path
-func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
+func (e *Env) getEnvFromPath(path []string) (*Env, error) {
 	out := e
 	if len(path) < 1 {
 		return out, nil
@@ -138,24 +231,8 @@ func (e *Env) GetEnvFromPath(path []string) (*Env, error) {
 	return out, nil
 }
 
-func isSymbolNameValid(name string) bool {
-	return !strings.Contains(name, ".")
-}
-
-type ErrUnknownSymbol struct {
-	name string
-}
-
-func (e *ErrUnknownSymbol) Error() string {
-	return fmt.Sprintf("unknown symbol '%s'", e.name)
-}
-
-func newUnknownSymbol(name string) *ErrUnknownSymbol {
-	return &ErrUnknownSymbol{name: name}
-}
-
 // AddPackage creates a new env with a name that has methods and types in it. Created under the parent env
-func (e *Env) AddPackage(name string, methods map[string]any, types map[string]any) (*Env, error) {
+func (e *Env) addPackage(name string, methods map[string]any, types map[string]any) (*Env, error) {
 	if !isSymbolNameValid(name) {
 		return nil, newUnknownSymbol(name)
 	}
@@ -180,13 +257,12 @@ func (e *Env) AddPackage(name string, methods map[string]any, types map[string]a
 	return pack, nil
 }
 
-func (e *Env) Name() string {
+func (e *Env) getName() string {
 	envName := e.name.Load()
 	return utils.TernaryZ(envName, fmt.Sprintf("module<%s>", envName), "n/a")
 }
 
-// String returns string of values and types in current scope.
-func (e *Env) String() string {
+func (e *Env) string() string {
 	replaceInterface := func(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
 	valuesArr := make([][]string, 0)
 	e.values.Each(func(symbol string, value reflect.Value) {
@@ -233,9 +309,7 @@ func (e *Env) String() string {
 var nilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
 var nilType = reflect.TypeOf(nil)
 
-// Addr returns pointer value which specified symbol. It goes to upper scope until
-// found or returns error.
-func (e *Env) Addr(k string) (reflect.Value, error) {
+func (e *Env) addr(k string) (reflect.Value, error) {
 	if v, ok := e.values.Get(k); ok {
 		if v.CanAddr() {
 			return v.Addr(), nil
@@ -245,12 +319,10 @@ func (e *Env) Addr(k string) (reflect.Value, error) {
 	if e.parent == nil {
 		return nilValue, fmt.Errorf("undefined symbol '%s'", k)
 	}
-	return e.parent.Addr(k)
+	return e.parent.addr(k)
 }
 
-// Type returns type which specified symbol. It goes to upper scope until
-// found or returns error.
-func (e *Env) Type(k string) (reflect.Type, error) {
+func (e *Env) typ(k string) (reflect.Type, error) {
 	if v, ok := e.types.Get(k); ok {
 		return v, nil
 	}
@@ -260,12 +332,10 @@ func (e *Env) Type(k string) (reflect.Type, error) {
 		}
 		return nilType, fmt.Errorf("undefined type '%s'", k)
 	}
-	return e.parent.Type(k)
+	return e.parent.typ(k)
 }
 
-// Get returns value which specified symbol. It goes to upper scope until
-// found or returns error.
-func (e *Env) Get(k string) (any, error) {
+func (e *Env) get(k string) (any, error) {
 	rv, err := e.GetValue(k)
 	if !rv.IsValid() || !rv.CanInterface() {
 		return nil, err
@@ -273,7 +343,7 @@ func (e *Env) Get(k string) (any, error) {
 	return rv.Interface(), err
 }
 
-func (e *Env) GetValue(k string) (reflect.Value, error) {
+func (e *Env) getValue(k string) (reflect.Value, error) {
 	if v, ok := e.values.Get(k); ok {
 		return v, nil
 	}
@@ -290,44 +360,18 @@ func (e *Env) set(k string, v any) error {
 	if v != nil {
 		val = reflect.ValueOf(v)
 	}
-	return e.SetValue(k, val)
+	return e.setValue(k, val)
 }
 
-func (e *Env) SetValue(k string, v reflect.Value) error {
-	_, ok := e.values.Get(k)
-	if ok {
+func (e *Env) setValue(k string, v reflect.Value) error {
+	if e.values.ContainsKey(k) {
 		e.values.Insert(k, v)
 		return nil
 	}
 	if e.parent == nil {
 		return newUnknownSymbol(k)
 	}
-	return e.parent.SetValue(k, v)
-}
-
-// DefineGlobal defines symbol in global scope.
-func (e *Env) DefineGlobal(k string, v any) error {
-	return e.getRootEnv().define(k, v)
-}
-
-// DefineGlobalValue defines symbol in global scope.
-func (e *Env) DefineGlobalValue(k string, v reflect.Value) error {
-	return e.getRootEnv().defineValue(k, v)
-}
-
-// DefineGlobalType defines type in global scope.
-func (e *Env) DefineGlobalType(k string, t any) error {
-	return e.getRootEnv().DefineType(k, t)
-}
-
-// DefineGlobalReflectType defines type in global scope.
-func (e *Env) DefineGlobalReflectType(k string, t reflect.Type) error {
-	return e.getRootEnv().DefineReflectType(k, t)
-}
-
-// Define defines symbol in current scope.
-func (e *Env) Define(k string, v any) error {
-	return e.define(k, v)
+	return e.parent.setValue(k, v)
 }
 
 func (e *Env) define(k string, v any) error {
@@ -338,27 +382,12 @@ func (e *Env) define(k string, v any) error {
 	return e.defineValue(k, val)
 }
 
-// DefineValue defines symbol in current scope.
-func (e *Env) DefineValue(k string, v reflect.Value) error {
-	return e.defineValue(k, v)
-}
-
 func (e *Env) defineValue(k string, v reflect.Value) error {
 	if !isSymbolNameValid(k) {
 		return newUnknownSymbol(k)
 	}
 	e.values.Insert(k, v)
 	return nil
-}
-
-// Delete deletes symbol in current scope.
-func (e *Env) Delete(k string) error {
-	return e.delete(k)
-}
-
-// DeleteGlobal deletes the first matching symbol found in current or parent scope.
-func (e *Env) DeleteGlobal(k string) error {
-	return e.deleteGlobal(k)
 }
 
 func (e *Env) deleteGlobal(k string) error {
@@ -384,8 +413,7 @@ func (e *Env) getRootEnv() (root *Env) {
 	return
 }
 
-// DefineType defines type in current scope.
-func (e *Env) DefineType(k string, t any) error {
+func (e *Env) defineType(k string, t any) error {
 	var typ reflect.Type
 	if t == nil {
 		typ = nilType
@@ -396,11 +424,10 @@ func (e *Env) DefineType(k string, t any) error {
 			typ = reflect.TypeOf(t)
 		}
 	}
-	return e.DefineReflectType(k, typ)
+	return e.defineReflectType(k, typ)
 }
 
-// DefineReflectType defines type in current scope.
-func (e *Env) DefineReflectType(k string, t reflect.Type) error {
+func (e *Env) defineReflectType(k string, t reflect.Type) error {
 	if !isSymbolNameValid(k) {
 		return newUnknownSymbol(k)
 	}
@@ -408,8 +435,7 @@ func (e *Env) DefineReflectType(k string, t reflect.Type) error {
 	return nil
 }
 
-// Copy the state of the virtual machine environment
-func (e *Env) Copy() *Env {
+func (e *Env) copy() *Env {
 	copyEnv := newEnv()
 	copyEnv.parent = e.parent
 	copyEnv.values.Store(e.values.Clone())
@@ -419,11 +445,10 @@ func (e *Env) Copy() *Env {
 	return copyEnv
 }
 
-// DeepCopy copy recursively the state of the virtual machine environment
-func (e *Env) DeepCopy() *Env {
-	copyEnv := e.Copy()
+func (e *Env) deepCopy() *Env {
+	copyEnv := e.copy()
 	if copyEnv.parent != nil {
-		copyEnv.parent = copyEnv.parent.DeepCopy()
+		copyEnv.parent = copyEnv.parent.deepCopy()
 	}
 	return copyEnv
 }

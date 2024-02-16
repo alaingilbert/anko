@@ -1342,3 +1342,25 @@ func TestEnv_Defers(t *testing.T) {
 	env := NewEnv()
 	assert.Equal(t, 0, env.Defers().Len())
 }
+
+func TestEnv_DefineReflectType(t *testing.T) {
+	env := NewEnv()
+	err := env.DefineReflectType("a", reflect.TypeOf("a"))
+	assert.NoError(t, err)
+}
+
+func TestEnv_DefineValue(t *testing.T) {
+	env := NewEnv()
+	err := env.DefineValue("a", reflect.ValueOf("a"))
+	assert.NoError(t, err)
+}
+
+func TestEnv_SetValue(t *testing.T) {
+	env := NewEnv()
+	err := env.SetValue("a", reflect.ValueOf("a"))
+	assert.Error(t, err)
+	_ = env.define("a", "a")
+	err = env.SetValue("a", reflect.ValueOf("a"))
+	assert.NoError(t, err)
+	assert.Equal(t, 1, env.Values().Len())
+}

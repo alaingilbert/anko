@@ -203,7 +203,7 @@ func decodeStmtsStmt(r *Decoder) *ast.StmtsStmt {
 	out := &ast.StmtsStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Stmts = r.readStmtArray()
-	return nil
+	return out
 }
 
 func decodeExprStmt(r *Decoder) *ast.ExprStmt {

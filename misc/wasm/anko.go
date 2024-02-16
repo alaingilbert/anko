@@ -36,7 +36,7 @@ func writeStderr(s string) {
 
 func main() {
 	env := vm.NewEnv()
-	vm.Import(env)
+	//vm.Import(env)
 	packages.DefineImport(env)
 
 	env.Define("print", func(a ...any) {

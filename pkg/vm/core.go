@@ -13,14 +13,14 @@ import (
 )
 
 // Import defines core language builtins - keys, range, println,  etc.
-func Import(env env.IEnv) env.IEnv {
+func Import(env env.IEnv, doNotProtectMaps bool) env.IEnv {
 	_ = env.Define("keys", keysFn)
 	_ = env.Define("range", rangeFn)
 	_ = env.Define("typeOf", typeOfFn)
 	_ = env.Define("kindOf", kindOfFn)
 	_ = env.Define("chanOf", chanOfFn)
 	_ = env.Define("defined", definedFn(env))
-	_ = env.Define("load", loadFn(env))
+	_ = env.Define("load", loadFn(env, doNotProtectMaps))
 	_ = env.Define("panic", panicFn)
 	_ = env.Define("print", fmt.Print)
 	_ = env.Define("println", fmt.Println)
@@ -113,7 +113,7 @@ func definedFn(env env.IEnv) func(s string) bool {
 }
 
 // Dynamically load a file and execute it, return the RV value
-func loadFn(env env.IEnv) func(s string) any {
+func loadFn(env env.IEnv, doNotProtectMaps bool) func(s string) any {
 	return func(s string) any {
 		body, err := os.ReadFile(s)
 		if err != nil {
@@ -130,7 +130,7 @@ func loadFn(env env.IEnv) func(s string) any {
 			}
 			panic(err)
 		}
-		rv, err := New(&Configs{Env: env, DoNotDeepCopyEnv: true}).Executor().Run(nil, stmts)
+		rv, err := New(&Configs{Env: env, DoNotDeepCopyEnv: true, DoNotProtectMaps: doNotProtectMaps}).Executor().Run(nil, stmts)
 		if err != nil {
 			panic(err)
 		}

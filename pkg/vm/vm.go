@@ -74,7 +74,7 @@ func NewExecutor(cfg *ExecutorConfig) *Executor {
 		e.env = cfg.Env.DeepCopy()
 	}
 	if cfg.ImportCore {
-		Import(e.env)
+		Import(e.env, cfg.DoNotProtectMaps)
 	}
 	if cfg.DefineImport {
 		DefineImport(e.env)

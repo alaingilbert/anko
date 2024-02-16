@@ -100,13 +100,13 @@ func encode(w *Encoder, args ...any) {
 }
 
 func encodeString(w *Encoder, str string) {
-	strIdx := w.stringsIdx
+	strIdx := int32(w.stringsIdx)
 	if el, ok := w.strings[str]; !ok {
 		w.strings[str] = w.stringsIdx
 		w.stringsIdx += len(str)
 		w.stringsArr = append(w.stringsArr, str)
 	} else {
-		strIdx = el
+		strIdx = int32(el)
 	}
 	encode(w, strIdx, int32(len(str)))
 }

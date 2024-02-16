@@ -357,7 +357,7 @@ func (e *Env) DeleteGlobal(k string) error {
 	if e.parent == nil {
 		return e.Delete(k)
 	}
-	if _, ok := e.values.Get(k); ok {
+	if e.values.ContainsKey(k) {
 		return e.Delete(k)
 	}
 	return e.parent.DeleteGlobal(k)
@@ -383,7 +383,6 @@ func (e *Env) DefineType(k string, t any) error {
 			typ = reflect.TypeOf(t)
 		}
 	}
-
 	return e.DefineReflectType(k, typ)
 }
 

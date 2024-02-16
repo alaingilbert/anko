@@ -51,6 +51,7 @@ type Executor struct {
 	doNotProtectMaps bool
 	mapMutex         *mapLocker
 	cancel           context.CancelFunc
+	importCore       bool
 }
 
 type ExecutorConfig struct {
@@ -74,7 +75,7 @@ func NewExecutor(cfg *ExecutorConfig) *Executor {
 		e.env = cfg.Env.DeepCopy()
 	}
 	if cfg.ImportCore {
-		Import(e.env, cfg.DoNotProtectMaps)
+		Import(e.env)
 	}
 	if cfg.DefineImport {
 		DefineImport(e.env)
@@ -82,6 +83,7 @@ func NewExecutor(cfg *ExecutorConfig) *Executor {
 	e.pause = stateCh.NewStateCh(true)
 	e.stats = &stats{}
 	e.doNotProtectMaps = cfg.DoNotProtectMaps
+	e.importCore = cfg.ImportCore
 	e.mapMutex = &mapLocker{}
 	if cfg.RateLimit > 0 {
 		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
@@ -459,6 +461,10 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	envCopy := e.env
 	rvCh := make(chan Result)
 	vmp := newVmParams(ctx, rvCh, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
+
+	if e.importCore {
+		_ = envCopy.Define("load", loadFn(e, ctx))
+	}
 
 	go func() {
 		rv, err := runSingleStmtL(vmp, envCopy, stmt1)

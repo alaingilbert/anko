@@ -315,6 +315,16 @@ func (e *Env) DefineGlobalValue(k string, v reflect.Value) error {
 	return e.getRootEnv().DefineValue(k, v)
 }
 
+// DefineGlobalType defines type in global scope.
+func (e *Env) DefineGlobalType(k string, t any) error {
+	return e.getRootEnv().DefineType(k, t)
+}
+
+// DefineGlobalReflectType defines type in global scope.
+func (e *Env) DefineGlobalReflectType(k string, t reflect.Type) error {
+	return e.getRootEnv().DefineReflectType(k, t)
+}
+
 // Define defines symbol in current scope.
 func (e *Env) Define(k string, v any) error {
 	val := nilValue
@@ -359,16 +369,6 @@ func (e *Env) getRootEnv() (root *Env) {
 		root = root.parent
 	}
 	return
-}
-
-// DefineGlobalType defines type in global scope.
-func (e *Env) DefineGlobalType(k string, t any) error {
-	return e.getRootEnv().DefineType(k, t)
-}
-
-// DefineGlobalReflectType defines type in global scope.
-func (e *Env) DefineGlobalReflectType(k string, t reflect.Type) error {
-	return e.getRootEnv().DefineReflectType(k, t)
 }
 
 // DefineType defines type in current scope.

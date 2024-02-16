@@ -13,88 +13,88 @@ import (
 func invokeLetExpr(vmp *vmParams, env envPkg.IEnv, expr ast.Expr, rv reflect.Value) (reflect.Value, error) {
 	switch lhs := expr.(type) {
 	case *ast.IdentExpr:
-		return invokeLetIdentExpr(expr, rv, env, lhs)
+		return invokeLetIdentExpr(env, rv, lhs)
 	case *ast.MemberExpr:
-		return invokeLetMemberExpr(vmp, rv, env, expr, lhs)
+		return invokeLetMemberExpr(vmp, env, rv, lhs)
 	case *ast.ItemExpr:
-		return invokeLetItemExpr(vmp, rv, env, expr, lhs)
+		return invokeLetItemExpr(vmp, rv, env, lhs)
 	case *ast.SliceExpr:
-		return invokeLetSliceExpr(vmp, rv, env, expr, lhs)
+		return invokeLetSliceExpr(vmp, env, rv, lhs)
 	case *ast.DerefExpr:
-		return invokeLetDerefExpr(vmp, rv, env, expr, lhs)
+		return invokeLetDerefExpr(vmp, env, rv, lhs)
 	}
 	return nilValue, newStringError(expr, "invalid operation")
 }
 
-func invokeLetIdentExpr(expr ast.Expr, rv reflect.Value, env envPkg.IEnv, lhs *ast.IdentExpr) (vv reflect.Value, err error) {
+func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, lhs *ast.IdentExpr) (vv reflect.Value, err error) {
 	if env.SetValue(lhs.Lit, rv) != nil {
 		if strings.Contains(lhs.Lit, ".") {
-			return nilValue, newErrorf(expr, "undefined symbol '%s'", lhs.Lit)
+			return nilValue, newErrorf(lhs, "undefined symbol '%s'", lhs.Lit)
 		}
 		_ = env.DefineValue(lhs.Lit, rv)
 	}
 	return rv, nil
 }
 
-func invokeLetMemberExpr(vmp *vmParams, rv reflect.Value, env envPkg.IEnv, expr ast.Expr, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
+func invokeLetMemberExpr(vmp *vmParams, env envPkg.IEnv, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Expr)
 	if err != nil {
-		return nilValueL, newError(expr, err)
+		return nilValueL, newError(lhs, err)
 	}
 
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newStringError(expr, "type invalid does not support member operation")
+		return nilValueL, newStringError(lhs, "type invalid does not support member operation")
 	}
 	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newStringError(expr, "type invalid does not support member operation")
+		return nilValueL, newStringError(lhs, "type invalid does not support member operation")
 	}
 
 	switch v.Kind() {
 	case reflect.Struct:
-		return invokeLetMemberStructExpr(vmp.ctx, expr, v, rv, lhs)
+		return invokeLetMemberStructExpr(vmp.ctx, v, rv, lhs)
 	case reflect.Map:
-		return invokeLetMemberMapExpr(vmp, expr, v, rv, env, lhs)
+		return invokeLetMemberMapExpr(vmp, env, v, rv, lhs)
 	default:
-		return nilValueL, newStringError(expr, "type "+v.Kind().String()+" does not support member operation")
+		return nilValueL, newStringError(lhs, "type "+v.Kind().String()+" does not support member operation")
 	}
 }
 
-func invokeLetMemberStructExpr(ctx context.Context, expr ast.Expr, v, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
+func invokeLetMemberStructExpr(ctx context.Context, v, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	field, found := v.Type().FieldByName(lhs.Name)
 	if !found {
-		return nilValueL, newStringError(expr, "no member named '"+lhs.Name+"' for struct")
+		return nilValueL, newStringError(lhs, "no member named '"+lhs.Name+"' for struct")
 	}
 	v = v.FieldByIndex(field.Index)
 	// From reflect CanSet:
 	// A Value can be changed only if it is addressable and was not obtained by the use of unexported struct fields.
 	// Often a struct has to be passed as a pointer to be set
 	if !v.CanSet() {
-		return nilValueL, newStringError(expr, "struct member '"+lhs.Name+"' cannot be assigned")
+		return nilValueL, newStringError(lhs, "struct member '"+lhs.Name+"' cannot be assigned")
 	}
 
 	rv, err = convertReflectValueToType(ctx, rv, v.Type())
 	if err != nil {
-		return nilValueL, newStringError(expr, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String()+" for struct")
+		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String()+" for struct")
 	}
 
 	v.Set(rv)
 	return v, nil
 }
 
-func invokeLetMemberMapExpr(vmp *vmParams, expr ast.Expr, v, rv reflect.Value, env envPkg.IEnv, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
+func invokeLetMemberMapExpr(vmp *vmParams, env envPkg.IEnv, v, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	if v.Type().Elem() != interfaceType && v.Type().Elem() != rv.Type() {
 		rv, err = convertReflectValueToType(vmp.ctx, rv, v.Type().Elem())
 		if err != nil {
-			return nilValueL, newStringError(expr, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
+			return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
 		}
 	}
 	if v.IsNil() {
@@ -110,15 +110,15 @@ func invokeLetMemberMapExpr(vmp *vmParams, expr ast.Expr, v, rv reflect.Value, e
 	return v, nil
 }
 
-func invokeLetItemExpr(vmp *vmParams, rv reflect.Value, env envPkg.IEnv, expr ast.Expr, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
+func invokeLetItemExpr(vmp *vmParams, rv reflect.Value, env envPkg.IEnv, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Value)
 	if err != nil {
-		return nilValueL, newError(expr, err)
+		return nilValueL, newError(lhs, err)
 	}
 	index, err := invokeExpr(vmp, env, lhs.Index)
 	if err != nil {
-		return nilValueL, newError(expr, err)
+		return nilValueL, newError(lhs, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -126,21 +126,21 @@ func invokeLetItemExpr(vmp *vmParams, rv reflect.Value, env envPkg.IEnv, expr as
 
 	switch v.Kind() {
 	case reflect.Slice, reflect.Array:
-		return invokeLetItemSliceExpr(vmp, expr, rv, v, index, env, lhs)
+		return invokeLetItemSliceExpr(vmp, env, rv, v, index, lhs)
 	case reflect.Map:
-		return invokeLetItemMapExpr(vmp, expr, rv, v, index, env, lhs)
+		return invokeLetItemMapExpr(vmp, env, rv, v, index, lhs)
 	case reflect.String:
-		return invokeLetItemStringExpr(vmp, expr, rv, v, index, env, lhs)
+		return invokeLetItemStringExpr(vmp, env, rv, v, index, lhs)
 	default:
-		return nilValueL, newStringError(expr, "type "+v.Kind().String()+" does not support index operation")
+		return nilValueL, newStringError(lhs, "type "+v.Kind().String()+" does not support index operation")
 	}
 }
 
-func invokeLetItemSliceExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.Value, env envPkg.IEnv, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
+func invokeLetItemSliceExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	indexInt, err := tryToInt(index)
 	if err != nil {
-		return nilValueL, newStringError(expr, "index must be a number")
+		return nilValueL, newStringError(lhs, "index must be a number")
 	}
 
 	if indexInt == v.Len() {
@@ -154,11 +154,11 @@ func invokeLetItemSliceExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.V
 			return invokeLetExpr(vmp, env, lhs.Value, v)
 		}
 		if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
-			return nilValueL, newStringError(expr, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for array index")
+			return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for array index")
 		}
 
 		newSlice := reflect.MakeSlice(v.Type().Elem(), 0, rv.Len())
-		newSlice, err = appendSlice(expr, newSlice, rv)
+		newSlice, err = appendSlice(lhs, newSlice, rv)
 		if err != nil {
 			return nilValueL, err
 		}
@@ -167,11 +167,11 @@ func invokeLetItemSliceExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.V
 	}
 
 	if indexInt < 0 || indexInt >= v.Len() {
-		return nilValueL, newStringError(expr, "index out of range")
+		return nilValueL, newStringError(lhs, "index out of range")
 	}
 	v = v.Index(indexInt)
 	if !v.CanSet() {
-		return nilValueL, newStringError(expr, "index cannot be assigned")
+		return nilValueL, newStringError(lhs, "index cannot be assigned")
 	}
 
 	if v.Type() == rv.Type() {
@@ -184,11 +184,11 @@ func invokeLetItemSliceExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.V
 	}
 
 	if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
-		return nilValueL, newStringError(expr, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String()+" for array index")
+		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String()+" for array index")
 	}
 
 	newSlice := reflect.MakeSlice(v.Type(), 0, rv.Len())
-	newSlice, err = appendSlice(expr, newSlice, rv)
+	newSlice, err = appendSlice(lhs, newSlice, rv)
 	if err != nil {
 		return nilValueL, err
 	}
@@ -196,10 +196,10 @@ func invokeLetItemSliceExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.V
 	return v, nil
 }
 
-func invokeLetItemMapExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.Value, env envPkg.IEnv, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
+func invokeLetItemMapExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = newStringError(expr, fmt.Sprintf("%v", r))
+			err = newStringError(lhs, fmt.Sprintf("%v", r))
 		}
 	}()
 	var errr error
@@ -207,7 +207,7 @@ func invokeLetItemMapExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.Val
 		index, errr = convertReflectValueToType(vmp.ctx, index, v.Type().Key())
 		if errr != nil {
 			vv = nilValue
-			err = newStringError(expr, "index type "+index.Type().String()+" cannot be used for map index type "+v.Type().Key().String())
+			err = newStringError(lhs, "index type "+index.Type().String()+" cannot be used for map index type "+v.Type().Key().String())
 			return
 		}
 	}
@@ -215,7 +215,7 @@ func invokeLetItemMapExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.Val
 		rv, errr = convertReflectValueToType(vmp.ctx, rv, v.Type().Elem())
 		if errr != nil {
 			vv = nilValue
-			err = newStringError(expr, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
+			err = newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
 			return
 		}
 	}
@@ -235,16 +235,16 @@ func invokeLetItemMapExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.Val
 	return
 }
 
-func invokeLetItemStringExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.Value, env envPkg.IEnv, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
+func invokeLetItemStringExpr(vmp *vmParams, env envPkg.IEnv, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	rv, err = convertReflectValueToType(vmp.ctx, rv, v.Type())
 	if err != nil {
-		return nilValueL, newStringError(expr, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String())
+		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String())
 	}
 
 	indexInt, err := tryToInt(index)
 	if err != nil {
-		return nilValueL, newStringError(expr, "index must be a number")
+		return nilValueL, newStringError(lhs, "index must be a number")
 	}
 
 	if indexInt == v.Len() {
@@ -259,7 +259,7 @@ func invokeLetItemStringExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.
 	}
 
 	if indexInt < 0 || indexInt >= v.Len() {
-		return nilValueL, newStringError(expr, "index out of range")
+		return nilValueL, newStringError(lhs, "index out of range")
 	}
 
 	if v.CanSet() {
@@ -270,11 +270,11 @@ func invokeLetItemStringExpr(vmp *vmParams, expr ast.Expr, rv, v, index reflect.
 	return invokeLetExpr(vmp, env, lhs.Value, reflect.ValueOf(v.Slice(0, indexInt).String()+rv.String()+v.Slice(indexInt+1, v.Len()).String()))
 }
 
-func invokeLetSliceExpr(vmp *vmParams, rv reflect.Value, env envPkg.IEnv, expr ast.Expr, lhs *ast.SliceExpr) (vv reflect.Value, err error) {
+func invokeLetSliceExpr(vmp *vmParams, env envPkg.IEnv, rv reflect.Value, lhs *ast.SliceExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Value)
 	if err != nil {
-		return nilValueL, newError(expr, err)
+		return nilValueL, newError(lhs, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -287,14 +287,14 @@ func invokeLetSliceExpr(vmp *vmParams, rv reflect.Value, env envPkg.IEnv, expr a
 		if lhs.Begin != nil {
 			rb, err := invokeExpr(vmp, env, lhs.Begin)
 			if err != nil {
-				return nilValueL, newError(expr, err)
+				return nilValueL, newError(lhs, err)
 			}
 			rbi, err = tryToInt(rb)
 			if err != nil {
-				return nilValueL, newStringError(expr, "index must be a number")
+				return nilValueL, newStringError(lhs, "index must be a number")
 			}
 			if rbi < 0 || rbi > v.Len() {
-				return nilValueL, newStringError(expr, "index out of range")
+				return nilValueL, newStringError(lhs, "index out of range")
 			}
 		} else {
 			rbi = 0
@@ -302,41 +302,41 @@ func invokeLetSliceExpr(vmp *vmParams, rv reflect.Value, env envPkg.IEnv, expr a
 		if lhs.End != nil {
 			re, err := invokeExpr(vmp, env, lhs.End)
 			if err != nil {
-				return nilValueL, newError(expr, err)
+				return nilValueL, newError(lhs, err)
 			}
 			rei, err = tryToInt(re)
 			if err != nil {
-				return nilValueL, newStringError(expr, "index must be a number")
+				return nilValueL, newStringError(lhs, "index must be a number")
 			}
 			if rei < 0 || rei > v.Len() {
-				return nilValueL, newStringError(expr, "index out of range")
+				return nilValueL, newStringError(lhs, "index out of range")
 			}
 		} else {
 			rei = v.Len()
 		}
 		if rbi > rei {
-			return nilValueL, newStringError(expr, "invalid slice index")
+			return nilValueL, newStringError(lhs, "invalid slice index")
 		}
 		v = v.Slice(rbi, rei)
 		if !v.CanSet() {
-			return nilValueL, newStringError(expr, "slice cannot be assigned")
+			return nilValueL, newStringError(lhs, "slice cannot be assigned")
 		}
 		v.Set(rv)
 
 	// String
 	case reflect.String:
-		return nilValueL, newStringError(expr, "type string does not support slice operation for assignment")
+		return nilValueL, newStringError(lhs, "type string does not support slice operation for assignment")
 
 	default:
-		return nilValueL, newStringError(expr, "type "+v.Kind().String()+" does not support slice operation")
+		return nilValueL, newStringError(lhs, "type "+v.Kind().String()+" does not support slice operation")
 	}
 	return v, nil
 }
 
-func invokeLetDerefExpr(vmp *vmParams, rv reflect.Value, env envPkg.IEnv, expr ast.Expr, lhs *ast.DerefExpr) (vv reflect.Value, err error) {
+func invokeLetDerefExpr(vmp *vmParams, env envPkg.IEnv, rv reflect.Value, lhs *ast.DerefExpr) (vv reflect.Value, err error) {
 	v, err := invokeExpr(vmp, env, lhs.Expr)
 	if err != nil {
-		return nilValue, newError(expr, err)
+		return nilValue, newError(lhs, err)
 	}
 	v.Elem().Set(rv)
 	return v, nil

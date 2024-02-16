@@ -114,8 +114,11 @@ func definedFn(env env.IEnv) func(s string) bool {
 }
 
 // Dynamically load a file and execute it, return the RV value
-func loadFn(e *Executor, ctx context.Context) func(s string) any {
+func loadFn(e *Executor, ctx context.Context, validate bool) func(s string) any {
 	return func(s string) any {
+		if validate {
+			return nilValue
+		}
 		body, err := os.ReadFile(s)
 		if err != nil {
 			panic(err)
@@ -131,7 +134,7 @@ func loadFn(e *Executor, ctx context.Context) func(s string) any {
 			}
 			panic(err)
 		}
-		rv, err := e.Run(ctx, stmts)
+		_, rv, err := e.mainRun1(ctx, stmts, false, nil)
 		if err != nil {
 			panic(err)
 		}

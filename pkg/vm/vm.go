@@ -463,7 +463,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	vmp := newVmParams(ctx, rvCh, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
 
 	if e.importCore {
-		_ = envCopy.Define("load", loadFn(e, ctx))
+		_ = envCopy.Define("load", loadFn(e, ctx, validate))
 	}
 
 	go func() {

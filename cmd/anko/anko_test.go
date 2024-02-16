@@ -4,6 +4,12 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"errors"
+	"github.com/alaingilbert/anko/pkg/ast"
+	"github.com/alaingilbert/anko/pkg/parser"
+	"github.com/alaingilbert/anko/pkg/vm"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
 	"os"
@@ -269,4 +275,16 @@ func setStd(stdin *os.File, stderr *os.File, stdout *os.File) {
 	os.Stdin = stdin
 	os.Stderr = stderr
 	os.Stdout = stdout
+}
+
+func TestHandleErr(t *testing.T) {
+	buf := new(bytes.Buffer)
+	handleErr(buf, errors.New("something"))
+	assert.Equal(t, "something\n", buf.String())
+	buf.Reset()
+	handleErr(buf, &parser.Error{Pos: ast.Position{Line: 1, Column: 2}, Message: "something"})
+	assert.Equal(t, "1:2 something\n", buf.String())
+	buf.Reset()
+	handleErr(buf, &vm.Error{Pos: ast.Position{Line: 3, Column: 4}, Message: "something"})
+	assert.Equal(t, "3:4 something\n", buf.String())
 }

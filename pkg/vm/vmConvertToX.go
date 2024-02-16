@@ -135,8 +135,15 @@ func convertMap(ctx context.Context, m sync.Locker, rv reflect.Value, rt reflect
 	// At some point there will be a MapRange that could be used.
 	// https://github.com/golang/go/issues/11104
 	// In the meantime using MapKeys, which will costly for large maps.
+
 	it := rv.MapRange()
-	for it.Next() {
+	for {
+		m.Lock()
+		if !it.Next() {
+			m.Unlock()
+			break
+		}
+		m.Unlock()
 		oldKey := it.Key()
 		oldVal := it.Value()
 		newKey, err := convertReflectValueToType(ctx, m, oldKey, rtKey)

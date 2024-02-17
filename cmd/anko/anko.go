@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"github.com/chzyer/readline"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -35,6 +37,7 @@ type AppFlags struct {
 	File        string
 	Compile     bool
 	Decompile   bool
+	Web         bool
 }
 
 func main() {
@@ -54,6 +57,8 @@ func main() {
 	}
 	if appFlags.FlagExecute != "" || flag.NArg() > 0 {
 		exitCode = runNonInteractive(args, appFlags)
+	} else if appFlags.Web {
+		exitCode = runWeb(args)
 	} else {
 		exitCode = runInteractive(args)
 	}
@@ -65,6 +70,7 @@ func parseFlags(appFlags *AppFlags) (args []string) {
 	flag.StringVar(&appFlags.FlagExecute, "e", "", "execute the Anko code")
 	flag.BoolVar(&appFlags.Compile, "c", false, "compile a script")
 	flag.BoolVar(&appFlags.Decompile, "d", false, "decompile anko bytecode")
+	flag.BoolVar(&appFlags.Web, "w", false, "web server")
 	flag.Parse()
 
 	if *flagVersion {
@@ -305,4 +311,53 @@ func compileAndSave(source, fileName string) error {
 		return err
 	}
 	return nil
+}
+
+func runWeb(args []string) int {
+	e := vm.New(&vm.Config{ImportCore: true, DefineImport: true}).Executor()
+
+	mux := http.DefaultServeMux
+	mux.HandleFunc("/favicon.ico", func(resp http.ResponseWriter, req *http.Request) {})
+	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
+		if req.Method == http.MethodPost {
+			http.Redirect(resp, req, "/", http.StatusFound)
+			submit := req.PostFormValue("submit")
+			if submit == "run" {
+				source := req.PostFormValue("source")
+				e.RunAsync(context.Background(), source)
+				return
+			} else if submit == "stop" {
+				e.Stop()
+				return
+			} else if submit == "toggle_pause" {
+				utils.Ternary(e.IsPaused(), e.Resume, e.Pause)()
+				return
+			}
+			return
+		}
+		resp.WriteHeader(http.StatusOK)
+		defaultScript := `time = import("time")
+i = 0
+for {
+  i++
+  println("test", i)
+  time.Sleep(time.Second)
+}`
+		_, _ = resp.Write([]byte(`<html><body>
+	<form method="post">
+		<div>
+			<button type="submit" name="submit" value="run">Run</button>
+			<button type="submit" name="submit" value="stop">Stop</button>
+			<button type="submit" name="submit" value="toggle_pause">Pause/Resume</button>
+		</div>
+<textarea name="source" rows="10" cols="80">` + defaultScript + `</textarea>
+	</form>
+</body></html>`))
+	})
+	addr := "127.0.0.1:8080"
+	fmt.Printf("listening on %s\n", addr)
+	if err := http.ListenAndServe(addr, mux); err != nil {
+		fmt.Println(err)
+	}
+	return OkExitCode
 }

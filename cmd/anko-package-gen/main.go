@@ -111,11 +111,11 @@ import (
 )
 
 func init() {
-	Packages["%s"] = map[string]any{
+	Packages.Insert("%s", map[string]any{
 `, pn, pkg, pn, pkg, pn)
 		for _, k := range keys {
 			fmt.Printf(`	"%s": %s.%s,`+"\n", k, pn, k)
 		}
-		fmt.Println("}")
+		fmt.Println("})")
 	}
 }

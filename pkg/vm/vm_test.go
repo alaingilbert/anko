@@ -1333,7 +1333,9 @@ func TestAnk(t *testing.T) {
 		{Script: `load('testdata/testing.ank'); load('testdata/toRunes.ank')`},
 		{Script: `load('testdata/testing.ank'); load('testdata/chan.ank')`},
 	}
-	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
 }
 
 func TestKeys(t *testing.T) {
@@ -1343,7 +1345,9 @@ func TestKeys(t *testing.T) {
 		{Script: `a = {"a": nil}; b = keys(a)`, RunOutput: []any{"a"}, Output: map[string]any{"a": map[any]any{"a": nil}}},
 		{Script: `a = {"a": 1}; b = keys(a)`, RunOutput: []any{"a"}, Output: map[string]any{"a": map[any]any{"a": int64(1)}}},
 	}
-	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
 }
 
 func TestKindOf(t *testing.T) {
@@ -1416,7 +1420,9 @@ func TestRange(t *testing.T) {
 		{Script: `range(1,0,2)`, RunOutput: []int64{}},
 		{Script: `range(1,2,0)`, RunError: fmt.Errorf("range argument 3 must not be zero")},
 	}
-	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
 }
 
 func TestLoad(t *testing.T) {
@@ -1431,7 +1437,9 @@ func TestLoad(t *testing.T) {
 		{Script: `load('testdata/not-found.ank'); X(1)`, RunErrorFunc: &notFoundRunErrorFunc},
 		{Script: `load('testdata/broken.ank'); X(1)`, RunError: fmt.Errorf("syntax error")},
 	}
-	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
 }
 
 func TestDefined(t *testing.T) {
@@ -1441,7 +1449,9 @@ func TestDefined(t *testing.T) {
 		{Script: `defined("a")`, RunOutput: false},
 		{Script: `func(){ var a = 1 }(); defined("a")`, RunOutput: false},
 	}
-	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
 }
 
 func TestToX(t *testing.T) {
@@ -1582,7 +1592,9 @@ func TestToX(t *testing.T) {
 		{Script: `toDuration(a)`, Input: map[string]any{"a": float64(time.Duration(123 * time.Minute))}, RunOutput: time.Duration(123 * time.Minute)},
 		{Script: `toDuration(a)`, Input: map[string]any{"a": time.Duration(123 * time.Minute)}, RunOutput: time.Duration(123 * time.Minute)},
 	}
-	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
 }
 
 func TestAddPackage(t *testing.T) {
@@ -1722,7 +1734,9 @@ func TestFuncTypedReturns(t *testing.T) {
 		{Script: `errors = import("errors");func a() (int64) {return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 1")},
 		{Script: `errors = import("errors");func a() (int64,int64,int64) {return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 3")},
 	}
-	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
 }
 
 func TestExecuteError(t *testing.T) {

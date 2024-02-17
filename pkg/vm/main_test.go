@@ -112,13 +112,6 @@ type Options struct {
 	ImportCore   bool
 }
 
-// Run runs VM tests
-func runTests(t *testing.T, tests []Test, testingOptions *Options) {
-	for _, test := range tests {
-		runTest(t, test, testingOptions)
-	}
-}
-
 func runTest(t *testing.T, test Test, testingOptions *Options) {
 	runTestFromSource(t, test, testingOptions)
 	runTestFromCompiledSource(t, test, testingOptions)

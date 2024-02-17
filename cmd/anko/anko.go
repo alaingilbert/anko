@@ -364,9 +364,8 @@ for {
 			"IsRunning": e.IsRunning(),
 			"IsPaused":  e.IsPaused(),
 		}
-		tmpl := template.New("")
-		_, _ = tmpl.Parse(pageHtml)
 		buf := new(bytes.Buffer)
+		tmpl, _ := template.New("").Parse(pageHtml)
 		_ = tmpl.Execute(buf, data)
 		_, _ = resp.Write(buf.Bytes())
 	})

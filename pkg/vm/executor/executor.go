@@ -343,7 +343,18 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 		has[fmt.Sprintf("%v", vv)] = false
 	}
 
-	rv, err := runner.Run(ctx, envCopy, stmt1, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has)
+	rv, err := runner.Run(&runner.Config{
+		Ctx:              ctx,
+		Env:              envCopy,
+		Stmt:             stmt1,
+		Stats:            e.stats,
+		DoNotProtectMaps: e.doNotProtectMaps,
+		MapMutex:         e.mapMutex,
+		Pause:            e.pause,
+		RateLimit:        e.rateLimit,
+		Validate:         validate,
+		Has:              has,
+	})
 	if err != nil {
 		return nil, rv, err
 	}

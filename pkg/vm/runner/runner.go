@@ -56,12 +56,28 @@ func NewVmParams(ctx context.Context,
 	}
 }
 
-func Run(ctx context.Context, env envPkg.IEnv, stmt ast.Stmt, stats *Stats, doNotProtectMaps bool, mapMutex *MapLocker, pause *stateCh.StateCh,
-	rateLimit *ratelimitanything.RateLimitAnything, validate bool, has map[any]bool) (reflect.Value, error) {
+type Config struct {
+	Ctx              context.Context
+	Env              envPkg.IEnv
+	Stmt             ast.Stmt
+	Stats            *Stats
+	MapMutex         *MapLocker
+	Pause            *stateCh.StateCh
+	RateLimit        *ratelimitanything.RateLimitAnything
+	DoNotProtectMaps bool
+	Validate         bool
+	Has              map[any]bool
+}
 
+func Run(config *Config) (reflect.Value, error) {
+
+	stmt := config.Stmt
+	env := config.Env
+	validate := config.Validate
 	validateLater := make(map[string]ast.Stmt)
 	rvCh := make(chan Result)
-	vmp := NewVmParams(ctx, rvCh, stats, doNotProtectMaps, mapMutex, pause, rateLimit, validate, has, validateLater)
+	vmp := NewVmParams(config.Ctx, rvCh, config.Stats, config.DoNotProtectMaps, config.MapMutex,
+		config.Pause, config.RateLimit, validate, config.Has, validateLater)
 
 	go func() {
 		rv, err := run(vmp, env, stmt)

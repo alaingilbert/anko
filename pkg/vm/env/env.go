@@ -285,33 +285,34 @@ func (e *Env) getEnvFromPath(path []string) (*Env, error) {
 }
 
 func (e *Env) newModule(symbol string) (*Env, error) {
-	module := e.newEnv()
-	if err := e.define(symbol, module); err != nil {
-		return nil, err
-	}
-	module.name.Store(symbol)
-	return module, nil
+	return e.addPackageHelper(symbol, nil, nil)
 }
 
-// AddPackage creates a new env with a name that has methods and types in it. Created under the parent env
 func (e *Env) addPackage(name string, methods map[string]any, types map[string]any) (*Env, error) {
-	pack, err := e.newModule(name)
-	if err != nil {
+	return e.addPackageHelper(name, methods, types)
+}
+
+func (e *Env) addPackageHelper(name string, methods map[string]any, types map[string]any) (*Env, error) {
+	module := e.newEnv()
+	destroyFn := module.destroy
+	if err := e.define(name, module); err != nil {
+		destroyFn()
 		return nil, err
 	}
+	module.name.Store(name)
 	for methodName, methodValue := range methods {
-		err = pack.define(methodName, methodValue)
-		if err != nil {
-			return pack, err
+		if err := module.define(methodName, methodValue); err != nil {
+			destroyFn()
+			return nil, err
 		}
 	}
 	for typeName, typeValue := range types {
-		err = pack.defineType(typeName, typeValue)
-		if err != nil {
-			return pack, err
+		if err := module.defineType(typeName, typeValue); err != nil {
+			destroyFn()
+			return nil, err
 		}
 	}
-	return pack, nil
+	return module, nil
 }
 
 func (e *Env) getName() string {

@@ -31,6 +31,7 @@ func init() {
 		"Getgroups":         os.Getgroups,
 		"Getpagesize":       os.Getpagesize,
 		"Getpid":            os.Getpid,
+		"Getppid":           os.Getppid,
 		"Getuid":            os.Getuid,
 		"Getwd":             os.Getwd,
 		"Hostname":          os.Hostname,
@@ -74,6 +75,7 @@ func init() {
 		"PathListSeparator": os.PathListSeparator,
 		"PathSeparator":     os.PathSeparator,
 		"Pipe":              os.Pipe,
+		"ReadFile":          os.ReadFile,
 		"Readlink":          os.Readlink,
 		"Remove":            os.Remove,
 		"RemoveAll":         os.RemoveAll,
@@ -91,7 +93,7 @@ func init() {
 		"Symlink":           os.Symlink,
 		"TempDir":           os.TempDir,
 		"Truncate":          os.Truncate,
-		"Getppid":           os.Getppid,
+		"WriteFile":         os.WriteFile,
 	})
 	var signal os.Signal
 	PackageTypes.Insert("os", map[string]any{

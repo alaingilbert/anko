@@ -363,7 +363,7 @@ func (e *Executor) hasCompiledWithContext(ctx context.Context, src []byte, targe
 }
 
 func (e *Executor) runWithContext(ctx context.Context, stmts ast.Stmt) (any, error) {
-	return valueToAny(e.mainRun(ctx, stmts))
+	return valueToAny(e.mainRun(ctx, stmts, false))
 }
 
 func (e *Executor) runWithContext2(ctx context.Context, stmts ast.Stmt) (any, error) {
@@ -428,21 +428,20 @@ func newVmParams(ctx context.Context,
 	}
 }
 
-// mainRun executes statements in the specified environment.
-func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt) (reflect.Value, error) {
-	_, rv, err := e.mainRun1(ctx, stmt, false, nil)
-	return rv, err
+func (e *Executor) mainRunValidate(ctx context.Context, stmt ast.Stmt) error {
+	_, err := e.mainRun(ctx, stmt, true)
+	return err
 }
 
 // mainRun executes statements in the specified environment.
+func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool) (reflect.Value, error) {
+	_, rv, err := e.mainRun1(ctx, stmt, validate, nil)
+	return rv, err
+}
+
 func (e *Executor) mainRun2(ctx context.Context, stmt ast.Stmt) (reflect.Value, error) {
 	_, rv, err := e.mainRun3(ctx, stmt, false, nil)
 	return rv, err
-}
-
-func (e *Executor) mainRunValidate(ctx context.Context, stmt ast.Stmt) error {
-	_, _, err := e.mainRun1(ctx, stmt, true, nil)
-	return err
 }
 
 func (e *Executor) watchDog(ctx context.Context, cancel context.CancelFunc) {

@@ -330,7 +330,7 @@ for {
 	mux.HandleFunc("/favicon.ico", func(resp http.ResponseWriter, req *http.Request) {})
 	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		resp.WriteHeader(http.StatusOK)
-		script := ""
+		script := defaultScript
 		if req.Method == http.MethodPost {
 			script = req.PostFormValue("source")
 			submit := req.PostFormValue("submit")
@@ -342,8 +342,6 @@ for {
 				utils.Ternary(e.IsPaused(), e.Resume, e.Pause)()
 			} else if submit == "refresh" {
 			}
-		} else if req.Method == http.MethodGet {
-			script = defaultScript
 		}
 		pageHtml := `<!DOCTYPE html>
 <html>

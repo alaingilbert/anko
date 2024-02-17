@@ -630,6 +630,7 @@ func encodeFuncExpr(w *Encoder, expr *ast.FuncExpr) {
 	encodeString(w, expr.Name)
 	encodeBool(w, expr.VarArg)
 	encodeParamExprArray(w, expr.Params)
+	encodeFuncReturnValuesExprArray(w, expr.Returns)
 	encodeSingleStmt(w, expr.Stmt)
 }
 
@@ -642,6 +643,17 @@ func encodeParamExprArray(w *Encoder, exprs []*ast.ParamExpr) {
 
 func encodeParamExpr(w *Encoder, expr *ast.ParamExpr) {
 	encodeString(w, expr.Name)
+	encodeTypeStruct(w, expr.TypeData)
+}
+
+func encodeFuncReturnValuesExprArray(w *Encoder, exprs []*ast.FuncReturnValuesExpr) {
+	encode(w, int32(len(exprs)))
+	for _, e := range exprs {
+		encodeFuncReturnValuesExpr(w, e)
+	}
+}
+
+func encodeFuncReturnValuesExpr(w *Encoder, expr *ast.FuncReturnValuesExpr) {
 	encodeTypeStruct(w, expr.TypeData)
 }
 

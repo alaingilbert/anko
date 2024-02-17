@@ -24,8 +24,9 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 	// for runVMFunction first arg is always context
 	inTypes[0] = contextType
 	for i := 1; i < len(inTypes); i++ {
-		if funcExpr.Params[i-1].TypeData != nil {
-			t, err := makeType(vmp, env, funcExpr.Params[i-1].TypeData)
+		param := funcExpr.Params[i-1]
+		if param.TypeData != nil {
+			t, err := makeType(vmp, env, param.TypeData)
 			if err != nil {
 				return nilValue, err
 			}
@@ -35,12 +36,13 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 		}
 	}
 	if funcExpr.VarArg {
-		lastType := inTypes[len(inTypes)-1]
-		if lastType == reflectValueType {
-			inTypes[len(inTypes)-1] = interfaceSliceType
-		} else {
-			inTypes[len(inTypes)-1] = reflect.SliceOf(lastType)
+		lastTypeIdx := len(inTypes) - 1
+		lastType := inTypes[lastTypeIdx]
+		newType := interfaceSliceType
+		if lastType != reflectValueType {
+			newType = reflect.SliceOf(lastType)
 		}
+		inTypes[lastTypeIdx] = newType
 	}
 	// create funcType, output is always slice of reflect.Type with two values
 	funcType := reflect.FuncOf(inTypes, []reflect.Type{reflectValueType, reflectValueType}, funcExpr.VarArg)

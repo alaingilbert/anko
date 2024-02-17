@@ -370,14 +370,6 @@ func (e *Executor) runWithContext2(ctx context.Context, stmts ast.Stmt) (any, er
 	return e.valueToAny(e.mainRun2(ctx, stmts, false))
 }
 
-func (e *Executor) validate(ctx context.Context, src string) (any, error) {
-	stmts, err := srcToStmt(src)
-	if err != nil {
-		return nil, err
-	}
-	return e.valueToAny(e.mainRun(ctx, stmts, true))
-}
-
 func (e *Executor) valueToAny(rv reflect.Value, err error) (any, error) {
 	if errors.Is(err, ErrReturn) {
 		err = nil

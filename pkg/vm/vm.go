@@ -385,6 +385,8 @@ func (e *Executor) hasAST(ctx context.Context, stmt ast.Stmt, targets []any) (ok
 	return
 }
 
+// we need to lock map operations MapIndex/SetMapIndex/mapIter.Next
+// in the VM to avoid application crash if the script uses a map in a concurrent manner.
 type mapLocker struct{ sync.Mutex }
 
 func (m *mapLocker) Lock()   { m.Mutex.Lock() }

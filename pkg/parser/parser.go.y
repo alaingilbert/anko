@@ -508,6 +508,9 @@ opt_func_return_expr_idents1 :
 	}
 	| opt_func_return_expr_idents1 ',' opt_newlines type_data
 	{
+		if len($1) == 0 {
+			yylex.Error("syntax error: unexpected ','")
+		}
 		$$ = append($1, &ast.FuncReturnValuesExpr{TypeData: $4})
 	}
 

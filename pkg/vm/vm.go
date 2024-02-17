@@ -481,13 +481,6 @@ func (e *Executor) watchDog(ctx context.Context, cancel context.CancelFunc) {
 }
 
 func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
-	// We use rvCh because the script can start goroutines and crash in one of them.
-	// So we need a way to stop the vm from another thread...
-	stmt1 := stmt.(*ast.StmtsStmt)
-	if stmt1 == nil {
-		return nil, nilValue, ErrInvalidInput
-	}
-
 	if e.importCore {
 		_ = e.env.Define("load", loadFn(e, ctx, validate))
 	}
@@ -501,8 +494,11 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 }
 
 func (e *Executor) mainRun3(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
-	stmt1 := stmt.(*ast.StmtsStmt)
-	if stmt1 == nil {
+	// We use rvCh because the script can start goroutines and crash in one of them.
+	// So we need a way to stop the vm from another thread...
+	
+	stmt1, ok := stmt.(*ast.StmtsStmt)
+	if !ok || stmt1 == nil {
 		return nil, nilValue, ErrInvalidInput
 	}
 

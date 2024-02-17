@@ -314,7 +314,11 @@ func callExpr(vmp *vmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 // checkIfRunVMFunction checking the number and types of the reflect.Type.
 // If it matches the types for a runVMFunction this will return true, otherwise false
 func checkIfRunVMFunction(rt reflect.Type) bool {
-	if rt.NumIn() < 1 || rt.In(0) != contextType || rt.NumOut() != 2 || rt.Out(0) != reflectValueType || rt.Out(1) != reflectValueType {
+	if rt.NumIn() < 1 ||
+		rt.In(0) != contextType ||
+		rt.NumOut() != 2 ||
+		rt.Out(0) != reflectValueType ||
+		rt.Out(1) != reflectValueType {
 		return false
 	}
 	//if rt.NumIn() > 1 {

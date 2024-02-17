@@ -194,7 +194,9 @@ func (e *Executor) stop() {
 }
 
 func (e *Executor) pauseFn() {
-	e.pause.Open()
+	if e.isRunning.Load() {
+		e.pause.Open()
+	}
 }
 
 func (e *Executor) resume() {

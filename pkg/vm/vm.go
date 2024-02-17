@@ -446,7 +446,7 @@ func (e *Executor) mainRunForLoad(ctx context.Context, stmt ast.Stmt) (reflect.V
 	return rv, err
 }
 
-func (e *Executor) watchDog(ctx context.Context, cancel context.CancelFunc) {
+func (e *Executor) watchdog(ctx context.Context, cancel context.CancelFunc) {
 	for {
 		select {
 		case <-time.After(time.Second):
@@ -470,7 +470,7 @@ func (e *Executor) mainRunWithWatchdog(ctx context.Context, stmt ast.Stmt, valid
 	// Start thread to watch for memory leaking scripts
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	go e.watchDog(ctx, cancel)
+	go e.watchdog(ctx, cancel)
 
 	return e.mainRun(ctx, stmt, validate, targets)
 }

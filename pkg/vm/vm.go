@@ -268,16 +268,19 @@ type stats struct {
 }
 
 func incrCycle(vmp *vmParams) error {
+	// make sure script is not stopped
 	select {
 	case <-vmp.ctx.Done():
 		return ErrInterrupt
 	default:
 	}
+	// if script is NOT paused, `<-vmp.pause.Wait()` will return right away
 	select {
 	case <-vmp.pause.Wait():
 	case <-vmp.ctx.Done():
 		return ErrInterrupt
 	}
+	// halt here if we need to throttle the script
 	rateLimit := vmp.rateLimit
 	if rateLimit != nil {
 		select {

@@ -363,11 +363,11 @@ func (e *Executor) hasCompiledWithContext(ctx context.Context, src []byte, targe
 }
 
 func (e *Executor) runWithContext(ctx context.Context, stmts ast.Stmt) (any, error) {
-	return valueToAny(e.mainRun(ctx, stmts, false))
+	return valueToAny(e.mainRunNoTargets(ctx, stmts, false))
 }
 
-func (e *Executor) runWithContext2(ctx context.Context, stmts ast.Stmt) (any, error) {
-	return valueToAny(e.mainRun2(ctx, stmts))
+func (e *Executor) runWithContextForLoad(ctx context.Context, stmts ast.Stmt) (any, error) {
+	return valueToAny(e.mainRunForLoad(ctx, stmts))
 }
 
 func valueToAny(rv reflect.Value, err error) (any, error) {
@@ -381,7 +381,7 @@ func valueToAny(rv reflect.Value, err error) (any, error) {
 }
 
 func (e *Executor) hasAST(ctx context.Context, stmt ast.Stmt, targets []any) (oks []bool, err error) {
-	oks, _, err = e.mainRun1(ctx, stmt, true, targets)
+	oks, _, err = e.mainRunWithWatchdog(ctx, stmt, true, targets)
 	return
 }
 
@@ -429,18 +429,18 @@ func newVmParams(ctx context.Context,
 }
 
 func (e *Executor) mainRunValidate(ctx context.Context, stmt ast.Stmt) error {
-	_, err := e.mainRun(ctx, stmt, true)
+	_, err := e.mainRunNoTargets(ctx, stmt, true)
 	return err
 }
 
-// mainRun executes statements in the specified environment.
-func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool) (reflect.Value, error) {
-	_, rv, err := e.mainRun1(ctx, stmt, validate, nil)
+// mainRunNoTargets executes statements in the specified environment.
+func (e *Executor) mainRunNoTargets(ctx context.Context, stmt ast.Stmt, validate bool) (reflect.Value, error) {
+	_, rv, err := e.mainRunWithWatchdog(ctx, stmt, validate, nil)
 	return rv, err
 }
 
-func (e *Executor) mainRun2(ctx context.Context, stmt ast.Stmt) (reflect.Value, error) {
-	_, rv, err := e.mainRun3(ctx, stmt, false, nil)
+func (e *Executor) mainRunForLoad(ctx context.Context, stmt ast.Stmt) (reflect.Value, error) {
+	_, rv, err := e.mainRun(ctx, stmt, false, nil)
 	return rv, err
 }
 
@@ -460,7 +460,7 @@ func (e *Executor) watchDog(ctx context.Context, cancel context.CancelFunc) {
 	}
 }
 
-func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
+func (e *Executor) mainRunWithWatchdog(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	if e.importCore {
 		_ = e.env.Define("load", loadFn(e, ctx, validate))
 	}
@@ -470,10 +470,10 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	defer cancel()
 	go e.watchDog(ctx, cancel)
 
-	return e.mainRun3(ctx, stmt, validate, targets)
+	return e.mainRun(ctx, stmt, validate, targets)
 }
 
-func (e *Executor) mainRun3(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
+func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	// We use rvCh because the script can start goroutines and crash in one of them.
 	// So we need a way to stop the vm from another thread...
 

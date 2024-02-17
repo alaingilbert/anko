@@ -316,22 +316,10 @@ func importFn(e envPkg.IEnv) func(string) envPkg.IEnv {
 		if !ok {
 			panic(fmt.Sprintf("package '%s' not found", source))
 		}
-		var err error
-		pack, _ := e.NewModule(source)
-		for methodName, methodValue := range methods {
-			err = pack.Define(methodName, methodValue)
-			if err != nil {
-				panic(fmt.Sprintf("import Define error: %v", err))
-			}
-		}
-		types, ok := packages.PackageTypes.Get(source)
-		if ok {
-			for typeName, typeValue := range types {
-				err = pack.DefineType(typeName, typeValue)
-				if err != nil {
-					panic(fmt.Sprintf("import DefineType error: %v", err))
-				}
-			}
+		types, _ := packages.PackageTypes.Get(source)
+		pack, err := e.AddPackage(source, methods, types)
+		if err != nil {
+			panic(fmt.Sprintf("import error: %v", err))
 		}
 		return pack
 	}

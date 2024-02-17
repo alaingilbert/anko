@@ -295,12 +295,10 @@ func (e *Env) newModule(symbol string) (*Env, error) {
 
 // AddPackage creates a new env with a name that has methods and types in it. Created under the parent env
 func (e *Env) addPackage(name string, methods map[string]any, types map[string]any) (*Env, error) {
-	if !isSymbolNameValid(name) {
-		return nil, newUnknownSymbolErr(name)
+	pack, err := e.newModule(name)
+	if err != nil {
+		return nil, err
 	}
-	var err error
-	pack := e.newEnv()
-
 	for methodName, methodValue := range methods {
 		err = pack.define(methodName, methodValue)
 		if err != nil {
@@ -313,9 +311,6 @@ func (e *Env) addPackage(name string, methods map[string]any, types map[string]a
 			return pack, err
 		}
 	}
-
-	// can ignore error from Define because of check at the start of the function
-	_ = e.define(name, pack)
 	return pack, nil
 }
 

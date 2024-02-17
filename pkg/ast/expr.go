@@ -142,6 +142,11 @@ type SliceExpr struct {
 	End   Expr
 }
 
+// FuncReturnValuesExpr ...
+type FuncReturnValuesExpr struct {
+	TypeData *TypeStruct
+}
+
 // ParamExpr ...
 type ParamExpr struct {
 	Name     string
@@ -151,10 +156,11 @@ type ParamExpr struct {
 // FuncExpr provide function expression.
 type FuncExpr struct {
 	ExprImpl
-	Name   string
-	Stmt   Stmt
-	Params []*ParamExpr
-	VarArg bool
+	Name    string
+	Stmt    Stmt
+	Params  []*ParamExpr
+	Returns []*FuncReturnValuesExpr
+	VarArg  bool
 }
 
 // LetsExpr provide multiple expression of let.

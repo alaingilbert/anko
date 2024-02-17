@@ -27,6 +27,8 @@ import (
 %type<expr> expr
 %type<expr_idents> expr_idents
 %type<func_expr_idents> func_expr_idents
+%type<opt_func_return_expr_idents> opt_func_return_expr_idents
+%type<opt_func_return_expr_idents1> opt_func_return_expr_idents1
 %type<type_data> type_data
 %type<type_data_struct> type_data_struct
 %type<slice_count> slice_count
@@ -55,6 +57,8 @@ import (
 	exprs                  []ast.Expr
 	expr_idents            []string
 	func_expr_idents       []*ast.ParamExpr
+	opt_func_return_expr_idents []*ast.FuncReturnValuesExpr
+	opt_func_return_expr_idents1 []*ast.FuncReturnValuesExpr
 	expr_map               *ast.MapExpr
 	type_data              *ast.TypeStruct
         type_data_struct       *ast.TypeStruct
@@ -482,6 +486,27 @@ expr_idents :
 		$$ = append($1, $4.Lit)
 	}
 
+opt_func_return_expr_idents :
+	{
+		$$ = []*ast.FuncReturnValuesExpr{}
+	}
+	| ':' '(' opt_func_return_expr_idents1 ')'
+	{
+		$$ = $3
+	}
+opt_func_return_expr_idents1 :
+	{
+		$$ = []*ast.FuncReturnValuesExpr{}
+	}
+	| type_data
+	{
+		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $1}}
+	}
+	| opt_func_return_expr_idents1 ',' opt_newlines type_data
+	{
+		$$ = append($1, &ast.FuncReturnValuesExpr{TypeData: $4})
+	}
+
 func_expr_idents :
 	{
 		$$ = []*ast.ParamExpr{}
@@ -612,24 +637,24 @@ expr :
 		$$ = &ast.MemberExpr{Expr: $1, Name: $3.Lit}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC '(' func_expr_idents ')' '{' compstmt '}'
+	| FUNC '(' func_expr_idents ')' opt_func_return_expr_idents '{' compstmt '}'
 	{
-		$$ = &ast.FuncExpr{Params: $3, Stmt: $6}
+		$$ = &ast.FuncExpr{Params: $3, Returns: $5, Stmt: $7}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC '(' func_expr_idents VARARG ')' '{' compstmt '}'
+	| FUNC '(' func_expr_idents VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
 	{
-		$$ = &ast.FuncExpr{Params: $3, Stmt: $7, VarArg: true}
+		$$ = &ast.FuncExpr{Params: $3, Returns: $6, Stmt: $8, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC IDENT '(' func_expr_idents ')' '{' compstmt '}'
+	| FUNC IDENT '(' func_expr_idents ')' opt_func_return_expr_idents '{' compstmt '}'
 	{
-		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Stmt: $7}
+		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $6, Stmt: $8}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC IDENT '(' func_expr_idents VARARG ')' '{' compstmt '}'
+	| FUNC IDENT '(' func_expr_idents VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
 	{
-		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Stmt: $8, VarArg: true}
+		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $7, Stmt: $9, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
 	| '[' ']'

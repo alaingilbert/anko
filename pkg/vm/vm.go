@@ -363,25 +363,11 @@ func (e *Executor) hasCompiledWithContext(ctx context.Context, src []byte, targe
 }
 
 func (e *Executor) runWithContext(ctx context.Context, stmts ast.Stmt) (any, error) {
-	rv, err := e.mainRun(ctx, stmts, false)
-	if errors.Is(err, ErrReturn) {
-		err = nil
-	}
-	if !rv.IsValid() || !rv.CanInterface() {
-		return nil, err
-	}
-	return rv.Interface(), err
+	return e.valueToAny(e.mainRun(ctx, stmts, false))
 }
 
 func (e *Executor) runWithContext2(ctx context.Context, stmts ast.Stmt) (any, error) {
-	rv, err := e.mainRun2(ctx, stmts, false)
-	if errors.Is(err, ErrReturn) {
-		err = nil
-	}
-	if !rv.IsValid() || !rv.CanInterface() {
-		return nil, err
-	}
-	return rv.Interface(), err
+	return e.valueToAny(e.mainRun2(ctx, stmts, false))
 }
 
 func (e *Executor) validate(ctx context.Context, src string) (any, error) {
@@ -389,7 +375,10 @@ func (e *Executor) validate(ctx context.Context, src string) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	rv, err := e.mainRun(ctx, stmts, true)
+	return e.valueToAny(e.mainRun(ctx, stmts, true))
+}
+
+func (e *Executor) valueToAny(rv reflect.Value, err error) (any, error) {
 	if errors.Is(err, ErrReturn) {
 		err = nil
 	}
@@ -496,7 +485,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 func (e *Executor) mainRun3(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	// We use rvCh because the script can start goroutines and crash in one of them.
 	// So we need a way to stop the vm from another thread...
-	
+
 	stmt1, ok := stmt.(*ast.StmtsStmt)
 	if !ok || stmt1 == nil {
 		return nil, nilValue, ErrInvalidInput

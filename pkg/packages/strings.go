@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("strings", map[string]any{
+	Packages.Insert("strings", PackageMap{
 		"Contains":       strings.Contains,
 		"ContainsAny":    strings.ContainsAny,
 		"ContainsRune":   strings.ContainsRune,

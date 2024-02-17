@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("fmt", map[string]any{
+	Packages.Insert("fmt", PackageMap{
 		"Errorf":   fmt.Errorf,
 		"Fprint":   fmt.Fprint,
 		"Fprintf":  fmt.Fprintf,

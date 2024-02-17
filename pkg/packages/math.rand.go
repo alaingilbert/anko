@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("math/rand", map[string]any{
+	Packages.Insert("math/rand", PackageMap{
 		"ExpFloat64":  rand.ExpFloat64,
 		"Float32":     rand.Float32,
 		"Float64":     rand.Float64,

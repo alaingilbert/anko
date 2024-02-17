@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("bytes", map[string]any{
+	Packages.Insert("bytes", PackageMap{
 		"Compare":         bytes.Compare,
 		"Contains":        bytes.Contains,
 		"ContainsRune":    bytes.ContainsRune,
@@ -54,7 +54,7 @@ func init() {
 		"TrimSpace":       bytes.TrimSpace,
 		"TrimSuffix":      bytes.TrimSuffix,
 	})
-	PackageTypes.Insert("bytes", map[string]any{
+	PackageTypes.Insert("bytes", PackageMap{
 		"Buffer": bytes.Buffer{},
 		"Reader": bytes.Reader{},
 	})

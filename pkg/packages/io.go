@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("io", map[string]any{
+	Packages.Insert("io", PackageMap{
 		"Copy":             io.Copy,
 		"CopyN":            io.CopyN,
 		"EOF":              io.EOF,

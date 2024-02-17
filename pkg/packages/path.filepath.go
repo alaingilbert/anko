@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("path/filepath", map[string]any{
+	Packages.Insert("path/filepath", PackageMap{
 		"Abs":          filepath.Abs,
 		"Base":         filepath.Base,
 		"Clean":        filepath.Clean,

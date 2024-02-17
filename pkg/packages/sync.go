@@ -5,10 +5,10 @@ import (
 )
 
 func init() {
-	Packages.Insert("sync", map[string]any{
+	Packages.Insert("sync", PackageMap{
 		"NewCond": sync.NewCond,
 	})
-	PackageTypes.Insert("sync", map[string]any{
+	PackageTypes.Insert("sync", PackageMap{
 		"Cond":      sync.Cond{},
 		"Mutex":     sync.Mutex{},
 		"Once":      sync.Once{},

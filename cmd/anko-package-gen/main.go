@@ -111,7 +111,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("%s", map[string]any{
+	Packages.Insert("%s", PackageMap{
 `, pn, pkg, pn, pkg, pn)
 		for _, k := range keys {
 			fmt.Printf(`	"%s": %s.%s,`+"\n", k, pn, k)

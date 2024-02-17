@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("runtime", map[string]any{
+	Packages.Insert("runtime", PackageMap{
 		"GC":         runtime.GC,
 		"GOARCH":     runtime.GOARCH,
 		"GOMAXPROCS": runtime.GOMAXPROCS,

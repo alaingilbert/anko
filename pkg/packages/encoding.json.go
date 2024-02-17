@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("encoding/json", map[string]any{
+	Packages.Insert("encoding/json", PackageMap{
 		"Marshal":   json.Marshal,
 		"Unmarshal": json.Unmarshal,
 	})

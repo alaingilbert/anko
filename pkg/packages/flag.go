@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("flag", map[string]any{
+	Packages.Insert("flag", PackageMap{
 		"Arg":             flag.Arg,
 		"Args":            flag.Args,
 		"Bool":            flag.Bool,

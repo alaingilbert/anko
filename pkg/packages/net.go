@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("net", map[string]any{
+	Packages.Insert("net", PackageMap{
 		"CIDRMask":                   net.CIDRMask,
 		"Dial":                       net.Dial,
 		"DialIP":                     net.DialIP,

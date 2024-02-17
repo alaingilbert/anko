@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("log", map[string]any{
+	Packages.Insert("log", PackageMap{
 		"Fatal":     log.Fatal,
 		"Fatalf":    log.Fatalf,
 		"Fatalln":   log.Fatalln,

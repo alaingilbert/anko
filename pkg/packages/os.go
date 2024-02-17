@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("os", map[string]any{
+	Packages.Insert("os", PackageMap{
 		"Args":              os.Args,
 		"Chdir":             os.Chdir,
 		"Chmod":             os.Chmod,
@@ -96,7 +96,7 @@ func init() {
 		"WriteFile":         os.WriteFile,
 	})
 	var signal os.Signal
-	PackageTypes.Insert("os", map[string]any{
+	PackageTypes.Insert("os", PackageMap{
 		"Signal": reflect.TypeOf(&signal).Elem(),
 	})
 }

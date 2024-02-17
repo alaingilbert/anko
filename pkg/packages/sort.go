@@ -16,7 +16,7 @@ func (s SortFuncsStruct) Less(i, j int) bool { return s.LessFunc(i, j) }
 func (s SortFuncsStruct) Swap(i, j int)      { s.SwapFunc(i, j) }
 
 func init() {
-	Packages.Insert("sort", map[string]any{
+	Packages.Insert("sort", PackageMap{
 		"Float64s":          sort.Float64s,
 		"Float64sAreSorted": sort.Float64sAreSorted,
 		"Ints":              sort.Ints,
@@ -34,7 +34,7 @@ func init() {
 		"SliceIsSorted":     sort.SliceIsSorted,
 		"SliceStable":       sort.SliceStable,
 	})
-	PackageTypes.Insert("sort", map[string]any{
+	PackageTypes.Insert("sort", PackageMap{
 		"Float64Slice":    sort.Float64Slice{},
 		"IntSlice":        sort.IntSlice{},
 		"StringSlice":     sort.StringSlice{},

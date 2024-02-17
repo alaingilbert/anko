@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("io/ioutil", map[string]any{
+	Packages.Insert("io/ioutil", PackageMap{
 		"ReadAll":   ioutil.ReadAll,
 		"ReadDir":   ioutil.ReadDir,
 		"ReadFile":  ioutil.ReadFile,

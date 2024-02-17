@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("io/fs", map[string]any{
+	Packages.Insert("io/fs", PackageMap{
 		"ErrClosed":          fs.ErrClosed,
 		"ErrExist":           fs.ErrExist,
 		"ErrInvalid":         fs.ErrInvalid,
@@ -40,7 +40,7 @@ func init() {
 		"ValidPath":          fs.ValidPath,
 		"WalkDir":            fs.WalkDir,
 	})
-	PackageTypes.Insert("io/fs", map[string]any{
+	PackageTypes.Insert("io/fs", PackageMap{
 		"DirEntry":    reflect.TypeOf((*fs.DirEntry)(nil)).Elem(),
 		"FS":          reflect.TypeOf((*fs.FS)(nil)).Elem(),
 		"File":        reflect.TypeOf((*fs.File)(nil)).Elem(),

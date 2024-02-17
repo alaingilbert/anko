@@ -3,6 +3,7 @@ package env
 import (
 	"bytes"
 	"fmt"
+	"github.com/alaingilbert/anko/pkg/packages"
 	"github.com/alaingilbert/anko/pkg/utils"
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"github.com/alaingilbert/mtx"
@@ -288,11 +289,11 @@ func (e *Env) newModule(symbol string) (*Env, error) {
 	return e.addPackageHelper(symbol, nil, nil)
 }
 
-func (e *Env) addPackage(name string, methods map[string]any, types map[string]any) (*Env, error) {
+func (e *Env) addPackage(name string, methods packages.PackageMap, types packages.PackageMap) (*Env, error) {
 	return e.addPackageHelper(name, methods, types)
 }
 
-func (e *Env) addPackageHelper(name string, methods map[string]any, types map[string]any) (*Env, error) {
+func (e *Env) addPackageHelper(name string, methods packages.PackageMap, types packages.PackageMap) (*Env, error) {
 	module := e.newEnv()
 	destroyFn := module.destroy
 	if err := e.define(name, module); err != nil {

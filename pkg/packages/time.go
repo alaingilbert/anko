@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("time", map[string]any{
+	Packages.Insert("time", PackageMap{
 		"ANSIC":                  time.ANSIC,
 		"After":                  time.After,
 		"AfterFunc":              time.AfterFunc,
@@ -64,7 +64,7 @@ func init() {
 		"Until":                  time.Until,
 		"LoadLocationFromTZData": time.LoadLocationFromTZData,
 	})
-	PackageTypes.Insert("time", map[string]any{
+	PackageTypes.Insert("time", PackageMap{
 		"Duration": time.Duration(0),
 		"Ticker":   time.Ticker{},
 		"Time":     time.Time{},

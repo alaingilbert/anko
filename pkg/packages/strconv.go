@@ -5,7 +5,7 @@ import (
 )
 
 func init() {
-	Packages.Insert("strconv", map[string]any{
+	Packages.Insert("strconv", PackageMap{
 		"FormatBool":  strconv.FormatBool,
 		"FormatFloat": strconv.FormatFloat,
 		"FormatInt":   strconv.FormatInt,

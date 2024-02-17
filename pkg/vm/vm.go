@@ -117,27 +117,9 @@ func (v *VM) executor() *executor.Executor {
 }
 
 func (v *VM) validate(ctx context.Context, val any) error {
-	ctx = utils.DefaultCtx(ctx)
-	e := v.executor()
-	switch vv := val.(type) {
-	case string:
-		return e.ValidateWithContext(ctx, vv)
-	case []byte:
-		return e.ValidateCompiledWithContext(ctx, vv)
-	default:
-		return executor.ErrInvalidInput
-	}
+	return v.executor().Validate(utils.DefaultCtx(ctx), val)
 }
 
 func (v *VM) has(ctx context.Context, val any, targets []any) ([]bool, error) {
-	ctx = utils.DefaultCtx(ctx)
-	e := v.executor()
-	switch vv := val.(type) {
-	case string:
-		return e.HasWithContext(ctx, vv, targets)
-	case []byte:
-		return e.HasCompiledWithContext(ctx, vv, targets)
-	default:
-		return nil, executor.ErrInvalidInput
-	}
+	return v.executor().Has(utils.DefaultCtx(ctx), val, targets)
 }

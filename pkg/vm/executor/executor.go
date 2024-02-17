@@ -138,6 +138,28 @@ func (e *Executor) run(ctx context.Context, input any) (any, error) {
 	}
 }
 
+func (e *Executor) Validate(ctx context.Context, input any) error {
+	switch vv := input.(type) {
+	case string:
+		return e.ValidateWithContext(ctx, vv)
+	case []byte:
+		return e.ValidateCompiledWithContext(ctx, vv)
+	default:
+		return ErrInvalidInput
+	}
+}
+
+func (e *Executor) Has(ctx context.Context, input any, targets []any) ([]bool, error) {
+	switch vv := input.(type) {
+	case string:
+		return e.HasWithContext(ctx, vv, targets)
+	case []byte:
+		return e.HasCompiledWithContext(ctx, vv, targets)
+	default:
+		return nil, ErrInvalidInput
+	}
+}
+
 func (e *Executor) runAsync(ctx context.Context, input any) {
 	go func() {
 		_, _ = e.run(ctx, input)

@@ -113,11 +113,11 @@ func (e *Executor) Has(ctx context.Context, input any, targets []any) ([]bool, e
 }
 
 func (e *Executor) Pause() {
-	e.pause.Open()
+	e.pauseFn()
 }
 
 func (e *Executor) Resume() {
-	e.pause.Close()
+	e.resume()
 }
 
 func (e *Executor) IsPaused() bool {
@@ -185,6 +185,14 @@ func (e *Executor) stop() {
 	if e.cancel != nil {
 		e.cancel()
 	}
+}
+
+func (e *Executor) pauseFn() {
+	e.pause.Open()
+}
+
+func (e *Executor) resume() {
+	e.pause.Close()
 }
 
 func srcToStmt(src string) (ast.Stmt, error) {

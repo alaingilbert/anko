@@ -395,7 +395,7 @@ func makeCallArgs(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 		}
 		if isRunVMFunction {
 			if rt.In(indexInReal) != reflectValueType {
-				if arg.Type() != rt.In(indexInReal) {
+				if rt.In(indexInReal) != interfaceType && arg.Type() != rt.In(indexInReal) {
 					err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
 					return []reflect.Value{}, []reflect.Type{}, false, err
 				}
@@ -444,7 +444,7 @@ func makeCallArgsFnNotVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type
 	}
 	if isRunVMFunction {
 		if rt.In(indexInReal) != reflectValueType {
-			if arg.Type() != rt.In(indexInReal) {
+			if rt.In(indexInReal) != interfaceType && arg.Type() != rt.In(indexInReal) {
 				err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
 				return []reflect.Value{}, []reflect.Type{}, false, err
 			}
@@ -486,7 +486,7 @@ func makeCallArgsFnNotVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, i
 	for indexInReal < numInReal {
 		if isRunVMFunction {
 			if rt.In(indexInReal) != reflectValueType {
-				if arg.Index(indexSlice).Type() != rt.In(indexInReal) {
+				if rt.In(indexInReal) != interfaceType && arg.Index(indexSlice).Type() != rt.In(indexInReal) {
 					err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Index(indexSlice).Type().String())
 					return []reflect.Value{}, []reflect.Type{}, false, err
 				}

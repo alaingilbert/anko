@@ -1631,6 +1631,8 @@ func TestEnvRef(t *testing.T) {
 func TestFuncTypedParams(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
+		{Script: `func a(x:any){return x}; a(1)`, RunOutput: int64(1)},
+		{Script: `func a(x:any){return x}; a("1")`, RunOutput: "1"},
 		{Script: `func a(x:int64){return x}; a(1)`, RunOutput: int64(1)},
 		{Script: `func a(x:int64){return x}; a("1")`, RunError: fmt.Errorf("function wants argument type int64 but received type string")},
 		{Script: `func a(x:string){return x}; a(1)`, RunError: fmt.Errorf("function wants argument type string but received type int64")},

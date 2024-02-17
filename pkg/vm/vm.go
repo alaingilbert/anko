@@ -10,6 +10,7 @@ import (
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"github.com/alaingilbert/anko/pkg/vm/ratelimitanything"
 	"github.com/alaingilbert/anko/pkg/vm/stateCh"
+	"github.com/alaingilbert/mtx"
 	"reflect"
 	"sync"
 	"sync/atomic"
@@ -52,6 +53,7 @@ type Executor struct {
 	mapMutex         *mapLocker
 	cancel           context.CancelFunc
 	importCore       bool
+	maxEnvCount      *mtx.Mtx[int64]
 }
 
 type ExecutorConfig struct {
@@ -62,6 +64,7 @@ type ExecutorConfig struct {
 	RateLimit        int
 	RateLimitPeriod  time.Duration
 	Env              envPkg.IEnv
+	MaxEnvCount      int
 }
 
 func NewExecutor(cfg *ExecutorConfig) *Executor {
@@ -85,6 +88,7 @@ func NewExecutor(cfg *ExecutorConfig) *Executor {
 	e.doNotProtectMaps = cfg.DoNotProtectMaps
 	e.importCore = cfg.ImportCore
 	e.mapMutex = &mapLocker{}
+	e.maxEnvCount = mtx.NewRWMtxPtr(int64(cfg.MaxEnvCount))
 	if cfg.RateLimit > 0 {
 		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
 	}
@@ -224,6 +228,7 @@ func (v *VM) executor() *Executor {
 		RateLimit:        v.rateLimit,
 		RateLimitPeriod:  v.rateLimitPeriod,
 		Env:              v.env,
+		MaxEnvCount:      1000,
 	})
 }
 
@@ -477,7 +482,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 				return
 			}
 			//fmt.Println(e.env.ChildCount())
-			if e.env.ChildCount() > 10000 {
+			if e.env.ChildCount() > e.maxEnvCount.Load() {
 				cancel()
 				fmt.Println("KILLED")
 				break

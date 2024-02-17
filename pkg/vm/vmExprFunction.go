@@ -135,12 +135,19 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 					} else {
 						if expectedT == errorType && !rvv.IsNil() {
 							if !rvvT.Implements(errorType) {
-								err = fmt.Errorf("invalid type for returned value %d", i)
+								err = fmt.Errorf("invalid type for returned value %d, have: %s, want: %s", i, rvvT, expectedT)
 								return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 							}
 						} else if rvvT != expectedT {
-							err = fmt.Errorf("invalid type for returned value %d", i)
-							return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+							if expectedT.Kind() == reflect.Interface {
+								if !rvvT.Implements(expectedT) {
+									err = fmt.Errorf("invalid type for returned value %d, have: %s, want: %s", i, rvvT, expectedT)
+									return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+								}
+							} else {
+								err = fmt.Errorf("invalid type for returned value %d, have: %s, want: %s", i, rvvT, expectedT)
+								return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+							}
 						}
 					}
 				}

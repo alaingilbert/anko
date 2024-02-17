@@ -17,7 +17,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -113,10 +112,6 @@ func runNonInteractive(args []string, appFlags AppFlags) int {
 
 	v := vm.New(&vm.Configs{ImportCore: true, DefineImport: true})
 	_ = v.Define("args", args)
-	_ = v.Define("test_builtin", func(cmd *exec.Cmd) (int, []byte, error) {
-		a, err := cmd.Output()
-		return 0, a, err
-	})
 	executor := v.Executor()
 	fileExt := filepath.Ext(appFlags.File)
 	var err error

@@ -490,6 +490,10 @@ opt_func_return_expr_idents :
 	{
 		$$ = []*ast.FuncReturnValuesExpr{}
 	}
+	| ':' type_data
+	{
+		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $2}}
+	}
 	| ':' '(' opt_func_return_expr_idents1 ')'
 	{
 		$$ = $3

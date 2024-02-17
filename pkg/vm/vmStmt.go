@@ -213,6 +213,7 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 	if toBool(rv) {
 		// then
 		newenv := env.NewEnv()
+		defer newenv.Destroy()
 		rv, err = runSingleStmt(vmp, newenv, stmt.Then)
 		if err != nil {
 			return rv, newError(stmt, err)
@@ -224,6 +225,7 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		elseIf := statement.(*ast.IfStmt)
 		// else if - if
 		newenv := env.NewEnv()
+		defer newenv.Destroy()
 		rv, err = invokeExpr(vmp, newenv, elseIf.If)
 		if err != nil {
 			return rv, newError(elseIf.If, err)
@@ -233,8 +235,9 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		}
 
 		// else if - then
-		newenv = env.NewEnv()
-		rv, err = runSingleStmt(vmp, newenv, elseIf.Then)
+		newenv1 := env.NewEnv()
+		defer newenv1.Destroy()
+		rv, err = runSingleStmt(vmp, newenv1, elseIf.Then)
 		if err != nil {
 			return rv, newError(elseIf, err)
 		}
@@ -244,6 +247,7 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 	if stmt.Else != nil {
 		// else
 		newenv := env.NewEnv()
+		defer newenv.Destroy()
 		rv, err = runSingleStmt(vmp, newenv, stmt.Else)
 		if err != nil {
 			return rv, newError(stmt, err)
@@ -255,10 +259,12 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 
 func runTryStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Value, error) {
 	newenv := env.NewEnv()
+	defer newenv.Destroy()
 	_, err := runSingleStmt(vmp, newenv, stmt.Try)
 	if err != nil {
 		// Catch
 		cenv := env.NewEnv()
+		defer cenv.Destroy()
 		if stmt.Var != "" {
 			_ = cenv.DefineValue(stmt.Var, reflect.ValueOf(err))
 		}
@@ -282,6 +288,7 @@ func runTryStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Valu
 func runLoopStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Value, error) {
 	nilValueL := nilValue
 	newenv := env.NewEnv()
+	defer newenv.Destroy()
 	for {
 		if err := incrCycle(vmp); err != nil {
 			return nilValueL, ErrInterrupt
@@ -339,6 +346,7 @@ func runForStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt) (reflect.Valu
 func runForStmtSlice(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflect.Value) (reflect.Value, error) {
 	nilValueL := nilValue
 	newenv := env.NewEnv()
+	defer newenv.Destroy()
 	for i := 0; i < val.Len(); i++ {
 		if err := incrCycle(vmp); err != nil {
 			return nilValueL, ErrInterrupt
@@ -365,6 +373,7 @@ func runForStmtSlice(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 func runForStmtMap(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflect.Value) (reflect.Value, error) {
 	nilValueL := nilValue
 	newenv := env.NewEnv()
+	defer newenv.Destroy()
 	keys := val.MapKeys()
 	for i := 0; i < len(keys); i++ {
 		if err := incrCycle(vmp); err != nil {
@@ -391,6 +400,7 @@ func runForStmtMap(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 
 func runForStmtChan(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflect.Value) (reflect.Value, error) {
 	newenv := env.NewEnv()
+	defer newenv.Destroy()
 	for {
 		iv := nilValue
 		if !vmp.validate {
@@ -437,6 +447,7 @@ func runForStmtChan(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 func runCForStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Value, error) {
 	nilValueL := nilValue
 	newenv := env.NewEnv()
+	defer newenv.Destroy()
 	_, err := runSingleStmt(vmp, newenv, stmt.Stmt1)
 	if err != nil {
 		return nilValueL, err
@@ -515,6 +526,7 @@ func runThrowStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ThrowStmt) (reflect.
 
 func runModuleStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ModuleStmt) (reflect.Value, error) {
 	newenv := env.NewEnv()
+	defer newenv.Destroy()
 	rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 	if err != nil {
 		return rv, newError(stmt, err)
@@ -527,6 +539,7 @@ func runSelectStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 	nilValueL := nilValue
 	var err error
 	newenv := env.NewEnv()
+	defer newenv.Destroy()
 	body := stmt.Body.(*ast.SelectBodyStmt)
 	letsStmts := []*ast.LetsStmt{nil}
 	bodies := []ast.Stmt{nil}
@@ -615,6 +628,7 @@ func runSelectStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 
 func runSwitchStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.SwitchStmt) (reflect.Value, error) {
 	newenv := env.NewEnv()
+	defer newenv.Destroy()
 	rv, err := invokeExpr(vmp, newenv, stmt.Expr)
 	if err != nil {
 		return rv, newError(stmt, err)

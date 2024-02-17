@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 )
 
 var basicTypes = map[string]reflect.Type{
@@ -59,6 +60,7 @@ type IEnv interface {
 	Name() string
 	NewEnv() *Env
 	NewModule(symbol string) (*Env, error)
+	ChildCount() int64
 	SetValue(k string, v reflect.Value) error
 	String() string
 	Type(k string) (reflect.Type, error)
@@ -71,11 +73,12 @@ var _ IEnv = (*Env)(nil)
 // Env provides interface to run VM. This mean function scope and blocked-scope.
 // If stack goes to blocked-scope, it will make new Env.
 type Env struct {
-	parent *Env
-	name   *mtx.Mtx[string]
-	values *mtx.Map[string, reflect.Value]
-	types  *mtx.Map[string, reflect.Type]
-	defers *mtx.Slice[CapturedFunc]
+	childCountVar int64 // atomic
+	parent        *Env
+	name          *mtx.Mtx[string]
+	values        *mtx.Map[string, reflect.Value]
+	types         *mtx.Map[string, reflect.Type]
+	defers        *mtx.Slice[CapturedFunc]
 }
 
 // NewEnv creates new global scope.
@@ -87,6 +90,10 @@ func (e *Env) NewEnv() *Env { return e.newEnv() }
 // NewModule creates new child scope and define it as a symbol.
 // This is a shortcut for calling e.NewEnv then Define that new Env.
 func (e *Env) NewModule(symbol string) (*Env, error) { return e.newModule(symbol) }
+
+func (e *Env) Destroy() { e.destroy() }
+
+func (e *Env) ChildCount() int64 { return e.childCount() }
 
 func (e *Env) Values() *mtx.Map[string, reflect.Value] { return e.values }
 
@@ -208,7 +215,23 @@ func newEnv() *Env {
 func (e *Env) newEnv() *Env {
 	env := newEnv()
 	env.parent = e
+	e.incrChildCount(1)
 	return env
+}
+
+func (e *Env) destroy() {
+	e.incrChildCount(-1)
+}
+
+func (e *Env) childCount() int64 {
+	return atomic.LoadInt64(&e.childCountVar)
+}
+
+func (e *Env) incrChildCount(diff int) {
+	atomic.AddInt64(&e.childCountVar, int64(diff))
+	if e.parent != nil {
+		e.parent.incrChildCount(diff)
+	}
 }
 
 func (e *Env) newModule(symbol string) (*Env, error) {

@@ -467,6 +467,22 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	}
 
 	go func() {
+		for {
+			select {
+			case <-time.After(time.Second):
+			case <-ctx.Done():
+				return
+			}
+			//fmt.Println(e.env.ChildCount())
+			if e.env.ChildCount() > 10000 {
+				e.cancel()
+				fmt.Println("KILLED")
+				break
+			}
+		}
+	}()
+
+	go func() {
 		rv, err := runSingleStmtL(vmp, envCopy, stmt1)
 		rvCh <- Result{Value: rv, Error: err}
 	}()

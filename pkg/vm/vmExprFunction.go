@@ -56,6 +56,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 
 		// create newEnv for run
 		newEnv := env.NewEnv()
+		defer newEnv.Destroy()
 		// add Params to newEnv, except last Params
 		for i := 0; i < len(funcExpr.Params)-1; i++ {
 			var ok bool

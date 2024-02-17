@@ -118,19 +118,42 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 
 		// Validate return values types
 		if len(funcExpr.Returns) > 0 {
-			if rv.Len() != len(funcExpr.Returns) {
-				err = fmt.Errorf("invalid number of returned values")
-				return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
-			}
-			for i := 0; i < rv.Len(); i++ {
-				rvv := rv.Index(i)
-				rvvT := reflect.TypeOf(rvv.Interface())
-				expectedT, err := makeType(vmp, env, funcExpr.Returns[i].TypeData)
+			if rv.Type() == interfaceSliceType {
+				if rv.Len() != len(funcExpr.Returns) {
+					err = fmt.Errorf("invalid number of returned values, have %d, expected: %d", rv.Len(), len(funcExpr.Returns))
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+				}
+				for i := 0; i < rv.Len(); i++ {
+					rvv := rv.Index(i)
+					rvvT := reflect.TypeOf(rvv.Interface())
+					expectedT, err := makeType(vmp, env, funcExpr.Returns[i].TypeData)
+					if err != nil {
+						return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+					}
+					if expectedT == errorType && rvv.IsNil() {
+					} else {
+						if expectedT == errorType && !rvv.IsNil() {
+							if !rvvT.Implements(errorType) {
+								err = fmt.Errorf("invalid type for returned value %d", i)
+								return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+							}
+						} else if rvvT != expectedT {
+							err = fmt.Errorf("invalid type for returned value %d", i)
+							return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+						}
+					}
+				}
+			} else {
+				if len(funcExpr.Returns) != 1 {
+					err = fmt.Errorf("invalid number of returned values, have %d, expected: %d", 1, len(funcExpr.Returns))
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+				}
+				expectedT, err := makeType(vmp, env, funcExpr.Returns[0].TypeData)
 				if err != nil {
 					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 				}
-				if rvvT != expectedT {
-					err = fmt.Errorf("invalid type for returned value %d", i)
+				if rv.Type() != expectedT {
+					err = fmt.Errorf("invalid type for returned value, have: %s, expected: %s", rv.Type(), expectedT)
 					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 				}
 			}

@@ -102,6 +102,7 @@ type Test struct {
 	RunErrorFunc   *func(*testing.T, error)
 	RunOutput      any
 	Output         map[string]any
+	Name           string
 }
 
 // Options is utility struct to pass options to the test.

@@ -1302,33 +1302,35 @@ func TestKeys(t *testing.T) {
 func TestKindOf(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `kindOf(a)`, Input: map[string]any{"a": reflect.Value{}}, RunOutput: "struct", Output: map[string]any{"a": reflect.Value{}}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": nil}, RunOutput: "nil", Output: map[string]any{"a": nil}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": true}, RunOutput: "bool", Output: map[string]any{"a": true}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": int32(1)}, RunOutput: "int32", Output: map[string]any{"a": int32(1)}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": int64(1)}, RunOutput: "int64", Output: map[string]any{"a": int64(1)}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": float32(1.1)}, RunOutput: "float32", Output: map[string]any{"a": float32(1.1)}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": float64(1.1)}, RunOutput: "float64", Output: map[string]any{"a": float64(1.1)}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": "a"}, RunOutput: "string", Output: map[string]any{"a": "a"}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": 'a'}, RunOutput: "int32", Output: map[string]any{"a": 'a'}},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": reflect.Value{}}, RunOutput: "struct", Output: map[string]any{"a": reflect.Value{}}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": nil}, RunOutput: "nil", Output: map[string]any{"a": nil}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": true}, RunOutput: "bool", Output: map[string]any{"a": true}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": int32(1)}, RunOutput: "int32", Output: map[string]any{"a": int32(1)}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": int64(1)}, RunOutput: "int64", Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": float32(1.1)}, RunOutput: "float32", Output: map[string]any{"a": float32(1.1)}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": float64(1.1)}, RunOutput: "float64", Output: map[string]any{"a": float64(1.1)}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": "a"}, RunOutput: "string", Output: map[string]any{"a": "a"}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": 'a'}, RunOutput: "int32", Output: map[string]any{"a": 'a'}, Name: ""},
 
-		{Script: `kindOf(a)`, Input: map[string]any{"a": any(nil)}, RunOutput: "nil", Output: map[string]any{"a": any(nil)}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": any(true)}, RunOutput: "bool", Output: map[string]any{"a": any(true)}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": any(int32(1))}, RunOutput: "int32", Output: map[string]any{"a": any(int32(1))}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": any(int64(1))}, RunOutput: "int64", Output: map[string]any{"a": any(int64(1))}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": any(float32(1))}, RunOutput: "float32", Output: map[string]any{"a": any(float32(1))}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": any(float64(1))}, RunOutput: "float64", Output: map[string]any{"a": any(float64(1))}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": any("a")}, RunOutput: "string", Output: map[string]any{"a": any("a")}},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": any(nil)}, RunOutput: "nil", Output: map[string]any{"a": any(nil)}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": any(true)}, RunOutput: "bool", Output: map[string]any{"a": any(true)}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": any(int32(1))}, RunOutput: "int32", Output: map[string]any{"a": any(int32(1))}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": any(int64(1))}, RunOutput: "int64", Output: map[string]any{"a": any(int64(1))}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": any(float32(1))}, RunOutput: "float32", Output: map[string]any{"a": any(float32(1))}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": any(float64(1))}, RunOutput: "float64", Output: map[string]any{"a": any(float64(1))}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": any("a")}, RunOutput: "string", Output: map[string]any{"a": any("a")}, Name: ""},
 
-		{Script: `kindOf(a)`, Input: map[string]any{"a": []any{}}, RunOutput: "slice", Output: map[string]any{"a": []any{}}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": []any{nil}}, RunOutput: "slice", Output: map[string]any{"a": []any{nil}}},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": []any{}}, RunOutput: "slice", Output: map[string]any{"a": []any{}}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": []any{nil}}, RunOutput: "slice", Output: map[string]any{"a": []any{nil}}, Name: ""},
 
-		{Script: `kindOf(a)`, Input: map[string]any{"a": map[string]any{}}, RunOutput: "map", Output: map[string]any{"a": map[string]any{}}},
-		{Script: `kindOf(a)`, Input: map[string]any{"a": map[string]any{"b": "b"}}, RunOutput: "map", Output: map[string]any{"a": map[string]any{"b": "b"}}},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": map[string]any{}}, RunOutput: "map", Output: map[string]any{"a": map[string]any{}}, Name: ""},
+		{Script: `kindOf(a)`, Input: map[string]any{"a": map[string]any{"b": "b"}}, RunOutput: "map", Output: map[string]any{"a": map[string]any{"b": "b"}}, Name: ""},
 
-		{Script: `a = make(interface); kindOf(a)`, RunOutput: "nil", Output: map[string]any{"a": any(nil)}},
+		{Script: `a = make(interface); kindOf(a)`, RunOutput: "nil", Output: map[string]any{"a": any(nil)}, Name: ""},
 	}
-	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
 }
 
 func TestRange(t *testing.T) {

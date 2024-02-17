@@ -490,13 +490,13 @@ opt_func_return_expr_idents :
 	{
 		$$ = nil
 	}
-	| ':' type_data
+	| type_data
 	{
-		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $2}}
+		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $1}}
 	}
-	| ':' '(' opt_func_return_expr_idents1 ')'
+	| '(' opt_func_return_expr_idents1 ')'
 	{
-		$$ = $3
+		$$ = $2
 	}
 opt_func_return_expr_idents1 :
 	{

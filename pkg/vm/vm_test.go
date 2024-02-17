@@ -1655,19 +1655,19 @@ func TestFuncTypedParams(t *testing.T) {
 func TestFuncTypedReturns(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `errors = import("errors");func a(){return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
-		{Script: `errors = import("errors");func a():error{return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
-		{Script: `errors = import("errors");func a():(error){return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
-		{Script: `errors = import("errors");func a():(int){return errors.New("err")}; a()`, RunError: fmt.Errorf("invalid type for returned value, have: error, expected: int")},
-		{Script: `errors = import("errors");func a():int64{return 1}; a()`, RunOutput: int64(1)},
-		{Script: `errors = import("errors");func a():any{return 1}; a()`, RunOutput: int64(1)},
-		{Script: `errors = import("errors");func a():any{return "1"}; a()`, RunOutput: "1"},
-		{Script: `errors = import("errors");func a():(){return 1}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 1, expected: 0")},
-		{Script: `errors = import("errors");func a():(){}; a()`},
-		{Script: `errors = import("errors");func a():(int64){return 1}; a()`, RunOutput: int64(1)},
-		{Script: `errors = import("errors");func a():(int64,error){return 1, nil}; b,c=a();b`, RunOutput: int64(1)},
-		{Script: `errors = import("errors");func a():(int64){return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 1")},
-		{Script: `errors = import("errors");func a():(int64,int64,int64){return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 3")},
+		{Script: `errors = import("errors");func a() {return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
+		{Script: `errors = import("errors");func a() error {return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
+		{Script: `errors = import("errors");func a() (error) {return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
+		{Script: `errors = import("errors");func a() (int) {return errors.New("err")}; a()`, RunError: fmt.Errorf("invalid type for returned value, have: error, expected: int")},
+		{Script: `errors = import("errors");func a() int64 {return 1}; a()`, RunOutput: int64(1)},
+		{Script: `errors = import("errors");func a() any {return 1}; a()`, RunOutput: int64(1)},
+		{Script: `errors = import("errors");func a() any {return "1"}; a()`, RunOutput: "1"},
+		{Script: `errors = import("errors");func a() () {return 1}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 1, expected: 0")},
+		{Script: `errors = import("errors");func a() () {}; a()`},
+		{Script: `errors = import("errors");func a() (int64) {return 1}; a()`, RunOutput: int64(1)},
+		{Script: `errors = import("errors");func a() (int64,error) {return 1, nil}; b,c=a();b`, RunOutput: int64(1)},
+		{Script: `errors = import("errors");func a() (int64) {return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 1")},
+		{Script: `errors = import("errors");func a() (int64,int64,int64) {return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 3")},
 	}
 	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
 }

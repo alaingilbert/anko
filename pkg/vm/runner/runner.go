@@ -74,7 +74,11 @@ func Run(config *Config) (reflect.Value, error) {
 	env := config.Env
 	validate := config.Validate
 	validateLater := make(map[string]ast.Stmt)
+
+	// We use rvCh because the script can start goroutines and crash in one of them.
+	// So we need a way to stop the vm from another thread...
 	rvCh := make(chan Result)
+	
 	vmp := NewVmParams(config.Ctx, rvCh, config.Stats, config.DoNotProtectMaps, config.MapMutex,
 		config.Pause, config.RateLimit, validate, config.Has, validateLater)
 

@@ -328,9 +328,6 @@ var nilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
 var ErrInvalidInput = errors.New("invalid input")
 
 func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
-	// We use rvCh because the script can start goroutines and crash in one of them.
-	// So we need a way to stop the vm from another thread...
-
 	stmt1, ok := stmt.(*ast.StmtsStmt)
 	if !ok || stmt1 == nil {
 		return nil, nilValue, ErrInvalidInput

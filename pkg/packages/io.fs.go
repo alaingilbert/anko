@@ -29,6 +29,17 @@ func init() {
 		"ModeType":       fs.ModeType,
 		"ReadFile":       fs.ReadFile,
 		"ValidPath":      fs.ValidPath,
+
+		"FileInfoToDirEntry": fs.FileInfoToDirEntry,
+		"FormatDirEntry":     fs.FormatDirEntry,
+		"FormatFileInfo":     fs.FormatFileInfo,
+		"Glob":               fs.Glob,
+		"ReadDir":            fs.ReadDir,
+		"SkipAll":            fs.SkipAll,
+		"SkipDir":            fs.SkipDir,
+		"Stat":               fs.Stat,
+		"Sub":                fs.Sub,
+		"WalkDir":            fs.WalkDir,
 	})
 	PackageTypes.Insert("io/fs", map[string]any{
 		"DirEntry":    reflect.TypeOf((*fs.DirEntry)(nil)).Elem(),

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"flag"
@@ -16,6 +17,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/vm/runner"
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"github.com/chzyer/readline"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -316,44 +318,59 @@ func compileAndSave(source, fileName string) error {
 func runWeb(args []string) int {
 	e := vm.New(&vm.Config{ImportCore: true, DefineImport: true}).Executor()
 
-	mux := http.DefaultServeMux
-	mux.HandleFunc("/favicon.ico", func(resp http.ResponseWriter, req *http.Request) {})
-	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
-		if req.Method == http.MethodPost {
-			http.Redirect(resp, req, "/", http.StatusFound)
-			submit := req.PostFormValue("submit")
-			if submit == "run" {
-				source := req.PostFormValue("source")
-				e.RunAsync(context.Background(), source)
-				return
-			} else if submit == "stop" {
-				e.Stop()
-				return
-			} else if submit == "toggle_pause" {
-				utils.Ternary(e.IsPaused(), e.Resume, e.Pause)()
-				return
-			}
-			return
-		}
-		resp.WriteHeader(http.StatusOK)
-		defaultScript := `time = import("time")
+	defaultScript := `time = import("time")
 i = 0
 for {
   i++
   println("test", i)
   time.Sleep(time.Second)
 }`
-		_, _ = resp.Write([]byte(`<html><body>
+
+	mux := http.DefaultServeMux
+	mux.HandleFunc("/favicon.ico", func(resp http.ResponseWriter, req *http.Request) {})
+	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
+		resp.WriteHeader(http.StatusOK)
+		script := ""
+		if req.Method == http.MethodPost {
+			script = req.PostFormValue("source")
+			submit := req.PostFormValue("submit")
+			if submit == "run" {
+				e.RunAsync(context.Background(), script)
+			} else if submit == "stop" {
+				e.Stop()
+			} else if submit == "toggle_pause" {
+				utils.Ternary(e.IsPaused(), e.Resume, e.Pause)()
+			} else if submit == "refresh" {
+			}
+		} else if req.Method == http.MethodGet {
+			script = defaultScript
+		}
+		pageHtml := `<html><body>
 	<form method="post">
 		<div>
-			<button type="submit" name="submit" value="run">Run</button>
-			<button type="submit" name="submit" value="stop">Stop</button>
-			<button type="submit" name="submit" value="toggle_pause">Pause/Resume</button>
+			<button type="submit" name="submit" value="refresh">refresh page</button>
+			<button type="submit" name="submit" value="run">run</button>
+			<button type="submit" name="submit" value="stop">stop</button>
+			<button type="submit" name="submit" value="toggle_pause">pause/resume</button>
 		</div>
-<textarea name="source" rows="10" cols="80">` + defaultScript + `</textarea>
+		<div>
+			Running: {{ if .IsRunning }}running{{ else }}stopped{{ end }} |
+			Paused: {{ if .IsPaused }}paused{{ else }}not paused{{ end }}
+		</div>
+		<textarea name="source" rows="10" cols="80">` + script + `</textarea>
 	</form>
-</body></html>`))
+</body></html>`
+		data := map[string]any{
+			"IsRunning": e.IsRunning(),
+			"IsPaused":  e.IsPaused(),
+		}
+		tmpl := template.New("")
+		_, _ = tmpl.Parse(pageHtml)
+		buf := new(bytes.Buffer)
+		_ = tmpl.Execute(buf, data)
+		_, _ = resp.Write(buf.Bytes())
 	})
+
 	addr := "127.0.0.1:8080"
 	fmt.Printf("listening on %s\n", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {

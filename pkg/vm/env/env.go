@@ -45,7 +45,7 @@ type CapturedFunc struct {
 }
 
 type IEnv interface {
-	AddPackage(name string, methods map[string]any, types map[string]any) (IEnv, error)
+	AddPackage(name string, methods packages.PackageMap, types packages.PackageMap) (IEnv, error)
 	ChildCount() int64
 	DeepCopy() IEnv
 	Defers() *mtx.Slice[CapturedFunc]
@@ -110,7 +110,7 @@ func (e *Env) Defers() *mtx.Slice[CapturedFunc] { return e.defers }
 func (e *Env) GetEnvFromPath(path []string) (IEnv, error) { return e.getEnvFromPath(path) }
 
 // AddPackage creates a new env with a name that has methods and types in it. Created under the parent env
-func (e *Env) AddPackage(name string, methods map[string]any, types map[string]any) (IEnv, error) {
+func (e *Env) AddPackage(name string, methods packages.PackageMap, types packages.PackageMap) (IEnv, error) {
 	return e.addPackage(name, methods, types)
 }
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/compiler"
+	"github.com/alaingilbert/anko/pkg/packages"
 	"github.com/alaingilbert/anko/pkg/parser"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"github.com/alaingilbert/anko/pkg/vm/ratelimitanything"
@@ -24,7 +25,7 @@ type IVM interface {
 
 	Define(k string, v any) error
 	DefineType(k string, v any) error
-	AddPackage(name string, methods map[string]any, types map[string]any) (envPkg.IEnv, error)
+	AddPackage(name string, methods packages.PackageMap, types packages.PackageMap) (envPkg.IEnv, error)
 }
 
 // Compile time checks to ensure type satisfies IVM interface
@@ -212,7 +213,7 @@ func (v *VM) Has(ctx context.Context, val any, targets []any) ([]bool, error) {
 	return v.has(ctx, val, targets)
 }
 
-func (v *VM) AddPackage(name string, methods map[string]any, types map[string]any) (envPkg.IEnv, error) {
+func (v *VM) AddPackage(name string, methods packages.PackageMap, types packages.PackageMap) (envPkg.IEnv, error) {
 	return v.env.AddPackage(name, methods, types)
 }
 

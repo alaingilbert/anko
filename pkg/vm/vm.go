@@ -363,14 +363,14 @@ func (e *Executor) hasCompiledWithContext(ctx context.Context, src []byte, targe
 }
 
 func (e *Executor) runWithContext(ctx context.Context, stmts ast.Stmt) (any, error) {
-	return e.valueToAny(e.mainRun(ctx, stmts, false))
+	return valueToAny(e.mainRun(ctx, stmts, false))
 }
 
 func (e *Executor) runWithContext2(ctx context.Context, stmts ast.Stmt) (any, error) {
-	return e.valueToAny(e.mainRun2(ctx, stmts, false))
+	return valueToAny(e.mainRun2(ctx, stmts, false))
 }
 
-func (e *Executor) valueToAny(rv reflect.Value, err error) (any, error) {
+func valueToAny(rv reflect.Value, err error) (any, error) {
 	if errors.Is(err, ErrReturn) {
 		err = nil
 	}

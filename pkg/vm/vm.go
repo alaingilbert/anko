@@ -53,6 +53,7 @@ type Executor struct {
 	mapMutex         *mapLocker                           // locker object to protect maps
 	cancel           context.CancelFunc                   // use to Stop a script
 	importCore       bool                                 // either or not to import core functions in executor's env
+	watchdogEnabled  bool                                 // either or not to run the watchdog
 	maxEnvCount      *mtx.Mtx[int64]                      // maximum sub-env allowed before the watchdog kills the script
 }
 
@@ -60,6 +61,7 @@ type ExecutorConfig struct {
 	DoNotProtectMaps bool
 	DoNotDeepCopyEnv bool
 	ImportCore       bool
+	WatchdogEnabled  bool
 	DefineImport     bool
 	RateLimit        int
 	RateLimitPeriod  time.Duration
@@ -82,6 +84,9 @@ func NewExecutor(cfg *ExecutorConfig) *Executor {
 	}
 	if cfg.DefineImport {
 		DefineImport(e.env)
+	}
+	if cfg.WatchdogEnabled {
+		e.watchdogEnabled = cfg.WatchdogEnabled
 	}
 	e.pause = stateCh.NewStateCh(true)
 	e.stats = &stats{}
@@ -228,6 +233,7 @@ func (v *VM) executor() *Executor {
 		RateLimit:        v.rateLimit,
 		RateLimitPeriod:  v.rateLimitPeriod,
 		Env:              v.env,
+		WatchdogEnabled:  true,
 		MaxEnvCount:      1000,
 	})
 }
@@ -471,9 +477,12 @@ func (e *Executor) mainRunWithWatchdog(ctx context.Context, stmt ast.Stmt, valid
 	}
 
 	// Start thread to watch for memory leaking scripts
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	go e.watchdog(ctx, cancel)
+	if e.watchdogEnabled {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithCancel(ctx)
+		defer cancel()
+		go e.watchdog(ctx, cancel)
+	}
 
 	return e.mainRun(ctx, stmt, validate, targets)
 }

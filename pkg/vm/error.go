@@ -18,6 +18,8 @@ type (
 	}
 )
 
+type IsVmFunc struct{}
+
 var (
 	nilType            = reflect.TypeOf(nil)
 	stringType         = reflect.TypeOf("a")
@@ -27,6 +29,7 @@ var (
 	errorType          = reflect.TypeOf((*error)(nil)).Elem()
 	vmErrorType        = reflect.TypeOf(&Error{})
 	contextType        = reflect.TypeOf((*context.Context)(nil)).Elem()
+	isVmFuncType       = reflect.TypeOf((*IsVmFunc)(nil)).Elem()
 
 	nilValue                  = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
 	trueValue                 = reflect.ValueOf(true)

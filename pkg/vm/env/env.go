@@ -210,9 +210,9 @@ func newEnv() *Env {
 	return &Env{
 		parent: nil,
 		name:   mtx.NewRWMtxPtr(""),
-		values: mtx.NewRWMapPtr[string, reflect.Value](nil),
-		types:  mtx.NewRWMapPtr[string, reflect.Type](nil),
-		defers: mtx.NewRWSlicePtr[CapturedFunc](nil),
+		values: mtx.NewRWMapPtr(map[string]reflect.Value{}),
+		types:  mtx.NewRWMapPtr(map[string]reflect.Type{}),
+		defers: mtx.NewRWSlicePtr([]CapturedFunc{}),
 	}
 }
 

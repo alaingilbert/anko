@@ -14,6 +14,7 @@ import (
 	"sync/atomic"
 )
 
+// It's fine for this map to not be mutex protected, so long as no one writes in it
 var basicTypes = map[string]reflect.Type{
 	"interface": reflect.ValueOf([]any{int64(1)}).Index(0).Type(),
 	"any":       reflect.ValueOf([]any{int64(1)}).Index(0).Type(),

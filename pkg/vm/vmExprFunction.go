@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/utils"
@@ -22,7 +21,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 	// create the inTypes needed by reflect.FuncOf
 	inTypes := make([]reflect.Type, len(funcExpr.Params)+1, len(funcExpr.Params)+1)
 	// for runVMFunction first arg is always context
-	inTypes[0] = contextType
+	inTypes[0] = isVmFuncType
 	for i := 1; i < len(inTypes); i++ {
 		param := funcExpr.Params[i-1]
 		newType := reflectValueType
@@ -94,7 +93,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 			}
 		}
 
-		ctx := in[0].Interface().(context.Context)
+		ctx := in[0].Interface().(*IsVmFunc)
 		// run function statements
 		newVmp := newVmParams(ctx, vmp.rvCh, vmp.stats, vmp.doNotProtectMaps, vmp.mapMutex, vmp.pause, vmp.rateLimit, vmp.validate, vmp.has, vmp.validateLater)
 		rv, err = runSingleStmt(newVmp, newEnv, funcExpr.Stmt)
@@ -315,28 +314,12 @@ func callExpr(vmp *vmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 // If it matches the types for a runVMFunction this will return true, otherwise false
 func checkIfRunVMFunction(rt reflect.Type) bool {
 	if rt.NumIn() < 1 ||
-		rt.In(0) != contextType ||
+		rt.In(0) != isVmFuncType ||
 		rt.NumOut() != 2 ||
 		rt.Out(0) != reflectValueType ||
 		rt.Out(1) != reflectValueType {
 		return false
 	}
-	//if rt.NumIn() > 1 {
-	//	if rt.IsVariadic() {
-	//		if rt.In(rt.NumIn()-1) != interfaceSliceType {
-	//			return false
-	//		}
-	//	} else {
-	//		if rt.In(rt.NumIn()-1) != reflectValueType {
-	//			return false
-	//		}
-	//	}
-	//	for i := 1; i < rt.NumIn()-1; i++ {
-	//		if rt.In(i) != reflectValueType {
-	//			return false
-	//		}
-	//	}
-	//}
 	return true
 }
 
@@ -353,8 +336,8 @@ func makeCallArgs(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 	if numIn < 1 {
 		// no arguments needed
 		if isRunVMFunction {
-			// for runVMFunction first arg is always context
-			return []reflect.Value{reflect.ValueOf(vmp.ctx)}, []reflect.Type{reflect.TypeOf(vmp.ctx)}, false, nil
+			// for runVMFunction first arg is always IsVmFunc & context
+			return []reflect.Value{reflect.ValueOf(&IsVmFunc{vmp.ctx})}, []reflect.Type{reflect.TypeOf(&IsVmFunc{vmp.ctx})}, false, nil
 		}
 		return []reflect.Value{}, []reflect.Type{}, false, nil
 	}
@@ -385,8 +368,8 @@ func makeCallArgs(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 	args = make([]reflect.Value, 0, utils.Ternary(numInReal > numExprs, numInReal, numExprs))
 	types = make([]reflect.Type, 0, utils.Ternary(numInReal > numExprs, numInReal, numExprs))
 	if isRunVMFunction {
-		// for runVMFunction first arg is always context
-		argCtx := reflect.ValueOf(vmp.ctx)
+		// for runVMFunction first arg is always IsVmFunc & context
+		argCtx := reflect.ValueOf(&IsVmFunc{vmp.ctx})
 		args = append(args, argCtx)
 		types = append(types, argCtx.Type())
 		indexInReal++

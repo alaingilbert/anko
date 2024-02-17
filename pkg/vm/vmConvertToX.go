@@ -170,9 +170,9 @@ func convertVMFunctionToType(vmp *vmParams, rv reflect.Value, rt reflect.Type) (
 		rtNumOut := rt.NumOut()
 		// make the reflect.Value slice of each of the VM reflect.Value
 		args := make([]reflect.Value, 0, rtNumIn+1)
-		// for runVMFunction first arg is always context
+		// for runVMFunction first arg is always IsVmFunc & context
 		// TOFIX: use normal context
-		args = append(args, reflect.ValueOf(vmp.ctx))
+		args = append(args, reflect.ValueOf(&IsVmFunc{vmp.ctx}))
 		for i := 0; i < rtNumIn; i++ {
 			// have to do the double reflect.ValueOf that runVMFunction expects
 			args = append(args, reflect.ValueOf(in[i]))

@@ -18,7 +18,7 @@ type (
 	}
 )
 
-type IsVmFunc struct{}
+type IsVmFunc struct{ context.Context }
 
 var (
 	nilType            = reflect.TypeOf(nil)
@@ -29,7 +29,7 @@ var (
 	errorType          = reflect.TypeOf((*error)(nil)).Elem()
 	vmErrorType        = reflect.TypeOf(&Error{})
 	contextType        = reflect.TypeOf((*context.Context)(nil)).Elem()
-	isVmFuncType       = reflect.TypeOf((*IsVmFunc)(nil)).Elem()
+	isVmFuncType       = reflect.TypeOf((*IsVmFunc)(nil))
 
 	nilValue                  = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
 	trueValue                 = reflect.ValueOf(true)

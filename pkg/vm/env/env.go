@@ -202,7 +202,7 @@ func (e *ErrUnknownSymbol) Error() string {
 	return fmt.Sprintf("unknown symbol '%s'", e.name)
 }
 
-func newUnknownSymbol(name string) *ErrUnknownSymbol {
+func newUnknownSymbolErr(name string) *ErrUnknownSymbol {
 	return &ErrUnknownSymbol{name: name}
 }
 
@@ -296,7 +296,7 @@ func (e *Env) getEnvFromPath(path []string) (*Env, error) {
 // AddPackage creates a new env with a name that has methods and types in it. Created under the parent env
 func (e *Env) addPackage(name string, methods map[string]any, types map[string]any) (*Env, error) {
 	if !isSymbolNameValid(name) {
-		return nil, newUnknownSymbol(name)
+		return nil, newUnknownSymbolErr(name)
 	}
 	var err error
 	pack := e.newEnv()
@@ -308,7 +308,7 @@ func (e *Env) addPackage(name string, methods map[string]any, types map[string]a
 		}
 	}
 	for typeName, typeValue := range types {
-		err = pack.DefineType(typeName, typeValue)
+		err = pack.defineType(typeName, typeValue)
 		if err != nil {
 			return pack, err
 		}
@@ -435,7 +435,7 @@ func (e *Env) setValue(k string, v reflect.Value) error {
 		return nil
 	}
 	if e.parent == nil {
-		return newUnknownSymbol(k)
+		return newUnknownSymbolErr(k)
 	}
 	return e.parent.setValue(k, v)
 }
@@ -450,7 +450,7 @@ func (e *Env) define(k string, v any) error {
 
 func (e *Env) defineValue(k string, v reflect.Value) error {
 	if !isSymbolNameValid(k) {
-		return newUnknownSymbol(k)
+		return newUnknownSymbolErr(k)
 	}
 	e.values.Insert(k, v)
 	return nil
@@ -465,7 +465,7 @@ func (e *Env) deleteGlobal(k string) error {
 
 func (e *Env) delete(k string) error {
 	if !isSymbolNameValid(k) {
-		return newUnknownSymbol(k)
+		return newUnknownSymbolErr(k)
 	}
 	e.values.Delete(k)
 	return nil
@@ -495,7 +495,7 @@ func (e *Env) defineType(k string, t any) error {
 
 func (e *Env) defineReflectType(k string, t reflect.Type) error {
 	if !isSymbolNameValid(k) {
-		return newUnknownSymbol(k)
+		return newUnknownSymbolErr(k)
 	}
 	e.types.Insert(k, t)
 	return nil

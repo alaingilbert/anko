@@ -6,6 +6,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/compiler"
 	"github.com/alaingilbert/anko/pkg/parser"
+	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"reflect"
 	"testing"
 	"time"
@@ -203,7 +204,7 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 					t.Errorf("Run error - received: %v - expected: %v - script: %v", err, test.RunError, test.Script)
 					return
 				}
-				var err *Error
+				var err *runner.Error
 				if err != nil && errors.As(err, &err) {
 					if test.RunErrorLine != 0 && err.Pos.Line != test.RunErrorLine {
 						t.Errorf("Run error line - received: %v - expected: %v - script: %v", err.Pos.Line, test.RunErrorLine, test.Script)

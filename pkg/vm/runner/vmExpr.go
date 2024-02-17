@@ -1,4 +1,4 @@
-package vm
+package runner
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 )
 
 // invokeExpr evaluates one expression.
-func invokeExpr(vmp *vmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, error) {
+func invokeExpr(vmp *VmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, error) {
 	if err := incrCycle(vmp); err != nil {
 		return nilValue, ErrInterrupt
 	}
@@ -79,7 +79,7 @@ func invokeExpr(vmp *vmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, e
 	}
 }
 
-func invokeNumberExpr(_ *vmParams, env envPkg.IEnv, e *ast.NumberExpr) (reflect.Value, error) {
+func invokeNumberExpr(_ *VmParams, env envPkg.IEnv, e *ast.NumberExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	if strings.Contains(e.Lit, ".") || strings.Contains(e.Lit, "e") {
 		v, err := strconv.ParseFloat(e.Lit, 64)
@@ -101,15 +101,15 @@ func invokeNumberExpr(_ *vmParams, env envPkg.IEnv, e *ast.NumberExpr) (reflect.
 	return reflect.ValueOf(i), nil
 }
 
-func invokeIdentExpr(_ *vmParams, env envPkg.IEnv, e *ast.IdentExpr) (reflect.Value, error) {
+func invokeIdentExpr(_ *VmParams, env envPkg.IEnv, e *ast.IdentExpr) (reflect.Value, error) {
 	return env.GetValue(e.Lit)
 }
 
-func invokeStringExpr(_ *vmParams, _ envPkg.IEnv, e *ast.StringExpr) (reflect.Value, error) {
+func invokeStringExpr(_ *VmParams, _ envPkg.IEnv, e *ast.StringExpr) (reflect.Value, error) {
 	return reflect.ValueOf(e.Lit), nil
 }
 
-func makeType(vmp *vmParams, env envPkg.IEnv, typeStruct *ast.TypeStruct) (reflect.Type, error) {
+func makeType(vmp *VmParams, env envPkg.IEnv, typeStruct *ast.TypeStruct) (reflect.Type, error) {
 	switch typeStruct.Kind {
 	case ast.TypeDefault:
 		return getTypeFromEnv(env, typeStruct)
@@ -219,7 +219,7 @@ func makeType(vmp *vmParams, env envPkg.IEnv, typeStruct *ast.TypeStruct) (refle
 //	}
 //}
 
-func invokeArrayExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ArrayExpr) (reflect.Value, error) {
+func invokeArrayExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ArrayExpr) (reflect.Value, error) {
 	if e.TypeData == nil {
 		a := make([]any, len(e.Exprs))
 		for i, expr := range e.Exprs {
@@ -256,7 +256,7 @@ func invokeArrayExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ArrayExpr) (reflect.
 	return slice, nil
 }
 
-func invokeMapExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MapExpr) (reflect.Value, error) {
+func invokeMapExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MapExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	m := make(map[any]any, len(e.Keys))
 	for i, ee := range e.Keys {
@@ -274,7 +274,7 @@ func invokeMapExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MapExpr) (reflect.Valu
 	return reflect.ValueOf(m), nil
 }
 
-func invokeDerefExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DerefExpr) (reflect.Value, error) {
+func invokeDerefExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DerefExpr) (reflect.Value, error) {
 	v := nilValue
 	switch ee := e.Expr.(type) {
 	case *ast.IdentExpr:
@@ -298,7 +298,7 @@ func invokeDeferExprIdentExpr(v reflect.Value, env envPkg.IEnv, e *ast.DerefExpr
 	return v.Elem(), nil
 }
 
-func invokeDeferExprMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DerefExpr, ee *ast.MemberExpr) (reflect.Value, error) {
+func invokeDeferExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DerefExpr, ee *ast.MemberExpr) (reflect.Value, error) {
 	v, err := invokeExpr(vmp, env, ee.Expr)
 	if err != nil {
 		return nilValue, newError(ee.Expr, err)
@@ -347,7 +347,7 @@ func invokeDeferExprMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DerefExpr,
 	return v.Elem(), nil
 }
 
-func invokeAddrExpr(vmp *vmParams, env envPkg.IEnv, e *ast.AddrExpr) (reflect.Value, error) {
+func invokeAddrExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	switch ee := e.Expr.(type) {
 	case *ast.IdentExpr:
@@ -371,7 +371,7 @@ func invokeAddrExprIdentExpr(env envPkg.IEnv, e *ast.AddrExpr, ee *ast.IdentExpr
 	return v.Addr(), nil
 }
 
-func invokeAddrExprMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.AddrExpr, ee *ast.MemberExpr) (reflect.Value, error) {
+func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr, ee *ast.MemberExpr) (reflect.Value, error) {
 	v, err := invokeExpr(vmp, env, ee.Expr)
 	if err != nil {
 		return nilValue, newError(ee.Expr, err)
@@ -420,7 +420,7 @@ func invokeAddrExprMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.AddrExpr, e
 	return v.Addr(), nil
 }
 
-func invokeUnaryExpr(vmp *vmParams, env envPkg.IEnv, e *ast.UnaryExpr) (reflect.Value, error) {
+func invokeUnaryExpr(vmp *VmParams, env envPkg.IEnv, e *ast.UnaryExpr) (reflect.Value, error) {
 	v, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
 		return nilValue, newError(e.Expr, err)
@@ -442,7 +442,7 @@ func invokeUnaryExpr(vmp *vmParams, env envPkg.IEnv, e *ast.UnaryExpr) (reflect.
 		return nilValue, newStringError(e, "unknown operator ''")
 	}
 }
-func invokeParenExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ParenExpr) (reflect.Value, error) {
+func invokeParenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ParenExpr) (reflect.Value, error) {
 	v, err := invokeExpr(vmp, env, e.SubExpr)
 	if err != nil {
 		return nilValue, newError(e.SubExpr, err)
@@ -450,7 +450,7 @@ func invokeParenExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ParenExpr) (reflect.
 	return v, nil
 }
 
-func invokeMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflect.Value, error) {
+func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
@@ -515,7 +515,7 @@ func invokeMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 	}
 }
 
-func invokeItemExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ItemExpr) (reflect.Value, error) {
+func invokeItemExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ItemExpr) (reflect.Value, error) {
 	v, err := invokeExpr(vmp, env, e.Value)
 	if err != nil {
 		return nilValue, newError(e.Value, err)
@@ -533,19 +533,19 @@ func invokeItemExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ItemExpr) (reflect.Va
 		if err != nil {
 			return nilValue, newStringError(e, "index must be a number")
 		}
-		if !vmp.validate {
+		if !vmp.Validate {
 			if ii < 0 || ii >= v.Len() {
 				return nilValue, newStringError(e, "index out of range")
 			}
 		}
 		if v.Kind() != reflect.String {
-			if vmp.validate {
+			if vmp.Validate {
 				return zeroOfType(v.Type().Elem()), nil
 			}
 			return v.Index(ii), nil
 		}
 		// String
-		return v.Index(ii).Convert(stringType), nil
+		return v.Index(ii).Convert(StringType), nil
 	case reflect.Map:
 		v = getMapIndex(vmp, i, v)
 		// Note if the map is of reflect.Value, it will incorrectly return nil when zero value
@@ -579,7 +579,7 @@ func zeroOfType(t reflect.Type) (v reflect.Value) {
 	return
 }
 
-func invokeSliceExpr(vmp *vmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.Value, error) {
+func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, e.Value)
 	if err != nil {
@@ -630,7 +630,7 @@ func invokeSliceExpr(vmp *vmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 	}
 }
 
-func invokeAssocExpr(vmp *vmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.Value, error) {
+func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.Value, error) {
 	switch e.Operator {
 	case "++":
 		if alhs, ok := e.Lhs.(*ast.IdentExpr); ok {
@@ -696,7 +696,7 @@ func invokeAssocExpr(vmp *vmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 	return invokeLetExpr(vmp, env, e.Lhs, v)
 }
 
-func invokeLetsExpr(vmp *vmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Value, error) {
+func invokeLetsExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Value, error) {
 	var err error
 	rvs := make([]reflect.Value, len(e.Rhss))
 	for i, rhs := range e.Rhss {
@@ -721,7 +721,7 @@ func invokeLetsExpr(vmp *vmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Va
 	return rvs[len(rvs)-1], nil
 }
 
-func invokeBinOpExpr(vmp *vmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.Expr) (reflect.Value, error) {
+func invokeBinOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.Expr) (reflect.Value, error) {
 	nilValueL := nilValue
 	lhsV := nilValueL
 	rhsV := nilValueL
@@ -827,7 +827,7 @@ func invokeBinOpExpr(vmp *vmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.
 	}
 }
 
-func invokeConstExpr(_ *vmParams, _ envPkg.IEnv, e *ast.ConstExpr) (reflect.Value, error) {
+func invokeConstExpr(_ *VmParams, _ envPkg.IEnv, e *ast.ConstExpr) (reflect.Value, error) {
 	switch e.Value {
 	case "true":
 		return trueValue, nil
@@ -837,7 +837,7 @@ func invokeConstExpr(_ *vmParams, _ envPkg.IEnv, e *ast.ConstExpr) (reflect.Valu
 	return nilValue, nil
 }
 
-func invokeTernaryOpExpr(vmp *vmParams, env envPkg.IEnv, e *ast.TernaryOpExpr) (reflect.Value, error) {
+func invokeTernaryOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.TernaryOpExpr) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
 		return nilValue, newError(e.Expr, err)
@@ -856,7 +856,7 @@ func invokeTernaryOpExpr(vmp *vmParams, env envPkg.IEnv, e *ast.TernaryOpExpr) (
 	return rhsV, nil
 }
 
-func invokeNilCoalescingOpExpr(vmp *vmParams, env envPkg.IEnv, e *ast.NilCoalescingOpExpr) (reflect.Value, error) {
+func invokeNilCoalescingOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.NilCoalescingOpExpr) (reflect.Value, error) {
 	var err error
 	rv, _ := invokeExpr(vmp, env, e.Lhs)
 	if toBool(rv) {
@@ -869,7 +869,7 @@ func invokeNilCoalescingOpExpr(vmp *vmParams, env envPkg.IEnv, e *ast.NilCoalesc
 	return rv, nil
 }
 
-func invokeLenExpr(vmp *vmParams, env envPkg.IEnv, e *ast.LenExpr) (reflect.Value, error) {
+func invokeLenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LenExpr) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
 		return nilValue, newError(e.Expr, err)
@@ -887,7 +887,7 @@ func invokeLenExpr(vmp *vmParams, env envPkg.IEnv, e *ast.LenExpr) (reflect.Valu
 	}
 }
 
-func invokeMakeExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Value, error) {
+func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Value, error) {
 	t, err := makeType(vmp, env, e.TypeData)
 	if err != nil {
 		return nilValue, err
@@ -932,11 +932,11 @@ func invokeMakeExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 		}
 		return reflect.MakeChan(t, aLen), nil
 	default:
-		return makeValue(t)
+		return MakeValue(t)
 	}
 }
 
-func invokeMakeTypeExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MakeTypeExpr, expr ast.Expr) (reflect.Value, error) {
+func invokeMakeTypeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeTypeExpr, expr ast.Expr) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, e.Type)
 	if err != nil {
 		return nilValue, newError(e, err)
@@ -952,7 +952,7 @@ func invokeMakeTypeExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MakeTypeExpr, exp
 	return reflect.ValueOf(rv.Type()), nil
 }
 
-func invokeChanExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Expr) (reflect.Value, error) {
+func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Expr) (reflect.Value, error) {
 	rhs, err := invokeExpr(vmp, env, e.Rhs)
 	if err != nil {
 		return nilValue, newError(e.Rhs, err)
@@ -960,7 +960,7 @@ func invokeChanExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 
 	if e.Lhs == nil {
 		if rhs.Kind() == reflect.Chan {
-			if vmp.validate {
+			if vmp.Validate {
 				return nilValue, nil
 			}
 			cases := []reflect.SelectCase{{
@@ -995,7 +995,7 @@ func invokeChanExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 					Chan: lhs,
 					Send: rhs,
 				}}
-				if !vmp.validate {
+				if !vmp.Validate {
 					if chosen, _, _ := reflect.Select(cases); chosen == 0 {
 						return nilValue, ErrInterrupt
 					}
@@ -1014,7 +1014,7 @@ func invokeChanExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 					Chan: lhs,
 					Send: rhs,
 				}}
-				if !vmp.validate {
+				if !vmp.Validate {
 					if chosen, _, _ := reflect.Select(cases); chosen == 0 {
 						return nilValue, ErrInterrupt
 					}
@@ -1032,7 +1032,7 @@ func invokeChanExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 				Chan: rhs,
 				Send: zeroValue,
 			}}
-			if !vmp.validate {
+			if !vmp.Validate {
 				var chosen int
 				var ok bool
 				chosen, rv, ok = reflect.Select(cases)
@@ -1050,19 +1050,19 @@ func invokeChanExpr(vmp *vmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 	return nilValue, newStringError(e, "invalid operation for chan")
 }
 
-func invokeFuncExpr(vmp *vmParams, env envPkg.IEnv, e *ast.FuncExpr) (reflect.Value, error) {
+func invokeFuncExpr(vmp *VmParams, env envPkg.IEnv, e *ast.FuncExpr) (reflect.Value, error) {
 	return funcExpr(vmp, env, e)
 }
 
-func invokeAnonCallExpr(vmp *vmParams, env envPkg.IEnv, e *ast.AnonCallExpr) (reflect.Value, error) {
+func invokeAnonCallExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AnonCallExpr) (reflect.Value, error) {
 	return anonCallExpr(vmp, env, e)
 }
 
-func invokeCallExpr(vmp *vmParams, env envPkg.IEnv, e *ast.CallExpr) (reflect.Value, error) {
+func invokeCallExpr(vmp *VmParams, env envPkg.IEnv, e *ast.CallExpr) (reflect.Value, error) {
 	return callExpr(vmp, env, e)
 }
 
-func invokeCloseExpr(vmp *vmParams, env envPkg.IEnv, e *ast.CloseExpr) (reflect.Value, error) {
+func invokeCloseExpr(vmp *VmParams, env envPkg.IEnv, e *ast.CloseExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	whatExpr, err := invokeExpr(vmp, env, e.WhatExpr)
 	if err != nil {
@@ -1084,7 +1084,7 @@ func invokeCloseExpr(vmp *vmParams, env envPkg.IEnv, e *ast.CloseExpr) (reflect.
 	}
 }
 
-func invokeDeleteExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DeleteExpr) (reflect.Value, error) {
+func invokeDeleteExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DeleteExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	whatExpr, err := invokeExpr(vmp, env, e.WhatExpr)
 	if err != nil {
@@ -1125,7 +1125,7 @@ func invokeDeleteExpr(vmp *vmParams, env envPkg.IEnv, e *ast.DeleteExpr) (reflec
 	}
 }
 
-func invokeIncludeExpr(vmp *vmParams, env envPkg.IEnv, e *ast.IncludeExpr) (reflect.Value, error) {
+func invokeIncludeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.IncludeExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	itemExpr, err := invokeExpr(vmp, env, e.ItemExpr)
 	if err != nil {

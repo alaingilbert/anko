@@ -8,7 +8,7 @@ import (
 	"errors"
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/parser"
-	"github.com/alaingilbert/anko/pkg/vm"
+	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"log"
@@ -282,6 +282,6 @@ func TestHandleErr(t *testing.T) {
 	handleErr(buf, &parser.Error{Pos: ast.Position{Line: 1, Column: 2}, Message: "something"})
 	assert.Equal(t, "1:2 something\n", buf.String())
 	buf.Reset()
-	handleErr(buf, &vm.Error{Pos: ast.Position{Line: 3, Column: 4}, Message: "something"})
+	handleErr(buf, &runner.Error{Pos: ast.Position{Line: 3, Column: 4}, Message: "something"})
 	assert.Equal(t, "3:4 something\n", buf.String())
 }

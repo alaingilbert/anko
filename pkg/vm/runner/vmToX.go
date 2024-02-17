@@ -1,4 +1,4 @@
-package vm
+package runner
 
 import (
 	"errors"

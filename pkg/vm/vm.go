@@ -10,10 +10,11 @@ import (
 	"github.com/alaingilbert/anko/pkg/parser"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"github.com/alaingilbert/anko/pkg/vm/ratelimitanything"
+	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"github.com/alaingilbert/anko/pkg/vm/stateCh"
 	"github.com/alaingilbert/mtx"
+	"os"
 	"reflect"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -48,10 +49,10 @@ var _ IExecutor = (*Executor)(nil)
 type Executor struct {
 	env              envPkg.IEnv                          // executor's env
 	pause            *stateCh.StateCh                     // allows pause/resume of scripts
-	stats            *stats                               // keep track of stmt/expr processed
+	stats            *runner.Stats                        // keep track of stmt/expr processed
 	rateLimit        *ratelimitanything.RateLimitAnything // rate limit expr processed/duration
 	doNotProtectMaps bool                                 // either or not to protect maps operations in the VM
-	mapMutex         *mapLocker                           // locker object to protect maps
+	mapMutex         *runner.MapLocker                    // locker object to protect maps
 	cancel           context.CancelFunc                   // use to Stop a script
 	importCore       bool                                 // either or not to import core functions in executor's env
 	watchdogEnabled  bool                                 // either or not to run the watchdog
@@ -81,19 +82,19 @@ func NewExecutor(cfg *ExecutorConfig) *Executor {
 		e.env = cfg.Env.DeepCopy()
 	}
 	if cfg.ImportCore {
-		Import(e.env)
+		runner.Import(e.env)
 	}
 	if cfg.DefineImport {
-		DefineImport(e.env)
+		runner.DefineImport(e.env)
 	}
 	if cfg.WatchdogEnabled {
 		e.watchdogEnabled = cfg.WatchdogEnabled
 	}
 	e.pause = stateCh.NewStateCh(true)
-	e.stats = &stats{}
+	e.stats = &runner.Stats{}
 	e.doNotProtectMaps = cfg.DoNotProtectMaps
 	e.importCore = cfg.ImportCore
-	e.mapMutex = &mapLocker{}
+	e.mapMutex = &runner.MapLocker{}
 	e.maxEnvCount = mtx.NewRWMtxPtr(int64(cfg.MaxEnvCount))
 	if cfg.RateLimit > 0 {
 		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
@@ -255,41 +256,6 @@ func (v *VM) has(ctx context.Context, val any, targets []any) ([]bool, error) {
 	}
 }
 
-type Result struct {
-	Value reflect.Value
-	Error error
-}
-
-type stats struct {
-	Cycles int64
-}
-
-func incrCycle(vmp *vmParams) error {
-	// make sure script is not stopped
-	select {
-	case <-vmp.ctx.Done():
-		return ErrInterrupt
-	default:
-	}
-	// if script is NOT paused, `<-vmp.pause.Wait()` will return right away
-	select {
-	case <-vmp.pause.Wait():
-	case <-vmp.ctx.Done():
-		return ErrInterrupt
-	}
-	// halt here if we need to throttle the script
-	rateLimit := vmp.rateLimit
-	if rateLimit != nil {
-		select {
-		case <-rateLimit.GetWithContext(vmp.ctx):
-		case <-vmp.ctx.Done():
-			return ErrInterrupt
-		}
-	}
-	atomic.AddInt64(&vmp.stats.Cycles, 1)
-	return nil
-}
-
 func defaultCtx(ctx context.Context) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
@@ -371,7 +337,7 @@ func (e *Executor) runWithContextForLoad(ctx context.Context, stmts ast.Stmt) (a
 }
 
 func valueToAny(rv reflect.Value, err error) (any, error) {
-	if errors.Is(err, ErrReturn) {
+	if errors.Is(err, runner.ErrReturn) {
 		err = nil
 	}
 	if !rv.IsValid() || !rv.CanInterface() {
@@ -383,51 +349,6 @@ func valueToAny(rv reflect.Value, err error) (any, error) {
 func (e *Executor) hasAST(ctx context.Context, stmt ast.Stmt, targets []any) (oks []bool, err error) {
 	oks, _, err = e.mainRunWithWatchdog(ctx, stmt, true, targets)
 	return
-}
-
-// we need to lock map operations MapIndex/SetMapIndex/mapIter.Next
-// in the VM to avoid application crash if the script uses a map in a concurrent manner.
-type mapLocker struct{ sync.Mutex }
-
-func (m *mapLocker) Lock()   { m.Mutex.Lock() }
-func (m *mapLocker) Unlock() { m.Mutex.Unlock() }
-
-type vmParams struct {
-	ctx              context.Context
-	rvCh             chan Result
-	stats            *stats
-	doNotProtectMaps bool
-	mapMutex         *mapLocker
-	pause            *stateCh.StateCh
-	rateLimit        *ratelimitanything.RateLimitAnything
-	validate         bool
-	has              map[any]bool
-	validateLater    map[string]ast.Stmt
-}
-
-func newVmParams(ctx context.Context,
-	rvCh chan Result,
-	stats *stats,
-	doNotProtectMaps bool,
-	mapMutex *mapLocker,
-	pause *stateCh.StateCh,
-	rateLimit *ratelimitanything.RateLimitAnything,
-	validate bool,
-	has map[any]bool,
-	validateLater map[string]ast.Stmt,
-) *vmParams {
-	return &vmParams{
-		ctx:              ctx,
-		rvCh:             rvCh,
-		stats:            stats,
-		doNotProtectMaps: doNotProtectMaps,
-		mapMutex:         mapMutex,
-		pause:            pause,
-		rateLimit:        rateLimit,
-		validate:         validate,
-		has:              has,
-		validateLater:    validateLater,
-	}
 }
 
 func (e *Executor) mainRunValidate(ctx context.Context, stmt ast.Stmt) error {
@@ -462,9 +383,38 @@ func (e *Executor) watchdog(ctx context.Context, cancel context.CancelFunc) {
 	}
 }
 
+// Dynamically load a file and execute it, return the RV value
+func (e *Executor) loadFn(ctx context.Context, validate bool) func(string) any {
+	return func(s string) any {
+		if validate {
+			return nilValue
+		}
+		body, err := os.ReadFile(s)
+		if err != nil {
+			panic(err)
+		}
+		scanner := new(parser.Scanner)
+		scanner.Init(string(body))
+		stmts, err := parser.Parse(scanner)
+		if err != nil {
+			var pe *parser.Error
+			if errors.As(err, &pe) {
+				pe.Filename = s
+				panic(pe)
+			}
+			panic(err)
+		}
+		rv, err := e.runWithContextForLoad(ctx, stmts)
+		if err != nil {
+			panic(err)
+		}
+		return rv
+	}
+}
+
 func (e *Executor) mainRunWithWatchdog(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	if e.importCore {
-		_ = e.env.Define("load", loadFn(e, ctx, validate))
+		_ = e.env.Define("load", e.loadFn(ctx, validate))
 	}
 
 	// Start thread to watch for memory leaking scripts
@@ -478,6 +428,9 @@ func (e *Executor) mainRunWithWatchdog(ctx context.Context, stmt ast.Stmt, valid
 	return e.mainRun(ctx, stmt, validate, targets)
 }
 
+var nilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
+var ErrInvalidInput = errors.New("invalid input")
+
 func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	// We use rvCh because the script can start goroutines and crash in one of them.
 	// So we need a way to stop the vm from another thread...
@@ -489,7 +442,7 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 
 	envCopy := e.env
 
-	runSingleStmtL := runSingleStmt
+	runSingleStmtL := runner.RunSingleStmt
 
 	oks := make([]bool, len(targets))
 	has := make(map[any]bool)
@@ -497,21 +450,21 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 	for _, vv := range targets {
 		has[fmt.Sprintf("%v", vv)] = false
 	}
-	rvCh := make(chan Result)
-	vmp := newVmParams(ctx, rvCh, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
+	rvCh := make(chan runner.Result)
+	vmp := runner.NewVmParams(ctx, rvCh, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
 
 	go func() {
 		rv, err := runSingleStmtL(vmp, envCopy, stmt1)
-		rvCh <- Result{Value: rv, Error: err}
+		rvCh <- runner.Result{Value: rv, Error: err}
 	}()
 
-	var result Result
+	var result runner.Result
 	select {
 	case result = <-rvCh:
 	}
 
-	if vmp.validate {
-		for _, s := range vmp.validateLater {
+	if vmp.Validate {
+		for _, s := range vmp.ValidateLater {
 			var err error
 			envCopy.WithNewEnv(func(newenv envPkg.IEnv) {
 				_, err = runSingleStmtL(vmp, newenv, s)

@@ -1,4 +1,4 @@
-package vm
+package runner
 
 import (
 	"errors"
@@ -16,7 +16,7 @@ import (
 
 // funcExpr creates a function that reflect Call can use.
 // When called, it will run runVMFunction, to run the function statements
-func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Value, error) {
+func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	// create the inTypes needed by reflect.FuncOf
 	inTypes := make([]reflect.Type, len(funcExpr.Params)+1, len(funcExpr.Params)+1)
@@ -37,7 +37,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 	if funcExpr.VarArg {
 		lastTypeIdx := len(inTypes) - 1
 		lastType := inTypes[lastTypeIdx]
-		newType := interfaceSliceType
+		newType := InterfaceSliceType
 		if lastType != reflectValueType {
 			newType = reflect.SliceOf(lastType)
 		}
@@ -96,7 +96,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 
 		ctx := in[0].Interface().(*IsVmFunc)
 		// run function statements
-		newVmp := newVmParams(ctx, vmp.rvCh, vmp.stats, vmp.doNotProtectMaps, vmp.mapMutex, vmp.pause, vmp.rateLimit, vmp.validate, vmp.has, vmp.validateLater)
+		newVmp := NewVmParams(ctx, vmp.rvCh, vmp.stats, vmp.doNotProtectMaps, vmp.mapMutex, vmp.pause, vmp.rateLimit, vmp.Validate, vmp.has, vmp.ValidateLater)
 		rv, err = runSingleStmt(newVmp, newEnv, funcExpr.Stmt)
 
 		for i := newEnv.Defers().Len() - 1; i >= 0; i-- {
@@ -120,7 +120,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 
 		// Validate return values types
 		if funcExpr.Returns != nil {
-			if rv.Type() == interfaceSliceType {
+			if rv.Type() == InterfaceSliceType {
 				if rv.Len() != len(funcExpr.Returns) {
 					err = fmt.Errorf("invalid number of returned values, have %d, expected: %d", rv.Len(), len(funcExpr.Returns))
 					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
@@ -185,9 +185,9 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 		}
 	}
 
-	if vmp.validate {
+	if vmp.Validate {
 		k := utils.Ternary(funcExpr.Name != "", funcExpr.Name, "invar_"+strconv.Itoa(rand.Intn(math.MaxInt32)))
-		vmp.validateLater[k] = funcExpr.Stmt
+		vmp.ValidateLater[k] = funcExpr.Stmt
 	}
 
 	// return the reflect.Value created
@@ -195,7 +195,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 }
 
 // anonCallExpr handles ast.AnonCallExpr which calls a function anonymously
-func anonCallExpr(vmp *vmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Value, error) {
+func anonCallExpr(vmp *VmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Value, error) {
 	f, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
 		return nilValue, newError(e, err)
@@ -215,7 +215,7 @@ func anonCallExpr(vmp *vmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Val
 }
 
 // callExpr handles *ast.CallExpr which calls a function
-func callExpr(vmp *vmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.Value, err error) {
+func callExpr(vmp *VmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.Value, err error) {
 	// Note that if the function type looks the same as the VM function type, the returned values will probably be wrong
 	nilValueL := nilValue
 
@@ -231,7 +231,7 @@ func callExpr(vmp *vmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 		}
 	}
 
-	if vmp.validate {
+	if vmp.Validate {
 		for h := range vmp.has {
 			if h == fmt.Sprintf("%v", f) {
 				vmp.has[h] = true
@@ -275,7 +275,7 @@ func callExpr(vmp *vmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 	// useCallSlice lets us know to use CallSlice instead of Call because of the format of the args
 	callFn := utils.Ternary(useCallSlice, f.CallSlice, f.Call)
 	if callExpr.Go {
-		if !vmp.validate {
+		if !vmp.Validate {
 			go func() {
 				rvs := callFn(args)
 				// call processCallReturnValues to process runVMFunction return values
@@ -288,7 +288,7 @@ func callExpr(vmp *vmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 		}
 		return
 	}
-	if !vmp.validate {
+	if !vmp.Validate {
 		rvs = callFn(args)
 	} else {
 		if isRunVMFunction || callExpr.Name == "import" {
@@ -333,7 +333,7 @@ func checkIfRunVMFunction(rt reflect.Type) bool {
 
 // makeCallArgs creates the arguments reflect.Value slice for the four different kinds of functions.
 // Also returns true if CallSlice should be used on the arguments, or false if Call should be used.
-func makeCallArgs(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr) ([]reflect.Value, []reflect.Type, bool, error) {
+func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr) ([]reflect.Value, []reflect.Type, bool, error) {
 	// number of arguments
 	numInReal := rt.NumIn()
 	numIn := numInReal
@@ -430,7 +430,7 @@ func makeCallArgs(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 	return makeCallArgsFnVarCallVar(vmp, env, rt, arg, callExpr, numInReal, indexInReal, indexExpr, args, types)
 }
 
-func makeCallArgsFnNotVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool,
+func makeCallArgsFnNotVarCallNotVar(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool,
 	callExpr *ast.CallExpr, indexInReal, indexExpr int, args []reflect.Value, types []reflect.Type) ([]reflect.Value, []reflect.Type, bool, error) {
 	// function is not variadic and call is not variadic
 	// add last arguments and return
@@ -463,7 +463,7 @@ func makeCallArgsFnNotVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type
 	return args, types, false, nil
 }
 
-func makeCallArgsFnNotVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr,
+func makeCallArgsFnNotVarCallVar(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr,
 	numInReal, indexInReal, indexExpr, numIn, indexIn, numExprs int, args []reflect.Value, types []reflect.Type) ([]reflect.Value, []reflect.Type, bool, error) {
 	// function is not variadic and call is variadic
 	subExpr := callExpr.SubExprs[indexExpr]
@@ -514,7 +514,7 @@ func makeCallArgsNoMoreExprs(args []reflect.Value, types []reflect.Type) ([]refl
 	return args, types, false, nil
 }
 
-func makeCallArgsDoNotCare(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr,
+func makeCallArgsDoNotCare(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr,
 	indexInReal, indexExpr int, args []reflect.Value, types []reflect.Type) ([]reflect.Value, []reflect.Type, bool, error) {
 	// there are more arguments after this one, so does not matter if call is variadic or not
 	// add the last argument then return what we have and let reflect Call handle if call is variadic or not
@@ -538,7 +538,7 @@ func makeCallArgsDoNotCare(vmp *vmParams, env env.IEnv, rt reflect.Type, isRunVM
 	return args, types, false, nil
 }
 
-func makeCallArgsFnVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type, numInReal, indexInReal, indexExpr, numExprs int,
+func makeCallArgsFnVarCallNotVar(vmp *VmParams, env env.IEnv, rt reflect.Type, numInReal, indexInReal, indexExpr, numExprs int,
 	callExpr *ast.CallExpr, args []reflect.Value, types []reflect.Type) ([]reflect.Value, []reflect.Type, bool, error) {
 	// function is variadic and call is not variadic
 	sliceType := rt.In(numInReal - 1).Elem()
@@ -560,7 +560,7 @@ func makeCallArgsFnVarCallNotVar(vmp *vmParams, env env.IEnv, rt reflect.Type, n
 	return args, types, false, nil
 }
 
-func makeCallArgsFnVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, arg reflect.Value,
+func makeCallArgsFnVarCallVar(vmp *VmParams, env env.IEnv, rt reflect.Type, arg reflect.Value,
 	callExpr *ast.CallExpr, numInReal, indexInReal, indexExpr int, args []reflect.Value, types []reflect.Type) ([]reflect.Value, []reflect.Type, bool, error) {
 	// function is variadic and call is variadic
 	// the only time we return CallSlice is true
@@ -574,7 +574,7 @@ func makeCallArgsFnVarCallVar(vmp *vmParams, env env.IEnv, rt reflect.Type, arg 
 	if err != nil {
 		return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
 	}
-	if sliceType != interfaceSliceType && arg.Type() != sliceType {
+	if sliceType != InterfaceSliceType && arg.Type() != sliceType {
 		err := newStringError(subExpr, "function wants argument type "+rt.In(indexInReal).String()+" but received type "+arg.Type().String())
 		return []reflect.Value{}, []reflect.Type{}, false, err
 	}

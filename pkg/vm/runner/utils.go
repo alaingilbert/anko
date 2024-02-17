@@ -1,4 +1,4 @@
-package vm
+package runner
 
 import (
 	"fmt"
@@ -108,7 +108,7 @@ func equal(lhsV, rhsV reflect.Value) bool {
 	return reflect.DeepEqual(lhsV, rhsV)
 }
 
-func readMapIndex(aMap, key reflect.Value, vmp *vmParams) (out reflect.Value) {
+func readMapIndex(aMap, key reflect.Value, vmp *VmParams) (out reflect.Value) {
 	if !vmp.doNotProtectMaps {
 		vmp.mapMutex.Lock()
 		defer vmp.mapMutex.Unlock()
@@ -116,7 +116,7 @@ func readMapIndex(aMap, key reflect.Value, vmp *vmParams) (out reflect.Value) {
 	return aMap.MapIndex(key)
 }
 
-func setMapIndex(aMap, key, value reflect.Value, vmp *vmParams) {
+func setMapIndex(aMap, key, value reflect.Value, vmp *VmParams) {
 	if !vmp.doNotProtectMaps {
 		vmp.mapMutex.Lock()
 		defer vmp.mapMutex.Unlock()
@@ -124,7 +124,7 @@ func setMapIndex(aMap, key, value reflect.Value, vmp *vmParams) {
 	aMap.SetMapIndex(key, value)
 }
 
-func mapIterNext(mapIter *reflect.MapIter, vmp *vmParams) bool {
+func mapIterNext(mapIter *reflect.MapIter, vmp *VmParams) bool {
 	if !vmp.doNotProtectMaps {
 		vmp.mapMutex.Lock()
 		defer vmp.mapMutex.Unlock()
@@ -132,7 +132,7 @@ func mapIterNext(mapIter *reflect.MapIter, vmp *vmParams) bool {
 	return mapIter.Next()
 }
 
-func getMapIndex(vmp *vmParams, key reflect.Value, aMap reflect.Value) reflect.Value {
+func getMapIndex(vmp *VmParams, key reflect.Value, aMap reflect.Value) reflect.Value {
 	nilValueL := nilValue
 	if !aMap.IsValid() || aMap.IsNil() {
 		return nilValueL
@@ -232,7 +232,7 @@ func getTypeFromEnv(env envPkg.IEnv, typeStruct *ast.TypeStruct) (reflect.Type, 
 	return t, nil
 }
 
-func makeValue(t reflect.Type) (reflect.Value, error) {
+func MakeValue(t reflect.Type) (reflect.Value, error) {
 	switch t.Kind() {
 	case reflect.Chan:
 		return makeValueChan(t)
@@ -269,7 +269,7 @@ func makeValueMap(t reflect.Type) (reflect.Value, error) {
 
 func makeValuePointer(t reflect.Type) (reflect.Value, error) {
 	ptrV := reflect.New(t.Elem())
-	v, err := makeValue(t.Elem())
+	v, err := MakeValue(t.Elem())
 	if err != nil {
 		return nilValue, err
 	}
@@ -290,7 +290,7 @@ func makeValueStruct(t reflect.Type) (reflect.Value, error) {
 		if structV.Field(i).Kind() == reflect.Ptr {
 			continue
 		}
-		v, err := makeValue(structV.Field(i).Type())
+		v, err := MakeValue(structV.Field(i).Type())
 		if err != nil {
 			return nilValue, err
 		}

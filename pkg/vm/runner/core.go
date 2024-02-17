@@ -1,12 +1,9 @@
 // Package core implements core interface for anko script.
 
-package vm
+package runner
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"github.com/alaingilbert/anko/pkg/parser"
 	"github.com/alaingilbert/anko/pkg/vm/env"
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"os"
@@ -114,35 +111,6 @@ func definedFn(env env.IEnv) func(s string) bool {
 	return func(s string) bool {
 		_, err := env.Get(s)
 		return err == nil
-	}
-}
-
-// Dynamically load a file and execute it, return the RV value
-func loadFn(e *Executor, ctx context.Context, validate bool) func(s string) any {
-	return func(s string) any {
-		if validate {
-			return nilValue
-		}
-		body, err := os.ReadFile(s)
-		if err != nil {
-			panic(err)
-		}
-		scanner := new(parser.Scanner)
-		scanner.Init(string(body))
-		stmts, err := parser.Parse(scanner)
-		if err != nil {
-			var pe *parser.Error
-			if errors.As(err, &pe) {
-				pe.Filename = s
-				panic(pe)
-			}
-			panic(err)
-		}
-		rv, err := e.runWithContextForLoad(ctx, stmts)
-		if err != nil {
-			panic(err)
-		}
-		return rv
 	}
 }
 

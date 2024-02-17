@@ -1,4 +1,4 @@
-package vm
+package runner
 
 import (
 	"context"
@@ -22,9 +22,9 @@ type IsVmFunc struct{ context.Context }
 
 var (
 	nilType            = reflect.TypeOf(nil)
-	stringType         = reflect.TypeOf("a")
+	StringType         = reflect.TypeOf("a")
 	interfaceType      = reflect.ValueOf([]any{int64(1)}).Index(0).Type()
-	interfaceSliceType = reflect.TypeOf([]any{})
+	InterfaceSliceType = reflect.TypeOf([]any{})
 	reflectValueType   = reflect.TypeOf(reflect.Value{})
 	errorType          = reflect.TypeOf((*error)(nil)).Elem()
 	vmErrorType        = reflect.TypeOf(&Error{})
@@ -44,8 +44,6 @@ var (
 	ErrReturn = errors.New("unexpected return statement")
 	// ErrInterrupt when execution has been interrupted
 	ErrInterrupt = errors.New("execution interrupted")
-
-	ErrInvalidInput = errors.New("invalid input")
 )
 
 // newErrorf makes error interface with message.

@@ -1,4 +1,4 @@
-package vm
+package runner
 
 import (
 	"fmt"
@@ -28,10 +28,10 @@ func reflectValueSliceToInterfaceSlice(valueSlice []reflect.Value) reflect.Value
 
 // convertReflectValueToType trys to covert the reflect.Value to the reflect.Type
 // if it can not, it returns the original rv and an error
-func convertReflectValueToType(vmp *vmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
+func convertReflectValueToType(vmp *VmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	if !rv.IsValid() {
 		// if not valid return a valid reflect.Value of the reflect.Type
-		return makeValue(rt)
+		return MakeValue(rt)
 	}
 	if rt == interfaceType || rv.Type() == rt {
 		// if reflect.Type is interface or the types match, return the provided reflect.Value
@@ -62,7 +62,7 @@ func convertReflectValueToType(vmp *vmParams, rv reflect.Value, rt reflect.Type)
 				return rv, err
 			}
 			// need to make a new value to be able to set it
-			ptrV, err := makeValue(rt)
+			ptrV, err := MakeValue(rt)
 			if err != nil {
 				return rv, err
 			}
@@ -86,7 +86,7 @@ func convertReflectValueToType(vmp *vmParams, rv reflect.Value, rt reflect.Type)
 }
 
 // convertSliceOrArray trys to covert the reflect.Value slice or array to the slice or array reflect.Type
-func convertSliceOrArray(vmp *vmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
+func convertSliceOrArray(vmp *VmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	rtElemType := rt.Elem()
 
 	// try to covert elements to new slice/array
@@ -118,7 +118,7 @@ func convertSliceOrArray(vmp *vmParams, rv reflect.Value, rt reflect.Type) (refl
 }
 
 // convertMap trys to covert the reflect.Value map to the map reflect.Type
-func convertMap(vmp *vmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
+func convertMap(vmp *VmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	rtKey := rt.Key()
 	rtElem := rt.Elem()
 
@@ -154,7 +154,7 @@ func convertMap(vmp *vmParams, rv reflect.Value, rt reflect.Type) (reflect.Value
 // convertVMFunctionToType is for translating a runVMFunction into the correct type
 // so, it can be passed to a Go function argument with the correct static types
 // it creates a translation function runVMConvertFunction
-func convertVMFunctionToType(vmp *vmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
+func convertVMFunctionToType(vmp *VmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	// only translates runVMFunction type
 	if !checkIfRunVMFunction(rv.Type()) {
 		return rv, fmt.Errorf("invalid type conversion")

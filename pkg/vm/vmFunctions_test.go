@@ -3,6 +3,7 @@ package vm
 import (
 	"bytes"
 	"fmt"
+	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"os"
 	"reflect"
 	"testing"
@@ -405,8 +406,8 @@ func TestPointerFunctions(t *testing.T) {
 		if !rv.Elem().CanSet() {
 			return "cannot set"
 		}
-		slice := reflect.MakeSlice(interfaceSliceType, 0, 1)
-		value, _ := makeValue(stringType)
+		slice := reflect.MakeSlice(runner.InterfaceSliceType, 0, 1)
+		value, _ := runner.MakeValue(runner.StringType)
 		value.SetString("b")
 		slice = reflect.Append(slice, value)
 		rv.Elem().Set(slice)
@@ -775,7 +776,7 @@ func TestCallFunctionWithVararg(t *testing.T) {
 	}
 	got, err := v.Executor().Run(nil, `X(a...)`)
 	if err != nil {
-		t.Errorf("execute error - received %#v - expected: %#v", err, ErrInterrupt)
+		t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("execute error - received %#v - expected: %#v", got, want)

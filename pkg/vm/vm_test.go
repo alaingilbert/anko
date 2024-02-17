@@ -7,6 +7,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/packages"
 	"github.com/alaingilbert/anko/pkg/utils"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"os"
@@ -861,8 +862,8 @@ func runCancelTestWithContext(t *testing.T, script string) {
 	}
 
 	_, err = v.Executor().Run(ctx, script)
-	if err == nil || err.Error() != ErrInterrupt.Error() {
-		t.Errorf("execute error - received %#v - expected: %#v", err, ErrInterrupt)
+	if err == nil || err.Error() != runner.ErrInterrupt.Error() {
+		t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
 	}
 }
 
@@ -875,8 +876,8 @@ func TestTwoContextSameEnv(t *testing.T) {
 	waitGroup.Add(1)
 	go func() {
 		_, err := e.Run(ctx1, "func myFn(a) { return 123; }; for { }")
-		if err == nil || err.Error() != ErrInterrupt.Error() {
-			t.Errorf("execute error - received %#v - expected: %#v", err, ErrInterrupt)
+		if err == nil || err.Error() != runner.ErrInterrupt.Error() {
+			t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
 		}
 		waitGroup.Done()
 	}()
@@ -899,8 +900,8 @@ func TestContextConcurrency(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		go func() {
 			_, err := v.Executor().Run(ctx, "for { }")
-			if err == nil || err.Error() != ErrInterrupt.Error() {
-				t.Errorf("execute error - received %#v - expected: %#v", err, ErrInterrupt)
+			if err == nil || err.Error() != runner.ErrInterrupt.Error() {
+				t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
 			}
 			waitGroup.Done()
 		}()
@@ -951,7 +952,7 @@ func TestAssignToInterface(t *testing.T) {
 	}
 	_, err = v.Executor().Run(nil, `X.Stdout = a`)
 	if err != nil {
-		t.Errorf("execute error - received %#v - expected: %#v", err, ErrInterrupt)
+		t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
 	}
 }
 
@@ -1084,7 +1085,7 @@ v2.Get("a")
 	}
 }
 
-var testPackagesEnvSetupFunc = func(t *testing.T, env *envPkg.Env) { DefineImport(env) }
+var testPackagesEnvSetupFunc = func(t *testing.T, env *envPkg.Env) { runner.DefineImport(env) }
 
 func TestDefineImport(t *testing.T) {
 	value, err := New(&Configs{DefineImport: true}).Executor().Run(nil, `strings = import("strings"); strings.ToLower("TEST")`)
@@ -1705,11 +1706,11 @@ func TestHas(t *testing.T) {
 	fourth := func(fn func()) {
 		fn()
 	}
-	fifth := func() TestStruct {
-		return TestStruct{}
+	fifth := func() runner.TestStruct {
+		return runner.TestStruct{}
 	}
-	sixth := func() TestInterface {
-		return TestStruct{}
+	sixth := func() runner.TestInterface {
+		return runner.TestStruct{}
 	}
 	vmprint := func(args ...any) {
 		fmt.Println(fmt.Sprint(args))
@@ -1717,8 +1718,8 @@ func TestHas(t *testing.T) {
 	arr := func() []int {
 		return []int{0, 1, 2}
 	}
-	arr2 := func() []TestInterface {
-		return []TestInterface{}
+	arr2 := func() []runner.TestInterface {
+		return []runner.TestInterface{}
 	}
 	newEnv := func() *VM {
 		v := New(&Configs{DefineImport: true})

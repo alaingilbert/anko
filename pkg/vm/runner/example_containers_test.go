@@ -1,4 +1,4 @@
-package vm_test
+package runner_test
 
 import (
 	"fmt"

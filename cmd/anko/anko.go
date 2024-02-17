@@ -12,6 +12,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/utils"
 	"github.com/alaingilbert/anko/pkg/vm"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	"github.com/alaingilbert/anko/pkg/vm/runner"
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"github.com/chzyer/readline"
 	"io"
@@ -283,7 +284,7 @@ func rebuildCompleter(e envPkg.IEnv) {
 }
 
 func handleErr(w io.Writer, err error) {
-	var vmErr *vm.Error
+	var vmErr *runner.Error
 	var parserErr *parser.Error
 	if errors.As(err, &vmErr) {
 		_, _ = fmt.Fprintf(w, "%d:%d %s\n", vmErr.Pos.Line, vmErr.Pos.Column, err)

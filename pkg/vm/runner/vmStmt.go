@@ -1,15 +1,104 @@
-package vm
+package runner
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	"github.com/alaingilbert/anko/pkg/vm/ratelimitanything"
+	"github.com/alaingilbert/anko/pkg/vm/stateCh"
 	"reflect"
+	"sync"
+	"sync/atomic"
 )
 
+// MapLocker we need to lock map operations MapIndex/SetMapIndex/mapIter.Next
+// in the VM to avoid application crash if the script uses a map in a concurrent manner.
+type MapLocker struct{ sync.Mutex }
+
+func (m *MapLocker) Lock()   { m.Mutex.Lock() }
+func (m *MapLocker) Unlock() { m.Mutex.Unlock() }
+
+type VmParams struct {
+	ctx              context.Context
+	rvCh             chan Result
+	stats            *Stats
+	doNotProtectMaps bool
+	mapMutex         *MapLocker
+	pause            *stateCh.StateCh
+	rateLimit        *ratelimitanything.RateLimitAnything
+	Validate         bool
+	has              map[any]bool
+	ValidateLater    map[string]ast.Stmt
+}
+
+func NewVmParams(ctx context.Context,
+	rvCh chan Result,
+	stats *Stats,
+	doNotProtectMaps bool,
+	mapMutex *MapLocker,
+	pause *stateCh.StateCh,
+	rateLimit *ratelimitanything.RateLimitAnything,
+	validate bool,
+	has map[any]bool,
+	validateLater map[string]ast.Stmt,
+) *VmParams {
+	return &VmParams{
+		ctx:              ctx,
+		rvCh:             rvCh,
+		stats:            stats,
+		doNotProtectMaps: doNotProtectMaps,
+		mapMutex:         mapMutex,
+		pause:            pause,
+		rateLimit:        rateLimit,
+		Validate:         validate,
+		has:              has,
+		ValidateLater:    validateLater,
+	}
+}
+
+type Result struct {
+	Value reflect.Value
+	Error error
+}
+
+type Stats struct {
+	Cycles int64
+}
+
+func incrCycle(vmp *VmParams) error {
+	// make sure script is not stopped
+	select {
+	case <-vmp.ctx.Done():
+		return ErrInterrupt
+	default:
+	}
+	// if script is NOT paused, `<-vmp.pause.Wait()` will return right away
+	select {
+	case <-vmp.pause.Wait():
+	case <-vmp.ctx.Done():
+		return ErrInterrupt
+	}
+	// halt here if we need to throttle the script
+	rateLimit := vmp.rateLimit
+	if rateLimit != nil {
+		select {
+		case <-rateLimit.GetWithContext(vmp.ctx):
+		case <-vmp.ctx.Done():
+			return ErrInterrupt
+		}
+	}
+	atomic.AddInt64(&vmp.stats.Cycles, 1)
+	return nil
+}
+
+func RunSingleStmt(vmp *VmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value, error) {
+	return runSingleStmt(vmp, env, stmt)
+}
+
 // runSingleStmt executes one statement in the specified environment.
-func runSingleStmt(vmp *vmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value, error) {
+func runSingleStmt(vmp *VmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value, error) {
 	if err := incrCycle(vmp); err != nil {
 		return nilValue, ErrInterrupt
 	}
@@ -56,7 +145,7 @@ func runSingleStmt(vmp *vmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value
 	}
 }
 
-func runStmtsStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.StmtsStmt) (reflect.Value, error) {
+func runStmtsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.StmtsStmt) (reflect.Value, error) {
 	rv := nilValue
 	var err error
 	for _, s := range stmt.Stmts {
@@ -81,7 +170,7 @@ func runStmtsStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.StmtsStmt) (reflect.
 	return rv, nil
 }
 
-func runExprStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ExprStmt) (reflect.Value, error) {
+func runExprStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ExprStmt) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, stmt.Expr)
 	if err != nil {
 		return rv, newError(stmt.Expr, err)
@@ -89,7 +178,7 @@ func runExprStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ExprStmt) (reflect.Va
 	return rv, nil
 }
 
-func runVarStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.VarStmt) (reflect.Value, error) {
+func runVarStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.VarStmt) (reflect.Value, error) {
 	var err error
 
 	// get right side expression values
@@ -126,7 +215,7 @@ func runVarStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.VarStmt) (reflect.Valu
 	return rvs[len(rvs)-1], nil
 }
 
-func runLetsStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Value, error) {
+func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Value, error) {
 	nilValueL := nilValue
 	var err error
 
@@ -178,7 +267,7 @@ func runLetsStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 	return rvs[len(rvs)-1], nil
 }
 
-func runLetMapItemStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt) (reflect.Value, error) {
+func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt) (reflect.Value, error) {
 	nilValueL := nilValue
 	rv, err := invokeExpr(vmp, env, stmt.Rhs)
 	if err != nil {
@@ -203,7 +292,7 @@ func runLetMapItemStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt)
 	return rvs[0], nil
 }
 
-func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value, error) {
+func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value, error) {
 	// if
 	rv, err := invokeExpr(vmp, env, stmt.If)
 	if err != nil {
@@ -257,7 +346,7 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 	return rv, nil
 }
 
-func runTryStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Value, error) {
+func runTryStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Value, error) {
 	newenv := env.NewEnv()
 	defer newenv.Destroy()
 	_, err := runSingleStmt(vmp, newenv, stmt.Try)
@@ -284,7 +373,7 @@ func runTryStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Valu
 	return nilValue, newError(stmt, err)
 }
 
-func runLoopStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Value, error) {
+func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Value, error) {
 	nilValueL := nilValue
 	newenv := env.NewEnv()
 	defer newenv.Destroy()
@@ -315,14 +404,14 @@ func runLoopStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 			}
 			return nilValueL, newError(stmt, err)
 		}
-		if vmp.validate {
+		if vmp.Validate {
 			break
 		}
 	}
 	return nilValueL, nil
 }
 
-func runForStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt) (reflect.Value, error) {
+func runForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt) (reflect.Value, error) {
 	val, ee := invokeExpr(vmp, env, stmt.Value)
 	if ee != nil {
 		return val, ee
@@ -342,7 +431,7 @@ func runForStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt) (reflect.Valu
 	}
 }
 
-func runForStmtSlice(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflect.Value) (reflect.Value, error) {
+func runForStmtSlice(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflect.Value) (reflect.Value, error) {
 	nilValueL := nilValue
 	newenv := env.NewEnv()
 	defer newenv.Destroy()
@@ -369,7 +458,7 @@ func runForStmtSlice(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 	return nilValueL, nil
 }
 
-func runForStmtMap(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflect.Value) (reflect.Value, error) {
+func runForStmtMap(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflect.Value) (reflect.Value, error) {
 	nilValueL := nilValue
 	newenv := env.NewEnv()
 	defer newenv.Destroy()
@@ -397,12 +486,12 @@ func runForStmtMap(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 	return nilValueL, nil
 }
 
-func runForStmtChan(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflect.Value) (reflect.Value, error) {
+func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflect.Value) (reflect.Value, error) {
 	newenv := env.NewEnv()
 	defer newenv.Destroy()
 	for {
 		iv := nilValue
-		if !vmp.validate {
+		if !vmp.Validate {
 			cases := []reflect.SelectCase{{
 				Dir:  reflect.SelectRecv,
 				Chan: reflect.ValueOf(vmp.ctx.Done()),
@@ -436,14 +525,14 @@ func runForStmtChan(vmp *vmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 			}
 			return nilValue, newError(stmt, err)
 		}
-		if vmp.validate {
+		if vmp.Validate {
 			break
 		}
 	}
 	return nilValue, nil
 }
 
-func runCForStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Value, error) {
+func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Value, error) {
 	nilValueL := nilValue
 	newenv := env.NewEnv()
 	defer newenv.Destroy()
@@ -477,14 +566,14 @@ func runCForStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 		if err != nil {
 			return nilValueL, err
 		}
-		if vmp.validate {
+		if vmp.Validate {
 			break
 		}
 	}
 	return nilValueL, nil
 }
 
-func runReturnStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ReturnStmt) (reflect.Value, error) {
+func runReturnStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ReturnStmt) (reflect.Value, error) {
 	var err error
 	rv := nilValue
 	switch len(stmt.Exprs) {
@@ -512,7 +601,7 @@ func runReturnStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ReturnStmt) (reflec
 	return reflect.ValueOf(rvs), nil
 }
 
-func runThrowStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ThrowStmt) (reflect.Value, error) {
+func runThrowStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ThrowStmt) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, stmt.Expr)
 	if err != nil {
 		return rv, newError(stmt, err)
@@ -523,7 +612,7 @@ func runThrowStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ThrowStmt) (reflect.
 	return rv, newStringError(stmt, fmt.Sprint(rv.Interface()))
 }
 
-func runModuleStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ModuleStmt) (reflect.Value, error) {
+func runModuleStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ModuleStmt) (reflect.Value, error) {
 	newenv := env.NewEnv()
 	defer newenv.Destroy()
 	rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
@@ -534,7 +623,7 @@ func runModuleStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.ModuleStmt) (reflec
 	return rv, nil
 }
 
-func runSelectStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflect.Value, error) {
+func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflect.Value, error) {
 	nilValueL := nilValue
 	var err error
 	newenv := env.NewEnv()
@@ -608,7 +697,7 @@ func runSelectStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 		return rv, nil
 	}
 
-	if vmp.validate {
+	if vmp.Validate {
 		var rv reflect.Value
 		for chosen := range cases {
 			rv, err = tmp(chosen, rv)
@@ -625,7 +714,7 @@ func runSelectStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 	return tmp(chosen, rv)
 }
 
-func runSwitchStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.SwitchStmt) (reflect.Value, error) {
+func runSwitchStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SwitchStmt) (reflect.Value, error) {
 	newenv := env.NewEnv()
 	defer newenv.Destroy()
 	rv, err := invokeExpr(vmp, newenv, stmt.Expr)
@@ -656,11 +745,11 @@ func runSwitchStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.SwitchStmt) (reflec
 	return rv, nil
 }
 
-func runGoroutineStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.GoroutineStmt) (reflect.Value, error) {
+func runGoroutineStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.GoroutineStmt) (reflect.Value, error) {
 	return invokeExpr(vmp, env, stmt.Expr)
 }
 
-func runDeferStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.DeferStmt) (reflect.Value, error) {
+func runDeferStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.DeferStmt) (reflect.Value, error) {
 	switch t := stmt.Expr.(type) {
 	case *ast.AnonCallExpr:
 		return runDeferStmtAnonCallExpr(vmp, env, t)
@@ -670,7 +759,7 @@ func runDeferStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.DeferStmt) (reflect.
 	return invokeExpr(vmp, env, stmt.Expr)
 }
 
-func runDeferStmtAnonCallExpr(vmp *vmParams, env envPkg.IEnv, t *ast.AnonCallExpr) (reflect.Value, error) {
+func runDeferStmtAnonCallExpr(vmp *VmParams, env envPkg.IEnv, t *ast.AnonCallExpr) (reflect.Value, error) {
 	f, err := invokeExpr(vmp, env, t.Expr)
 	if err != nil {
 		return f, err
@@ -679,7 +768,7 @@ func runDeferStmtAnonCallExpr(vmp *vmParams, env envPkg.IEnv, t *ast.AnonCallExp
 	return runDeferStmtMakeDefer(vmp, f, env, callExprInst)
 }
 
-func runDeferStmtCallExpr(vmp *vmParams, t *ast.CallExpr, env envPkg.IEnv) (reflect.Value, error) {
+func runDeferStmtCallExpr(vmp *VmParams, t *ast.CallExpr, env envPkg.IEnv) (reflect.Value, error) {
 	f := t.Func
 	if !f.IsValid() {
 		var err error
@@ -692,7 +781,7 @@ func runDeferStmtCallExpr(vmp *vmParams, t *ast.CallExpr, env envPkg.IEnv) (refl
 	return runDeferStmtMakeDefer(vmp, f, env, callExprInst)
 }
 
-func runDeferStmtMakeDefer(vmp *vmParams, f reflect.Value, env envPkg.IEnv, callExprInst *ast.CallExpr) (reflect.Value, error) {
+func runDeferStmtMakeDefer(vmp *VmParams, f reflect.Value, env envPkg.IEnv, callExprInst *ast.CallExpr) (reflect.Value, error) {
 	fType := f.Type()
 	isRunVmFunction := checkIfRunVMFunction(fType)
 	args, _, useCallSlice, err := makeCallArgs(vmp, env, fType, isRunVmFunction, callExprInst)

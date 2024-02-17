@@ -345,7 +345,7 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 
 	rv, err := runner.Run(ctx, envCopy, stmt1, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has)
 	if err != nil {
-		return nil, nilValue, err
+		return nil, rv, err
 	}
 
 	oks := make([]bool, len(targets))

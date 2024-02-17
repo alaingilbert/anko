@@ -175,7 +175,9 @@ func (e *Executor) has(ctx context.Context, input any, targets []any) ([]bool, e
 
 func (e *Executor) runAsync(ctx context.Context, input any) {
 	go func() {
-		_, _ = e.run(ctx, input)
+		if rv, err := e.run(ctx, input); err != nil {
+			fmt.Println(rv, err)
+		}
 	}()
 }
 

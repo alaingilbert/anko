@@ -24,7 +24,7 @@ type IVM interface {
 
 	Define(k string, v any) error
 	DefineType(k string, v any) error
-	AddPackage(name string, methods map[string]any, types map[string]any) (*envPkg.Env, error)
+	AddPackage(name string, methods map[string]any, types map[string]any) (envPkg.IEnv, error)
 }
 
 // Compile time checks to ensure type satisfies IVM interface
@@ -212,7 +212,7 @@ func (v *VM) Has(ctx context.Context, val any, targets []any) ([]bool, error) {
 	return v.has(ctx, val, targets)
 }
 
-func (v *VM) AddPackage(name string, methods map[string]any, types map[string]any) (*envPkg.Env, error) {
+func (v *VM) AddPackage(name string, methods map[string]any, types map[string]any) (envPkg.IEnv, error) {
 	return v.env.AddPackage(name, methods, types)
 }
 
@@ -522,7 +522,7 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 	if vmp.validate {
 		for _, s := range vmp.validateLater {
 			var err error
-			envCopy.WithNewEnv(func(newenv *envPkg.Env) {
+			envCopy.WithNewEnv(func(newenv envPkg.IEnv) {
 				_, err = runSingleStmtL(vmp, newenv, s)
 			})
 			if err != nil {

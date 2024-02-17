@@ -12,7 +12,7 @@ import (
 
 func TestSetError(t *testing.T) {
 	envParent := NewEnv()
-	envChild := envParent.NewEnv()
+	envChild := envParent.newEnv()
 	err := envChild.set("a", "a")
 	if err == nil {
 		t.Errorf("Set error - received: %v - expected: %v", err, fmt.Errorf("unknown symbol 'a'"))
@@ -23,7 +23,7 @@ func TestSetError(t *testing.T) {
 
 func TestAddrError(t *testing.T) {
 	envParent := NewEnv()
-	envChild := envParent.NewEnv()
+	envChild := envParent.newEnv()
 	_, err := envChild.addr("a")
 	if err == nil {
 		t.Errorf("Addr error - received: %v - expected: %v", err, fmt.Errorf("undefined symbol 'a'"))
@@ -165,7 +165,7 @@ func TestDefineAndGet(t *testing.T) {
 	// DefineAndGet DefineGlobal
 	for _, test := range tests {
 		envParent := NewEnv()
-		envChild := envParent.NewEnv()
+		envChild := envParent.newEnv()
 
 		err = envChild.defineGlobal(test.varName, test.varDefineValue)
 		if err != nil && test.defineError != nil {
@@ -346,7 +346,7 @@ func TestDefineModify(t *testing.T) {
 	// DefineModify envChild
 	for _, test := range tests {
 		envParent := NewEnv()
-		envChild := envParent.NewEnv()
+		envChild := envParent.newEnv()
 
 		err = envParent.Define(test.varName, test.varDefineValue)
 		if err != nil && test.defineError != nil {
@@ -568,7 +568,7 @@ func TestDefineType(t *testing.T) {
 	// DefineGlobalType
 	for _, test := range tests {
 		envParent := NewEnv()
-		envChild := envParent.NewEnv()
+		envChild := envParent.newEnv()
 
 		err = envChild.defineGlobalType(test.varName, test.varDefineValue)
 		if err != nil && test.defineError != nil {
@@ -621,7 +621,7 @@ func TestDefineType(t *testing.T) {
 	// DefineGlobalReflectType
 	for _, test := range tests {
 		envParent := NewEnv()
-		envChild := envParent.NewEnv()
+		envChild := envParent.newEnv()
 
 		err = envChild.defineGlobalReflectType(test.varName, reflect.TypeOf(test.varDefineValue))
 		if err != nil && test.defineError != nil {
@@ -740,7 +740,7 @@ func TestAddr(t *testing.T) {
 	// TestAddr
 	for _, test := range tests {
 		envParent := NewEnv()
-		envChild := envParent.NewEnv()
+		envChild := envParent.newEnv()
 
 		err = envParent.Define(test.varName, test.varDefineValue)
 		if err != nil && test.defineError != nil {
@@ -1102,7 +1102,7 @@ func TestRaceSetSameVariableNewEnv(t *testing.T) {
 		waitGroup.Add(1)
 		go func(i int) {
 			<-waitChan
-			env = env.NewEnv().NewEnv()
+			env = env.newEnv().newEnv()
 			err := env.set("a", i)
 			if err != nil {
 				t.Errorf("Set error: %v", err)
@@ -1124,7 +1124,7 @@ func raceDefineAndSetSameVariable(t *testing.T) {
 	var waitGroup sync.WaitGroup
 
 	envParent := NewEnv()
-	envChild := envParent.NewEnv()
+	envChild := envParent.newEnv()
 
 	for i := 0; i < 2; i++ {
 		waitGroup.Add(1)
@@ -1218,7 +1218,7 @@ func BenchmarkSet(b *testing.B) {
 func TestCopy(t *testing.T) {
 	parent := NewEnv()
 	_ = parent.Define("b", "a")
-	env := parent.NewEnv()
+	env := parent.newEnv()
 	_ = env.Define("a", "a")
 	copyEnv := env.copy()
 	if v, e := copyEnv.Get("a"); e != nil || v != "a" {

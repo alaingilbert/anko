@@ -44,9 +44,9 @@ type CapturedFunc struct {
 }
 
 type IEnv interface {
-	AddPackage(name string, methods map[string]any, types map[string]any) (*Env, error)
+	AddPackage(name string, methods map[string]any, types map[string]any) (IEnv, error)
 	ChildCount() int64
-	DeepCopy() *Env
+	DeepCopy() IEnv
 	Defers() *mtx.Slice[CapturedFunc]
 	Define(k string, v any) error
 	DefineGlobalValue(k string, v reflect.Value) error
@@ -57,12 +57,12 @@ type IEnv interface {
 	DeleteGlobal(k string) error
 	Destroy()
 	Get(k string) (any, error)
-	GetEnvFromPath(path []string) (*Env, error)
+	GetEnvFromPath(path []string) (IEnv, error)
 	GetValue(k string) (reflect.Value, error)
 	Name() string
-	NewEnv() *Env
-	WithNewEnv(func(*Env))
-	NewModule(symbol string) (*Env, error)
+	NewEnv() IEnv
+	WithNewEnv(func(IEnv))
+	NewModule(symbol string) (IEnv, error)
 	SetValue(k string, v reflect.Value) error
 	String() string
 	Type(k string) (reflect.Type, error)
@@ -87,13 +87,13 @@ type Env struct {
 func NewEnv() *Env { return newEnv() }
 
 // NewEnv creates new child scope.
-func (e *Env) NewEnv() *Env { return e.newEnv() }
+func (e *Env) NewEnv() IEnv { return e.newEnv() }
 
-func (e *Env) WithNewEnv(clb func(*Env)) { e.withNewEnv(clb) }
+func (e *Env) WithNewEnv(clb func(IEnv)) { e.withNewEnv(clb) }
 
 // NewModule creates new child scope and define it as a symbol.
 // This is a shortcut for calling e.NewEnv then Define that new Env.
-func (e *Env) NewModule(symbol string) (*Env, error) { return e.newModule(symbol) }
+func (e *Env) NewModule(symbol string) (IEnv, error) { return e.newModule(symbol) }
 
 func (e *Env) Destroy() { e.destroy() }
 
@@ -106,10 +106,10 @@ func (e *Env) Types() *mtx.Map[string, reflect.Type] { return e.types }
 func (e *Env) Defers() *mtx.Slice[CapturedFunc] { return e.defers }
 
 // GetEnvFromPath returns Env from path
-func (e *Env) GetEnvFromPath(path []string) (*Env, error) { return e.getEnvFromPath(path) }
+func (e *Env) GetEnvFromPath(path []string) (IEnv, error) { return e.getEnvFromPath(path) }
 
 // AddPackage creates a new env with a name that has methods and types in it. Created under the parent env
-func (e *Env) AddPackage(name string, methods map[string]any, types map[string]any) (*Env, error) {
+func (e *Env) AddPackage(name string, methods map[string]any, types map[string]any) (IEnv, error) {
 	return e.addPackage(name, methods, types)
 }
 
@@ -172,7 +172,7 @@ func (e *Env) DefineReflectType(k string, t reflect.Type) error { return e.defin
 //func (e *Env) Copy() *Env { return e.copy() }
 
 // DeepCopy copy recursively the state of the virtual machine environment
-func (e *Env) DeepCopy() *Env { return e.deepCopy() }
+func (e *Env) DeepCopy() IEnv { return e.deepCopy() }
 
 //-----------------------------------------------------------------------------
 
@@ -227,7 +227,7 @@ func (e *Env) destroy() {
 	e.incrChildCount(-1)
 }
 
-func (e *Env) withNewEnv(clb func(*Env)) {
+func (e *Env) withNewEnv(clb func(IEnv)) {
 	newenv := e.newEnv()
 	defer newenv.destroy()
 	clb(newenv)
@@ -245,7 +245,7 @@ func (e *Env) incrChildCount(diff int) {
 }
 
 func (e *Env) newModule(symbol string) (*Env, error) {
-	module := e.NewEnv()
+	module := e.newEnv()
 	if err := e.define(symbol, module); err != nil {
 		return nil, err
 	}
@@ -299,7 +299,7 @@ func (e *Env) addPackage(name string, methods map[string]any, types map[string]a
 		return nil, newUnknownSymbol(name)
 	}
 	var err error
-	pack := e.NewEnv()
+	pack := e.newEnv()
 
 	for methodName, methodValue := range methods {
 		err = pack.define(methodName, methodValue)

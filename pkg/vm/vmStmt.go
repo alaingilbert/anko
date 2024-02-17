@@ -212,7 +212,7 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 
 	if toBool(rv) {
 		// then
-		env.WithNewEnv(func(newenv *envPkg.Env) {
+		env.WithNewEnv(func(newenv envPkg.IEnv) {
 			rv, err = runSingleStmt(vmp, newenv, stmt.Then)
 		})
 		if err != nil {
@@ -224,7 +224,7 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 	for _, statement := range stmt.ElseIf {
 		elseIf := statement.(*ast.IfStmt)
 		// else if - if
-		env.WithNewEnv(func(newenv *envPkg.Env) {
+		env.WithNewEnv(func(newenv envPkg.IEnv) {
 			rv, err = invokeExpr(vmp, newenv, elseIf.If)
 		})
 		if err != nil {
@@ -235,7 +235,7 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		}
 
 		// else if - then
-		env.WithNewEnv(func(newenv *envPkg.Env) {
+		env.WithNewEnv(func(newenv envPkg.IEnv) {
 			rv, err = runSingleStmt(vmp, newenv, elseIf.Then)
 		})
 		if err != nil {
@@ -246,7 +246,7 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 
 	if stmt.Else != nil {
 		// else
-		env.WithNewEnv(func(newenv *envPkg.Env) {
+		env.WithNewEnv(func(newenv envPkg.IEnv) {
 			rv, err = runSingleStmt(vmp, newenv, stmt.Else)
 		})
 		if err != nil {
@@ -263,7 +263,7 @@ func runTryStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Valu
 	_, err := runSingleStmt(vmp, newenv, stmt.Try)
 	if err != nil {
 		// Catch
-		env.WithNewEnv(func(catchEnv *envPkg.Env) {
+		env.WithNewEnv(func(catchEnv envPkg.IEnv) {
 			if stmt.Var != "" {
 				_ = catchEnv.DefineValue(stmt.Var, reflect.ValueOf(err))
 			}

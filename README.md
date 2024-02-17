@@ -96,7 +96,7 @@ for i=0; i<10; i++ {
 
 ### Compiling a anko script to bytecode
 ```
-./anko -o script.bnk script.ank
+./anko -c script.ank
 ```
 
 ### Running an Anko script file named script.ank (or bytecode file script.bnk)

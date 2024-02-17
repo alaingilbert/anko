@@ -25,15 +25,15 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 	inTypes[0] = contextType
 	for i := 1; i < len(inTypes); i++ {
 		param := funcExpr.Params[i-1]
+		newType := reflectValueType
 		if param.TypeData != nil {
 			t, err := makeType(vmp, env, param.TypeData)
 			if err != nil {
 				return nilValue, err
 			}
-			inTypes[i] = t
-		} else {
-			inTypes[i] = reflectValueType
+			newType = t
 		}
+		inTypes[i] = newType
 	}
 	if funcExpr.VarArg {
 		lastTypeIdx := len(inTypes) - 1

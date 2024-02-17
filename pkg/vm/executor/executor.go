@@ -338,41 +338,22 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 
 	envCopy := e.env
 
-	runSingleStmtL := runner.Run
-
-	oks := make([]bool, len(targets))
 	has := make(map[any]bool)
-	validateLater := make(map[string]ast.Stmt)
 	for _, vv := range targets {
 		has[fmt.Sprintf("%v", vv)] = false
 	}
-	rvCh := make(chan runner.Result)
-	vmp := runner.NewVmParams(ctx, rvCh, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
 
-	go func() {
-		rv, err := runSingleStmtL(vmp, envCopy, stmt1)
-		rvCh <- runner.Result{Value: rv, Error: err}
-	}()
-
-	var result runner.Result
-	select {
-	case result = <-rvCh:
+	rv, err := runner.Run(ctx, envCopy, stmt1, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has)
+	if err != nil {
+		return nil, nilValue, err
 	}
 
-	if vmp.Validate {
-		for _, s := range vmp.ValidateLater {
-			var err error
-			envCopy.WithNewEnv(func(newenv envPkg.IEnv) {
-				_, err = runSingleStmtL(vmp, newenv, s)
-			})
-			if err != nil {
-				return nil, nilValue, err
-			}
-		}
+	oks := make([]bool, len(targets))
+	if validate {
 		for i, vv := range targets {
 			oks[i] = has[fmt.Sprintf("%v", vv)]
 		}
 	}
 
-	return oks, result.Value, result.Error
+	return oks, rv, err
 }

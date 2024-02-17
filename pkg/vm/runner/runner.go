@@ -56,7 +56,39 @@ func NewVmParams(ctx context.Context,
 	}
 }
 
-func Run(vmp *VmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value, error) {
+func Run(ctx context.Context, env envPkg.IEnv, stmt ast.Stmt, stats *Stats, doNotProtectMaps bool, mapMutex *MapLocker, pause *stateCh.StateCh,
+	rateLimit *ratelimitanything.RateLimitAnything, validate bool, has map[any]bool) (reflect.Value, error) {
+
+	validateLater := make(map[string]ast.Stmt)
+	rvCh := make(chan Result)
+	vmp := NewVmParams(ctx, rvCh, stats, doNotProtectMaps, mapMutex, pause, rateLimit, validate, has, validateLater)
+
+	go func() {
+		rv, err := run(vmp, env, stmt)
+		rvCh <- Result{Value: rv, Error: err}
+	}()
+
+	var result Result
+	select {
+	case result = <-rvCh:
+	}
+
+	if validate {
+		for _, s := range validateLater {
+			var err error
+			env.WithNewEnv(func(newenv envPkg.IEnv) {
+				_, err = run(vmp, newenv, s)
+			})
+			if err != nil {
+				return nilValue, err
+			}
+		}
+	}
+
+	return result.Value, result.Error
+}
+
+func run(vmp *VmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value, error) {
 	return runSingleStmt(vmp, env, stmt)
 }
 

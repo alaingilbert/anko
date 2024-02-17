@@ -45,15 +45,15 @@ type IExecutor interface {
 var _ IExecutor = (*Executor)(nil)
 
 type Executor struct {
-	env              envPkg.IEnv
-	pause            *stateCh.StateCh
-	stats            *stats
-	rateLimit        *ratelimitanything.RateLimitAnything
-	doNotProtectMaps bool
-	mapMutex         *mapLocker
-	cancel           context.CancelFunc
-	importCore       bool
-	maxEnvCount      *mtx.Mtx[int64]
+	env              envPkg.IEnv                          // executor's env
+	pause            *stateCh.StateCh                     // allows pause/resume of scripts
+	stats            *stats                               // keep track of stmt/expr processed
+	rateLimit        *ratelimitanything.RateLimitAnything // rate limit expr processed/duration
+	doNotProtectMaps bool                                 // either or not to protect maps operations in the VM
+	mapMutex         *mapLocker                           // locker object to protect maps
+	cancel           context.CancelFunc                   // use to Stop a script
+	importCore       bool                                 // either or not to import core functions in executor's env
+	maxEnvCount      *mtx.Mtx[int64]                      // maximum sub-env allowed before the watchdog kills the script
 }
 
 type ExecutorConfig struct {

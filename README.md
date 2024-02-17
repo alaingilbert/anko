@@ -8,6 +8,7 @@ This fork can:
 - Compile & execute scripts to bytecode (This is perfect if you don't want to share the sources of your script)
 - Validate script syntax before running it
 - Know if a function is being used in a script (works with bytecode too)
+- Optional typed function parameters and return values
 - pause/resume execution of a script
 - Stop a script at any time
 - Much better CLI with auto-completion

@@ -20,16 +20,16 @@ import (
 )
 
 type IExecutor interface {
-	Stop()
-	Run(ctx context.Context, input any) (any, error)
-	RunAsync(ctx context.Context, input any)
-	Validate(ctx context.Context, input any) error
+	GetCycles() int64
 	Has(ctx context.Context, input any, targets []any) ([]bool, error)
-	Pause()
-	Resume()
 	IsPaused() bool
 	IsRunning() bool
-	GetCycles() int64
+	Pause()
+	Resume()
+	Run(ctx context.Context, input any) (any, error)
+	RunAsync(ctx context.Context, input any)
+	Stop()
+	Validate(ctx context.Context, input any) error
 
 	GetEnv() envPkg.IEnv
 }

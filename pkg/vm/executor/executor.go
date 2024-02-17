@@ -92,9 +92,7 @@ func NewExecutor(cfg *Config) *Executor {
 }
 
 func (e *Executor) Stop() {
-	if e.cancel != nil {
-		e.cancel()
-	}
+	e.stop()
 }
 
 func (e *Executor) Run(ctx context.Context, input any) (any, error) {
@@ -174,6 +172,12 @@ func (e *Executor) runAsync(ctx context.Context, input any) {
 	go func() {
 		_, _ = e.run(ctx, input)
 	}()
+}
+
+func (e *Executor) stop() {
+	if e.cancel != nil {
+		e.cancel()
+	}
 }
 
 func srcToStmt(src string) (ast.Stmt, error) {

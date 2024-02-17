@@ -24,7 +24,7 @@ var (
 	interfaceType      = reflect.ValueOf([]any{int64(1)}).Index(0).Type()
 	interfaceSliceType = reflect.TypeOf([]any{})
 	reflectValueType   = reflect.TypeOf(reflect.Value{})
-	errorType          = reflect.ValueOf([]error{nil}).Index(0).Type()
+	errorType          = reflect.TypeOf((*error)(nil)).Elem()
 	vmErrorType        = reflect.TypeOf(&Error{})
 	contextType        = reflect.TypeOf((*context.Context)(nil)).Elem()
 

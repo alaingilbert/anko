@@ -45,6 +45,7 @@ type CapturedFunc struct {
 
 type IEnv interface {
 	AddPackage(name string, methods map[string]any, types map[string]any) (*Env, error)
+	ChildCount() int64
 	DeepCopy() *Env
 	Defers() *mtx.Slice[CapturedFunc]
 	Define(k string, v any) error
@@ -54,13 +55,13 @@ type IEnv interface {
 	DefineValue(k string, v reflect.Value) error
 	Delete(k string) error
 	DeleteGlobal(k string) error
+	Destroy()
 	Get(k string) (any, error)
 	GetEnvFromPath(path []string) (*Env, error)
 	GetValue(k string) (reflect.Value, error)
 	Name() string
 	NewEnv() *Env
 	NewModule(symbol string) (*Env, error)
-	ChildCount() int64
 	SetValue(k string, v reflect.Value) error
 	String() string
 	Type(k string) (reflect.Type, error)

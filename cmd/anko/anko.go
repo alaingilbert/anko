@@ -345,21 +345,25 @@ for {
 		} else if req.Method == http.MethodGet {
 			script = defaultScript
 		}
-		pageHtml := `<html><body>
-	<form method="post">
-		<div>
-			<button type="submit" name="submit" value="refresh">refresh page</button>
-			<button type="submit" name="submit" value="run">run</button>
-			<button type="submit" name="submit" value="stop">stop</button>
-			<button type="submit" name="submit" value="toggle_pause">pause/resume</button>
-		</div>
-		<div>
-			Running: {{ if .IsRunning }}running{{ else }}stopped{{ end }} |
-			Paused: {{ if .IsPaused }}paused{{ else }}not paused{{ end }}
-		</div>
-		<textarea name="source" rows="10" cols="80">` + script + `</textarea>
-	</form>
-</body></html>`
+		pageHtml := `<!DOCTYPE html>
+<html>
+	<head><title>Test</title></head>
+	<body>
+		<form method="post">
+			<div>
+				<button type="submit" name="submit" value="refresh">refresh page</button>
+				<button type="submit" name="submit" value="run">run</button>
+				<button type="submit" name="submit" value="stop">stop</button>
+				<button type="submit" name="submit" value="toggle_pause">pause/resume</button>
+			</div>
+			<div>
+				Running: {{ if .IsRunning }}running{{ else }}stopped{{ end }} |
+				Paused: {{ if .IsPaused }}paused{{ else }}not paused{{ end }}
+			</div>
+			<textarea name="source" rows="10" cols="80">` + script + `</textarea>
+		</form>
+	</body>
+</html>`
 		data := map[string]any{
 			"IsRunning": e.IsRunning(),
 			"IsPaused":  e.IsPaused(),

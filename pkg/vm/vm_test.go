@@ -1650,6 +1650,18 @@ func TestFuncTypedParams(t *testing.T) {
 	runTests(t, tests, nil)
 }
 
+func TestFuncTypedReturns(t *testing.T) {
+	_ = os.Setenv("ANKO_DEBUG", "1")
+	tests := []Test{
+		{Script: `errors = import("errors");func a(){return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
+		{Script: `errors = import("errors");func a():(error){return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
+		{Script: `errors = import("errors");func a():(int){return errors.New("err")}; a()`, RunError: fmt.Errorf("invalid type for returned value, have: error, expected: int")},
+		{Script: `errors = import("errors");func a():(int64){return 1}; a()`, RunOutput: int64(1)},
+		{Script: `errors = import("errors");func a():(int64,error){return 1, nil}; b,c=a();b`, RunOutput: int64(1)},
+	}
+	runTests(t, tests, &Options{DefineImport: true, ImportCore: true})
+}
+
 func TestExecuteError(t *testing.T) {
 	script := "a]]"
 	_, err := New(nil).Executor().Run(nil, script)

@@ -244,15 +244,6 @@ func (e *Env) incrChildCount(diff int) {
 	}
 }
 
-func (e *Env) newModule(symbol string) (*Env, error) {
-	module := e.newEnv()
-	if err := e.define(symbol, module); err != nil {
-		return nil, err
-	}
-	module.name.Store(symbol)
-	return module, nil
-}
-
 // try to find a module by name in current env, returns nil if not found
 func (e *Env) findModuleInCurrentEnv(name string) *Env {
 	if value, ok := e.values.Get(name); ok {
@@ -291,6 +282,15 @@ func (e *Env) getEnvFromPath(path []string) (*Env, error) {
 		}
 	}
 	return out, nil
+}
+
+func (e *Env) newModule(symbol string) (*Env, error) {
+	module := e.newEnv()
+	if err := e.define(symbol, module); err != nil {
+		return nil, err
+	}
+	module.name.Store(symbol)
+	return module, nil
 }
 
 // AddPackage creates a new env with a name that has methods and types in it. Created under the parent env

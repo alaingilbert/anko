@@ -121,7 +121,7 @@ func (e *Executor) Resume() {
 }
 
 func (e *Executor) IsPaused() bool {
-	return e.pause.IsClosed()
+	return !e.pause.IsClosed()
 }
 
 func (e *Executor) GetCycles() int64 {

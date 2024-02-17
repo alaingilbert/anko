@@ -157,37 +157,27 @@ type VM struct {
 
 func New(configs *Configs) *VM {
 	var env envPkg.IEnv
+	var rateLimit int
+	var rateLimitPeriod time.Duration
+	var importCore bool
+	var defineImport bool
+	var doNotDeepCopyEnv bool
+	var doNotProtectMaps bool
 	if configs == nil || configs.Env == nil {
 		env = envPkg.NewEnv()
 	} else {
 		env = configs.Env
 	}
-	var rateLimit int
 	if configs != nil {
 		rateLimit = configs.RateLimit
-	}
-	var rateLimitPeriod time.Duration
-	if configs != nil {
 		if configs.RateLimitPeriod == 0 {
 			rateLimitPeriod = time.Second
 		} else {
 			rateLimitPeriod = configs.RateLimitPeriod
 		}
-	}
-	var importCore bool
-	if configs != nil {
 		importCore = configs.ImportCore
-	}
-	var defineImport bool
-	if configs != nil {
 		defineImport = configs.DefineImport
-	}
-	var doNotDeepCopyEnv bool
-	if configs != nil {
 		doNotDeepCopyEnv = configs.DoNotDeepCopyEnv
-	}
-	var doNotProtectMaps bool
-	if configs != nil {
 		doNotProtectMaps = configs.DoNotProtectMaps
 	}
 	return &VM{

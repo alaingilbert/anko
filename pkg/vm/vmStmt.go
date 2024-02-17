@@ -213,8 +213,8 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 	if toBool(rv) {
 		// then
 		newenv := env.NewEnv()
-		defer newenv.Destroy()
 		rv, err = runSingleStmt(vmp, newenv, stmt.Then)
+		newenv.Destroy()
 		if err != nil {
 			return rv, newError(stmt, err)
 		}
@@ -225,8 +225,8 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		elseIf := statement.(*ast.IfStmt)
 		// else if - if
 		newenv := env.NewEnv()
-		defer newenv.Destroy()
 		rv, err = invokeExpr(vmp, newenv, elseIf.If)
+		newenv.Destroy()
 		if err != nil {
 			return rv, newError(elseIf.If, err)
 		}
@@ -236,8 +236,8 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 
 		// else if - then
 		newenv1 := env.NewEnv()
-		defer newenv1.Destroy()
 		rv, err = runSingleStmt(vmp, newenv1, elseIf.Then)
+		newenv1.Destroy()
 		if err != nil {
 			return rv, newError(elseIf, err)
 		}
@@ -247,8 +247,8 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 	if stmt.Else != nil {
 		// else
 		newenv := env.NewEnv()
-		defer newenv.Destroy()
 		rv, err = runSingleStmt(vmp, newenv, stmt.Else)
+		newenv.Destroy()
 		if err != nil {
 			return rv, newError(stmt, err)
 		}

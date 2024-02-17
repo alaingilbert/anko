@@ -450,6 +450,9 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 		return nil, nilValue, ErrInvalidInput
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	runSingleStmtL := runSingleStmt
 
 	oks := make([]bool, len(targets))
@@ -475,7 +478,7 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 			}
 			//fmt.Println(e.env.ChildCount())
 			if e.env.ChildCount() > 10000 {
-				e.cancel()
+				cancel()
 				fmt.Println("KILLED")
 				break
 			}

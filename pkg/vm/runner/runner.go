@@ -70,7 +70,6 @@ type Config struct {
 }
 
 func Run(config *Config) (reflect.Value, error) {
-
 	stmt := config.Stmt
 	env := config.Env
 	validate := config.Validate

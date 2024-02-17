@@ -19,7 +19,7 @@ sort.Sort(sortFuncs)
 fmt.Println(a)
 `
 
-	_, err := vm.New(&vm.Configs{DefineImport: true}).Executor().Run(nil, script)
+	_, err := vm.New(&vm.Config{DefineImport: true}).Executor().Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -53,7 +53,7 @@ result = re.ReplaceAllString("foo", "bar")
 fmt.Println(result)
 `
 
-	_, err := vm.New(&vm.Configs{DefineImport: true}).Executor().Run(nil, script)
+	_, err := vm.New(&vm.Config{DefineImport: true}).Executor().Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}

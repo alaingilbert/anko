@@ -870,7 +870,7 @@ func runCancelTestWithContext(t *testing.T, script string) {
 func TestTwoContextSameEnv(t *testing.T) {
 	var waitGroup sync.WaitGroup
 	env := envPkg.NewEnv()
-	v := New(&Configs{Env: env})
+	v := New(&Config{Env: env})
 	ctx1, cancel := context.WithCancel(context.Background())
 	e := v.Executor()
 	waitGroup.Add(1)
@@ -1063,7 +1063,7 @@ func TestCallStructMethod(t *testing.T) {
 
 func TestURL(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
-	value, err := New(&Configs{DefineImport: true}).Executor().Run(nil, `
+	value, err := New(&Config{DefineImport: true}).Executor().Run(nil, `
 url = import("net/url")
 v1 = make(url.Values)
 v1.Set("a", "a")
@@ -1088,7 +1088,7 @@ v2.Get("a")
 var testPackagesEnvSetupFunc = func(t *testing.T, env *envPkg.Env) { runner.DefineImport(env) }
 
 func TestDefineImport(t *testing.T) {
-	value, err := New(&Configs{DefineImport: true}).Executor().Run(nil, `strings = import("strings"); strings.ToLower("TEST")`)
+	value, err := New(&Config{DefineImport: true}).Executor().Run(nil, `strings = import("strings"); strings.ToLower("TEST")`)
 	if err != nil {
 		t.Errorf("execute error - received: %v - expected: %v", err, nil)
 	}
@@ -1099,7 +1099,7 @@ func TestDefineImport(t *testing.T) {
 
 func TestDefineImportPackageNotFound(t *testing.T) {
 	_ = os.Unsetenv("ANKO_DEBUG")
-	value, err := New(&Configs{DefineImport: true}).Executor().Run(nil, `a = import("a")`)
+	value, err := New(&Config{DefineImport: true}).Executor().Run(nil, `a = import("a")`)
 	expectedError := "package 'a' not found"
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
@@ -1113,7 +1113,7 @@ func TestDefineImportPackageDefineError(t *testing.T) {
 	_ = os.Unsetenv("ANKO_DEBUG")
 	packages.Packages.Insert("testPackage", map[string]any{"bad.name": testing.Coverage})
 
-	value, err := New(&Configs{DefineImport: true}).Executor().Run(nil, `a = import("testPackage")`)
+	value, err := New(&Config{DefineImport: true}).Executor().Run(nil, `a = import("testPackage")`)
 	expectedError := "import error: unknown symbol 'bad.name'"
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
@@ -1125,7 +1125,7 @@ func TestDefineImportPackageDefineError(t *testing.T) {
 	packages.Packages.Insert("testPackage", map[string]any{"Coverage": testing.Coverage})
 	packages.PackageTypes.Insert("testPackage", map[string]any{"bad.name": int64(1)})
 
-	value, err = New(&Configs{DefineImport: true}).Executor().Run(nil, `a = import("testPackage")`)
+	value, err = New(&Config{DefineImport: true}).Executor().Run(nil, `a = import("testPackage")`)
 	expectedError = "import error: unknown symbol 'bad.name'"
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
@@ -1722,7 +1722,7 @@ func TestHas(t *testing.T) {
 		return []runner.TestInterface{}
 	}
 	newEnv := func() *VM {
-		v := New(&Configs{DefineImport: true})
+		v := New(&Config{DefineImport: true})
 		_ = v.Define("toString", toString)
 		_ = v.Define("otherFn", otherFn)
 		_ = v.Define("third", third)

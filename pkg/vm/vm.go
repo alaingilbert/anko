@@ -22,7 +22,7 @@ type IVM interface {
 // Compile time checks to ensure type satisfies IVM interface
 var _ IVM = (*VM)(nil)
 
-type Configs struct {
+type Config struct {
 	Env              envPkg.IEnv
 	RateLimit        int
 	RateLimitPeriod  time.Duration
@@ -42,7 +42,7 @@ type VM struct {
 	doNotProtectMaps bool
 }
 
-func New(configs *Configs) *VM {
+func New(config *Config) *VM {
 	var env envPkg.IEnv
 	var rateLimit int
 	var rateLimitPeriod time.Duration
@@ -50,22 +50,22 @@ func New(configs *Configs) *VM {
 	var defineImport bool
 	var doNotDeepCopyEnv bool
 	var doNotProtectMaps bool
-	if configs == nil || configs.Env == nil {
+	if config == nil || config.Env == nil {
 		env = envPkg.NewEnv()
 	} else {
-		env = configs.Env
+		env = config.Env
 	}
-	if configs != nil {
-		rateLimit = configs.RateLimit
-		if configs.RateLimitPeriod == 0 {
+	if config != nil {
+		rateLimit = config.RateLimit
+		if config.RateLimitPeriod == 0 {
 			rateLimitPeriod = time.Second
 		} else {
-			rateLimitPeriod = configs.RateLimitPeriod
+			rateLimitPeriod = config.RateLimitPeriod
 		}
-		importCore = configs.ImportCore
-		defineImport = configs.DefineImport
-		doNotDeepCopyEnv = configs.DoNotDeepCopyEnv
-		doNotProtectMaps = configs.DoNotProtectMaps
+		importCore = config.ImportCore
+		defineImport = config.DefineImport
+		doNotDeepCopyEnv = config.DoNotDeepCopyEnv
+		doNotProtectMaps = config.DoNotProtectMaps
 	}
 	return &VM{
 		env:              env,

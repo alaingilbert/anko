@@ -111,7 +111,7 @@ func runNonInteractive(args []string, appFlags AppFlags) int {
 		}
 	}
 
-	v := vm.New(&vm.Configs{ImportCore: true, DefineImport: true})
+	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 	_ = v.Define("args", args)
 	executor := v.Executor()
 	fileExt := filepath.Ext(appFlags.File)
@@ -185,7 +185,7 @@ func runInteractive(args []string) int {
 	//l.CaptureExitSignal()
 
 	log.SetOutput(l.Stderr())
-	v := vm.New(&vm.Configs{ImportCore: true, DefineImport: true})
+	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 	_ = v.Define("args", args)
 	executor := v.Executor()
 	rebuildCompleter(executor.GetEnv())

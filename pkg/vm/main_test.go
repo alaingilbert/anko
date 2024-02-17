@@ -165,7 +165,7 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 	// parser.EnableErrorVerbose()
 	var err error
 
-	configs := &Configs{}
+	configs := &Config{}
 	if testingOptions != nil && testingOptions.DefineImport {
 		configs.DefineImport = true
 	}

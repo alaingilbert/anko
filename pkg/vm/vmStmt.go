@@ -212,9 +212,9 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 
 	if toBool(rv) {
 		// then
-		newenv := env.NewEnv()
-		rv, err = runSingleStmt(vmp, newenv, stmt.Then)
-		newenv.Destroy()
+		env.WithNewEnv(func(newenv *envPkg.Env) {
+			rv, err = runSingleStmt(vmp, newenv, stmt.Then)
+		})
 		if err != nil {
 			return rv, newError(stmt, err)
 		}
@@ -224,9 +224,9 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 	for _, statement := range stmt.ElseIf {
 		elseIf := statement.(*ast.IfStmt)
 		// else if - if
-		newenv := env.NewEnv()
-		rv, err = invokeExpr(vmp, newenv, elseIf.If)
-		newenv.Destroy()
+		env.WithNewEnv(func(newenv *envPkg.Env) {
+			rv, err = invokeExpr(vmp, newenv, elseIf.If)
+		})
 		if err != nil {
 			return rv, newError(elseIf.If, err)
 		}
@@ -235,9 +235,9 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		}
 
 		// else if - then
-		newenv1 := env.NewEnv()
-		rv, err = runSingleStmt(vmp, newenv1, elseIf.Then)
-		newenv1.Destroy()
+		env.WithNewEnv(func(newenv *envPkg.Env) {
+			rv, err = runSingleStmt(vmp, newenv, elseIf.Then)
+		})
 		if err != nil {
 			return rv, newError(elseIf, err)
 		}
@@ -246,9 +246,9 @@ func runIfStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 
 	if stmt.Else != nil {
 		// else
-		newenv := env.NewEnv()
-		rv, err = runSingleStmt(vmp, newenv, stmt.Else)
-		newenv.Destroy()
+		env.WithNewEnv(func(newenv *envPkg.Env) {
+			rv, err = runSingleStmt(vmp, newenv, stmt.Else)
+		})
 		if err != nil {
 			return rv, newError(stmt, err)
 		}
@@ -263,17 +263,16 @@ func runTryStmt(vmp *vmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Valu
 	_, err := runSingleStmt(vmp, newenv, stmt.Try)
 	if err != nil {
 		// Catch
-		cenv := env.NewEnv()
-		defer cenv.Destroy()
-		if stmt.Var != "" {
-			_ = cenv.DefineValue(stmt.Var, reflect.ValueOf(err))
-		}
-		_, e1 := runSingleStmt(vmp, cenv, stmt.Catch)
-		if e1 != nil {
-			err = newError(stmt.Catch, e1)
-		} else {
-			err = nil
-		}
+		env.WithNewEnv(func(catchEnv *envPkg.Env) {
+			if stmt.Var != "" {
+				_ = catchEnv.DefineValue(stmt.Var, reflect.ValueOf(err))
+			}
+			if _, catchErr := runSingleStmt(vmp, catchEnv, stmt.Catch); catchErr != nil {
+				err = newError(stmt.Catch, catchErr)
+			} else {
+				err = nil
+			}
+		})
 	}
 	if stmt.Finally != nil {
 		// Finally

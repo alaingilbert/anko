@@ -61,6 +61,7 @@ type IEnv interface {
 	GetValue(k string) (reflect.Value, error)
 	Name() string
 	NewEnv() *Env
+	WithNewEnv(func(*Env))
 	NewModule(symbol string) (*Env, error)
 	SetValue(k string, v reflect.Value) error
 	String() string
@@ -87,6 +88,8 @@ func NewEnv() *Env { return newEnv() }
 
 // NewEnv creates new child scope.
 func (e *Env) NewEnv() *Env { return e.newEnv() }
+
+func (e *Env) WithNewEnv(clb func(*Env)) { e.withNewEnv(clb) }
 
 // NewModule creates new child scope and define it as a symbol.
 // This is a shortcut for calling e.NewEnv then Define that new Env.
@@ -222,6 +225,12 @@ func (e *Env) newEnv() *Env {
 
 func (e *Env) destroy() {
 	e.incrChildCount(-1)
+}
+
+func (e *Env) withNewEnv(clb func(*Env)) {
+	newenv := e.newEnv()
+	defer newenv.destroy()
+	clb(newenv)
 }
 
 func (e *Env) childCount() int64 {

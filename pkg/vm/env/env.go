@@ -32,6 +32,7 @@ var basicTypes = map[string]reflect.Type{
 	"rune":      reflect.TypeOf('a'),
 	"float32":   reflect.TypeOf(float32(1)),
 	"float64":   reflect.TypeOf(float64(1)),
+	"error":     reflect.TypeOf((*error)(nil)).Elem(),
 }
 
 // CapturedFunc is stacked in the scope

@@ -143,6 +143,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 						}
 					}
 				}
+			} else if len(funcExpr.Returns) == 0 && rv.Kind() == reflect.Interface && rv.IsNil() {
 			} else {
 				if len(funcExpr.Returns) != 1 {
 					err = fmt.Errorf("invalid number of returned values, have %d, expected: %d", 1, len(funcExpr.Returns))

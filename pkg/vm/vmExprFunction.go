@@ -153,7 +153,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 				if err != nil {
 					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 				}
-				if rv.Type() != expectedT {
+				if expectedT != interfaceType && rv.Type() != expectedT {
 					err = fmt.Errorf("invalid type for returned value, have: %s, expected: %s", rv.Type(), expectedT)
 					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 				}

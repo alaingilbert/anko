@@ -363,7 +363,7 @@ func (e *Executor) hasCompiledWithContext(ctx context.Context, src []byte, targe
 }
 
 func (e *Executor) runWithContext(ctx context.Context, stmts ast.Stmt) (any, error) {
-	return valueToAny(e.mainRun(ctx, stmts, false))
+	return valueToAny(e.mainRun(ctx, stmts))
 }
 
 func (e *Executor) runWithContext2(ctx context.Context, stmts ast.Stmt) (any, error) {
@@ -429,8 +429,8 @@ func newVmParams(ctx context.Context,
 }
 
 // mainRun executes statements in the specified environment.
-func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool) (reflect.Value, error) {
-	_, rv, err := e.mainRun1(ctx, stmt, validate, nil)
+func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt) (reflect.Value, error) {
+	_, rv, err := e.mainRun1(ctx, stmt, false, nil)
 	return rv, err
 }
 

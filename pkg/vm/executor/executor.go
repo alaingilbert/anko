@@ -23,6 +23,8 @@ type IExecutor interface {
 	Stop()
 	Run(ctx context.Context, input any) (any, error)
 	RunAsync(ctx context.Context, input any)
+	Validate(ctx context.Context, input any) error
+	Has(ctx context.Context, input any, targets []any) ([]bool, error)
 	Pause()
 	Resume()
 	IsPaused() bool
@@ -103,6 +105,14 @@ func (e *Executor) RunAsync(ctx context.Context, input any) {
 	e.runAsync(ctx, input)
 }
 
+func (e *Executor) Validate(ctx context.Context, input any) error {
+	return e.validate(ctx, input)
+}
+
+func (e *Executor) Has(ctx context.Context, input any, targets []any) ([]bool, error) {
+	return e.has(ctx, input, targets)
+}
+
 func (e *Executor) Pause() {
 	e.pause.Open()
 }
@@ -138,7 +148,7 @@ func (e *Executor) run(ctx context.Context, input any) (any, error) {
 	}
 }
 
-func (e *Executor) Validate(ctx context.Context, input any) error {
+func (e *Executor) validate(ctx context.Context, input any) error {
 	switch vv := input.(type) {
 	case string:
 		return e.ValidateWithContext(ctx, vv)
@@ -149,7 +159,7 @@ func (e *Executor) Validate(ctx context.Context, input any) error {
 	}
 }
 
-func (e *Executor) Has(ctx context.Context, input any, targets []any) ([]bool, error) {
+func (e *Executor) has(ctx context.Context, input any, targets []any) ([]bool, error) {
 	switch vv := input.(type) {
 	case string:
 		return e.HasWithContext(ctx, vv, targets)

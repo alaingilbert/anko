@@ -28,6 +28,7 @@ type IExecutor interface {
 	Pause()
 	Resume()
 	IsPaused() bool
+	IsRunning() bool
 	GetCycles() int64
 
 	GetEnv() envPkg.IEnv
@@ -122,6 +123,10 @@ func (e *Executor) Resume() {
 
 func (e *Executor) IsPaused() bool {
 	return !e.pause.IsClosed()
+}
+
+func (e *Executor) IsRunning() bool {
+	return e.isRunning.Load()
 }
 
 func (e *Executor) GetCycles() int64 {

@@ -367,7 +367,7 @@ func (e *Executor) runWithContext(ctx context.Context, stmts ast.Stmt) (any, err
 }
 
 func (e *Executor) runWithContext2(ctx context.Context, stmts ast.Stmt) (any, error) {
-	return valueToAny(e.mainRun2(ctx, stmts, false))
+	return valueToAny(e.mainRun2(ctx, stmts))
 }
 
 func valueToAny(rv reflect.Value, err error) (any, error) {
@@ -435,8 +435,8 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool) (r
 }
 
 // mainRun executes statements in the specified environment.
-func (e *Executor) mainRun2(ctx context.Context, stmt ast.Stmt, validate bool) (reflect.Value, error) {
-	_, rv, err := e.mainRun3(ctx, stmt, validate, nil)
+func (e *Executor) mainRun2(ctx context.Context, stmt ast.Stmt) (reflect.Value, error) {
+	_, rv, err := e.mainRun3(ctx, stmt, false, nil)
 	return rv, err
 }
 

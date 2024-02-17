@@ -135,7 +135,9 @@ func TestBasicOperators(t *testing.T) {
 		{Script: `!true`, RunOutput: false},
 		{Script: `!1`, RunOutput: false},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestComparisonOperators(t *testing.T) {
@@ -339,7 +341,9 @@ func TestComparisonOperators(t *testing.T) {
 		{Script: `a = "test"; a[1] != 'e'`, RunOutput: false},
 		{Script: `a = "test"; a[3] != 't'`, RunOutput: false},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestTernaryOperator(t *testing.T) {
@@ -381,7 +385,9 @@ func TestTernaryOperator(t *testing.T) {
 		{Script: `b = "0.0"; a = false ? 2 : b ? 3 : 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}},
 		{Script: `b = "true"; a = false ? 2 : b ? 3 : 1`, RunOutput: int64(3), Output: map[string]any{"a": int64(3)}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestNilCoalescingOperator(t *testing.T) {
@@ -421,7 +427,9 @@ func TestNilCoalescingOperator(t *testing.T) {
 		{Script: `b = "test"; a = b[2:2] ?? "empty"`, RunOutput: "empty", Output: map[string]any{"a": "empty"}},
 		{Script: `b = "0.0"; a = false ?? b ?? 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestIf(t *testing.T) {
@@ -472,7 +480,9 @@ func TestIf(t *testing.T) {
 		{Script: `a = 1; if a == 2 { b = 4 } else if a == 5 { b = 6 } else if a == 1 { c = b }`, RunError: fmt.Errorf("undefined symbol 'b'"), Output: map[string]any{"a": int64(1)}},
 		{Script: `a = 1; if a == 2 { b = 4 } else if a == 5 { b = 6 } else if a == 1 { b = 7 }; b`, RunError: fmt.Errorf("undefined symbol 'b'"), Output: map[string]any{"a": int64(1)}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestSelect(t *testing.T) {
@@ -523,7 +533,9 @@ func TestSelect(t *testing.T) {
 				return 1
 		}`, RunError: fmt.Errorf("invalid operation"), RunErrorLine: 3, RunErrorColumn: 9, RunOutput: nil},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestSwitch(t *testing.T) {
@@ -619,7 +631,9 @@ func TestSwitch(t *testing.T) {
 				return 1
 		}`, RunOutput: int64(1)},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestForLoop(t *testing.T) {
@@ -787,7 +801,9 @@ func TestForLoop(t *testing.T) {
 
 		{Script: `a = make(chan int64, 1); a <- 1; v = 0; for val in a { v = val; break; }; v`, RunOutput: int64(1), Output: map[string]any{"v": int64(1)}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestItemInList(t *testing.T) {
@@ -923,5 +939,7 @@ func TestItemInList(t *testing.T) {
 		{Script: `[[1]] in [[1]]`, Input: map[string]any{"l": []any{[]any{1}}}, RunOutput: false},
 		{Script: `[[1]] in [[[1]]]`, Input: map[string]any{"l": []any{[]any{[]any{1}}}}, RunOutput: true},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }

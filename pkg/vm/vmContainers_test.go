@@ -789,7 +789,9 @@ func TestArrayAppendArrays(t *testing.T) {
 		{Script: `a = make([][][]interface); b = [1, 2]; c = [b]; b = [3, 4]; c += [b]; a += [c]`, RunOutput: [][][]any{{{int64(1), int64(2)}, {int64(3), int64(4)}}}, Output: map[string]any{"a": [][][]any{{{int64(1), int64(2)}, {int64(3), int64(4)}}}, "b": []any{int64(3), int64(4)}, "c": []any{[]any{int64(1), int64(2)}, []any{int64(3), int64(4)}}}},
 		{Script: `a = make([][][]interface); b = [1, 2]; c = []; c += [b]; b = [3, 4]; c += [b]; a += [c]`, RunOutput: [][][]any{{{int64(1), int64(2)}, {int64(3), int64(4)}}}, Output: map[string]any{"a": [][][]any{{{int64(1), int64(2)}, {int64(3), int64(4)}}}, "b": []any{int64(3), int64(4)}, "c": []any{[]any{int64(1), int64(2)}, []any{int64(3), int64(4)}}}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestMaps(t *testing.T) {
@@ -1053,7 +1055,9 @@ func TestMaps(t *testing.T) {
 "c": "c",
 }; a.c`, RunOutput: "c"},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestExistenceOfKeyInMaps(t *testing.T) {
@@ -1068,7 +1072,9 @@ func TestExistenceOfKeyInMaps(t *testing.T) {
 		{Script: `a = {"b":"b", "c":"c"}; v, ok = a["a"]`, RunOutput: nil, Output: map[string]any{"a": map[any]any{"b": "b", "c": "c"}, "v": nil, "ok": false}},
 		{Script: `a = {"b":"b", "c":"c"}; v, ok = a["b"]`, RunOutput: "b", Output: map[string]any{"a": map[any]any{"b": "b", "c": "c"}, "v": "b", "ok": true}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestDeleteMaps(t *testing.T) {
@@ -1114,7 +1120,9 @@ func TestDeleteMaps(t *testing.T) {
 		{Script: `a = {"b": ["b"], "c": ["c"]}; b = &a; delete(*b, "a")`, Output: map[string]any{"a": map[any]any{"b": []any{"b"}, "c": []any{"c"}}}},
 		{Script: `a = {"b": ["b"], "c": ["c"]}; b = &a; delete(*b, "b")`, Output: map[string]any{"a": map[any]any{"c": []any{"c"}}}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestMakeMaps(t *testing.T) {
@@ -1157,7 +1165,9 @@ func TestMakeMaps(t *testing.T) {
 		{Script: `a = make(mapInterfaceFloat64); a.b = 1.1; a.b`, Types: map[string]any{"mapInterfaceFloat64": map[any]float64{}}, RunOutput: float64(1.1), Output: map[string]any{"a": map[any]float64{"b": float64(1.1)}}},
 		{Script: `a = make(mapInterfaceString); a.b = "b"; a.b`, Types: map[string]any{"mapInterfaceString": map[any]string{}}, RunOutput: "b", Output: map[string]any{"a": map[any]string{"b": "b"}}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestArraysAndMaps(t *testing.T) {
@@ -1238,7 +1248,9 @@ func TestArraysAndMaps(t *testing.T) {
 		{Script: `a = {}; a.b = b; a.b[0] = [1.1]; a.b[0][1] = 2.2`, Input: map[string]any{"b": [][]any{}}, RunOutput: float64(2.2), Output: map[string]any{"a": map[any]any{"b": [][]any{{float64(1.1), float64(2.2)}}}, "b": [][]any{}}},
 		{Script: `a = {}; a.b = b; a.b[0] = ["c"]; a.b[0][1] = "d"`, Input: map[string]any{"b": [][]any{}}, RunOutput: "d", Output: map[string]any{"a": map[any]any{"b": [][]any{{"c", "d"}}}, "b": [][]any{}}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestMakeArraysAndMaps(t *testing.T) {
@@ -1252,7 +1264,9 @@ func TestMakeArraysAndMaps(t *testing.T) {
 		{Script: `a = make(mapArray2x); a`, Types: map[string]any{"mapArray2x": map[string][][]any{}}, RunOutput: map[string][][]any{}, Output: map[string]any{"a": map[string][][]any{}}},
 		{Script: `a = make(mapArray2x); a.b = b`, Types: map[string]any{"mapArray2x": map[string][][]any{}}, Input: map[string]any{"b": [][]any{}}, RunOutput: [][]any{}, Output: map[string]any{"a": map[string][][]any{"b": {}}, "b": [][]any{}}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestMakeArraysData(t *testing.T) {
@@ -1661,7 +1675,9 @@ func TestStructs(t *testing.T) {
 				A *struct{ AA *int64 }
 			}{A: nil}}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestMakeStructs(t *testing.T) {
@@ -1810,5 +1826,7 @@ make(struct {
 			BB map[string]int64
 		}{BA: []int64{}, BB: map[string]int64{}}}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }

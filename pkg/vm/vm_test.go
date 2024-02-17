@@ -408,7 +408,9 @@ a  =  1;
 		{Script: `a, b = func(){ return 1, 2 }()`, RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}},
 		{Script: `var a, b = func(){ return 1, 2 }()`, RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestModule(t *testing.T) {
@@ -424,7 +426,9 @@ func TestModule(t *testing.T) {
 		{Script: `module a { b = 1.1 }; a.b`, RunOutput: float64(1.1)},
 		{Script: `module a { b = "a" }; a.b`, RunOutput: "a"},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestNew(t *testing.T) {
@@ -440,7 +444,9 @@ func TestNew(t *testing.T) {
 		{Script: `a = new(float64); *a`, RunOutput: float64(0)},
 		{Script: `a = new(string); *a`, RunOutput: ""},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestMake(t *testing.T) {
@@ -459,7 +465,9 @@ func TestMake(t *testing.T) {
 		{Script: `make(float64)`, RunOutput: float64(0)},
 		{Script: `make(string)`, RunOutput: ""},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestMakeType(t *testing.T) {
@@ -473,7 +481,9 @@ func TestMakeType(t *testing.T) {
 		{Script: `make(type a, make([]bool))`, RunOutput: reflect.TypeOf([]bool{})},
 		{Script: `make(type a, make([]bool)); a = make(a)`, RunOutput: []bool{}, Output: map[string]any{"a": []bool{}}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestReferencingAndDereference(t *testing.T) {
@@ -482,7 +492,9 @@ func TestReferencingAndDereference(t *testing.T) {
 		// TOFIX:
 		// {Script: `a = 1; b = &a; *b = 2; *b`, RunOutput: int64(2), Output: map[string]any{"a": int64(2)}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestMakeChan(t *testing.T) {
@@ -494,7 +506,9 @@ func TestMakeChan(t *testing.T) {
 
 		{Script: `a = make(chan bool); b = func (c) { c <- true }; go b(a); <- a`, RunOutput: true},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestChan(t *testing.T) {
@@ -538,7 +552,9 @@ func TestChan(t *testing.T) {
 		// TOFIX: if variable is not created yet, should make variable instead of error
 		// {Script: `a = make(chan bool, 2); a <- true; b <- a`, RunOutput: true, Output: map[string]any{"b": true}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestCloseChan(t *testing.T) {
@@ -546,7 +562,9 @@ func TestCloseChan(t *testing.T) {
 	tests := []Test{
 		{Script: `a = make(chan int64, 1); close(a); <- a`, RunOutput: int64(0)},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestVMDelete(t *testing.T) {
@@ -566,7 +584,9 @@ func TestVMDelete(t *testing.T) {
 		{Script: `a = 1; func b() { delete("a", false) }; b()`, Output: map[string]any{"a": int64(1)}},
 		{Script: `a = 1; func b() { delete("a", true) }; b(); a`, RunError: fmt.Errorf("undefined symbol 'a'")},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestComment(t *testing.T) {
@@ -682,7 +702,9 @@ func TestComment(t *testing.T) {
 		{Script: `1
 /**** 1 ****/`, RunOutput: int64(1)},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestValidate(t *testing.T) {
@@ -1054,7 +1076,9 @@ func TestCallStructMethod(t *testing.T) {
 		{Script: "ptr.ValueReceiver()", Input: map[string]any{"ptr": ptr}, RunOutput: 100},
 		{Script: "ptr.PointerReceiver()", Input: map[string]any{"ptr": ptr}, RunOutput: []any{0, 0}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 
 	// Define value 'val' to struct Bar in VM
 	ref = 10
@@ -1062,7 +1086,9 @@ func TestCallStructMethod(t *testing.T) {
 		{Script: "val.ValueReceiver()", Input: map[string]interface{}{"val": val}, RunOutput: 200},
 		{Script: "val.PointerReceiver()", Input: map[string]interface{}{"val": val}, RunOutput: []interface{}{0, 0}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestURL(t *testing.T) {
@@ -1144,7 +1170,9 @@ func TestTime(t *testing.T) {
 	tests := []Test{
 		{Script: `time = import("time"); a = make(time.Time); a.IsZero()`, RunOutput: true},
 	}
-	runTests(t, tests, &Options{DefineImport: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
+	}
 }
 
 func TestSync(t *testing.T) {
@@ -1153,7 +1181,9 @@ func TestSync(t *testing.T) {
 		{Script: `sync = import("sync"); once = make(sync.Once); a = []; func add() { a += "a" }; once.Do(add); once.Do(add); a`, RunOutput: []any{"a"}, Output: map[string]any{"a": []any{"a"}}},
 		{Script: `sync = import("sync"); waitGroup = make(sync.WaitGroup); waitGroup.Add(2);  func done() { waitGroup.Done() }; go done(); go done(); waitGroup.Wait(); "a"`, RunOutput: "a"},
 	}
-	runTests(t, tests, &Options{DefineImport: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
+	}
 }
 
 func TestStringsPkg(t *testing.T) {
@@ -1163,7 +1193,9 @@ func TestStringsPkg(t *testing.T) {
 		{Script: `strings = import("strings"); a = "a b c d"; b = strings.Split(a, " ")`, RunOutput: []string{"a", "b", "c", "d"}, Output: map[string]any{"a": "a b c d", "b": []string{"a", "b", "c", "d"}}},
 		{Script: `strings = import("strings"); a = "a b c d"; b = strings.SplitN(a, " ", 3)`, RunOutput: []string{"a", "b", "c d"}, Output: map[string]any{"a": "a b c d", "b": []string{"a", "b", "c d"}}},
 	}
-	runTests(t, tests, &Options{DefineImport: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
+	}
 }
 
 func TestStrconv(t *testing.T) {
@@ -1206,7 +1238,9 @@ func TestStrconv(t *testing.T) {
 		{Script: `strconv = import("strconv"); a = "1"; var b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1", "b": uint64(1), "err": "<nil>"}},
 		{Script: `strconv = import("strconv"); a = "a"; var b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseUint: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": uint64(0), "err": `strconv.ParseUint: parsing "a": invalid syntax`}},
 	}
-	runTests(t, tests, &Options{DefineImport: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
+	}
 }
 
 func TestSort(t *testing.T) {
@@ -1227,7 +1261,9 @@ a
 `,
 			RunOutput: []any{"f", float64(1.1), "2", int64(3), "4.4", int64(5)}, Output: map[string]any{"a": []any{"f", float64(1.1), "2", int64(3), "4.4", int64(5)}}},
 	}
-	runTests(t, tests, &Options{DefineImport: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
+	}
 }
 
 func TestRegexp(t *testing.T) {
@@ -1253,7 +1289,9 @@ func TestRegexp(t *testing.T) {
 		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "no match"}, RunOutput: false, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "no match"}},
 		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a+1+b"}, RunOutput: false, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a+1+b"}},
 	}
-	runTests(t, tests, &Options{DefineImport: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
+	}
 }
 
 func TestJson(t *testing.T) {
@@ -1264,7 +1302,9 @@ func TestJson(t *testing.T) {
 		{Script: `json = import("encoding/json"); b = 1; err = json.Unmarshal(a, &b); err`, Input: map[string]any{"a": `{"b": "b"}`}, Output: map[string]any{"a": `{"b": "b"}`, "b": map[string]any{"b": "b"}}},
 		{Script: `json = import("encoding/json"); b = 1; err = json.Unmarshal(a, &b); err`, Input: map[string]any{"a": `[["1", "2"],["3", "4"]]`}, Output: map[string]any{"a": `[["1", "2"],["3", "4"]]`, "b": []any{[]any{"1", "2"}, []any{"3", "4"}}}},
 	}
-	runTests(t, tests, &Options{DefineImport: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
+	}
 }
 
 func TestBytes(t *testing.T) {
@@ -1273,7 +1313,9 @@ func TestBytes(t *testing.T) {
 		{Script: `bytes = import("bytes"); a = make(bytes.Buffer); n, err = a.WriteString("a"); if err != nil { return err }; n`, RunOutput: 1},
 		{Script: `bytes = import("bytes"); a = make(bytes.Buffer); n, err = a.WriteString("a"); if err != nil { return err }; a.String()`, RunOutput: "a"},
 	}
-	runTests(t, tests, &Options{DefineImport: true})
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
+	}
 }
 
 func TestAnk(t *testing.T) {
@@ -1632,7 +1674,9 @@ func TestEnvRef(t *testing.T) {
 		{Script: `module m { f=func(x){return func(){return x}} }; m.f(1)()`, RunOutput: int64(1)},
 		{Script: `module m { f=func(x){return func(){return x}}(1)() }; m.f`, RunOutput: int64(1)},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestFuncTypedParams(t *testing.T) {
@@ -1656,7 +1700,9 @@ func TestFuncTypedParams(t *testing.T) {
 		{Script: `func a(x:int64...){return x}; a(1,"2",3)`, RunError: fmt.Errorf("function wants argument type []int64 but received type string")},
 		{Script: `func a(x:int64, y:int64, z:int64){return x}; a([]int64{1,2,3}...)`, RunOutput: int64(1)},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestFuncTypedReturns(t *testing.T) {

@@ -13,154 +13,156 @@ import (
 func TestReturns(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `return 1++`, RunError: fmt.Errorf("invalid operation")},
-		{Script: `return 1, 1++`, RunError: fmt.Errorf("invalid operation")},
-		{Script: `return 1, 2, 1++`, RunError: fmt.Errorf("invalid operation")},
+		{Script: `return 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
+		{Script: `return 1, 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
+		{Script: `return 1, 2, 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 
-		{Script: `return`, RunOutput: nil},
-		{Script: `return nil`, RunOutput: nil},
-		{Script: `return true`, RunOutput: true},
-		{Script: `return 1`, RunOutput: int64(1)},
-		{Script: `return 1.1`, RunOutput: float64(1.1)},
-		{Script: `return "a"`, RunOutput: "a"},
+		{Script: `return`, RunOutput: nil, Name: ""},
+		{Script: `return nil`, RunOutput: nil, Name: ""},
+		{Script: `return true`, RunOutput: true, Name: ""},
+		{Script: `return 1`, RunOutput: int64(1), Name: ""},
+		{Script: `return 1.1`, RunOutput: float64(1.1), Name: ""},
+		{Script: `return "a"`, RunOutput: "a", Name: ""},
 
-		{Script: `b()`, Input: map[string]any{"b": func() {}}, RunOutput: nil},
-		{Script: `b()`, Input: map[string]any{"b": func() reflect.Value { return reflect.Value{} }}, RunOutput: reflect.Value{}},
-		{Script: `b()`, Input: map[string]any{"b": func() any { return nil }}, RunOutput: nil},
-		{Script: `b()`, Input: map[string]any{"b": func() bool { return true }}, RunOutput: true},
-		{Script: `b()`, Input: map[string]any{"b": func() int32 { return int32(1) }}, RunOutput: int32(1)},
-		{Script: `b()`, Input: map[string]any{"b": func() int64 { return int64(1) }}, RunOutput: int64(1)},
-		{Script: `b()`, Input: map[string]any{"b": func() float32 { return float32(1.1) }}, RunOutput: float32(1.1)},
-		{Script: `b()`, Input: map[string]any{"b": func() float64 { return float64(1.1) }}, RunOutput: float64(1.1)},
-		{Script: `b()`, Input: map[string]any{"b": func() string { return "a" }}, RunOutput: "a"},
+		{Script: `b()`, Input: map[string]any{"b": func() {}}, RunOutput: nil, Name: ""},
+		{Script: `b()`, Input: map[string]any{"b": func() reflect.Value { return reflect.Value{} }}, RunOutput: reflect.Value{}, Name: ""},
+		{Script: `b()`, Input: map[string]any{"b": func() any { return nil }}, RunOutput: nil, Name: ""},
+		{Script: `b()`, Input: map[string]any{"b": func() bool { return true }}, RunOutput: true, Name: ""},
+		{Script: `b()`, Input: map[string]any{"b": func() int32 { return int32(1) }}, RunOutput: int32(1), Name: ""},
+		{Script: `b()`, Input: map[string]any{"b": func() int64 { return int64(1) }}, RunOutput: int64(1), Name: ""},
+		{Script: `b()`, Input: map[string]any{"b": func() float32 { return float32(1.1) }}, RunOutput: float32(1.1), Name: ""},
+		{Script: `b()`, Input: map[string]any{"b": func() float64 { return float64(1.1) }}, RunOutput: float64(1.1), Name: ""},
+		{Script: `b()`, Input: map[string]any{"b": func() string { return "a" }}, RunOutput: "a", Name: ""},
 
-		{Script: `b(a)`, Input: map[string]any{"a": reflect.Value{}, "b": func(c reflect.Value) reflect.Value { return c }}, RunOutput: reflect.Value{}, Output: map[string]any{"a": reflect.Value{}}},
-		{Script: `b(a)`, Input: map[string]any{"a": nil, "b": func(c any) any { return c }}, RunOutput: nil, Output: map[string]any{"a": nil}},
-		{Script: `b(a)`, Input: map[string]any{"a": true, "b": func(c bool) bool { return c }}, RunOutput: true, Output: map[string]any{"a": true}},
-		{Script: `b(a)`, Input: map[string]any{"a": int32(1), "b": func(c int32) int32 { return c }}, RunOutput: int32(1), Output: map[string]any{"a": int32(1)}},
-		{Script: `b(a)`, Input: map[string]any{"a": int64(1), "b": func(c int64) int64 { return c }}, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}},
-		{Script: `b(a)`, Input: map[string]any{"a": float32(1.1), "b": func(c float32) float32 { return c }}, RunOutput: float32(1.1), Output: map[string]any{"a": float32(1.1)}},
-		{Script: `b(a)`, Input: map[string]any{"a": float64(1.1), "b": func(c float64) float64 { return c }}, RunOutput: float64(1.1), Output: map[string]any{"a": float64(1.1)}},
-		{Script: `b(a)`, Input: map[string]any{"a": "a", "b": func(c string) string { return c }}, RunOutput: "a", Output: map[string]any{"a": "a"}},
+		{Script: `b(a)`, Input: map[string]any{"a": reflect.Value{}, "b": func(c reflect.Value) reflect.Value { return c }}, RunOutput: reflect.Value{}, Output: map[string]any{"a": reflect.Value{}}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": nil, "b": func(c any) any { return c }}, RunOutput: nil, Output: map[string]any{"a": nil}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": true, "b": func(c bool) bool { return c }}, RunOutput: true, Output: map[string]any{"a": true}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": int32(1), "b": func(c int32) int32 { return c }}, RunOutput: int32(1), Output: map[string]any{"a": int32(1)}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": int64(1), "b": func(c int64) int64 { return c }}, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": float32(1.1), "b": func(c float32) float32 { return c }}, RunOutput: float32(1.1), Output: map[string]any{"a": float32(1.1)}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": float64(1.1), "b": func(c float64) float64 { return c }}, RunOutput: float64(1.1), Output: map[string]any{"a": float64(1.1)}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": "a", "b": func(c string) string { return c }}, RunOutput: "a", Output: map[string]any{"a": "a"}, Name: ""},
 
-		{Script: `b(a)`, Input: map[string]any{"a": "a", "b": func(c bool) bool { return c }}, RunError: fmt.Errorf("function wants argument type bool but received type string"), Output: map[string]any{"a": "a"}},
-		{Script: `b(a)`, Input: map[string]any{"a": int64(1), "b": func(c int32) int32 { return c }}, RunOutput: int32(1), Output: map[string]any{"a": int64(1)}},
-		{Script: `b(a)`, Input: map[string]any{"a": int32(1), "b": func(c int64) int64 { return c }}, RunOutput: int64(1), Output: map[string]any{"a": int32(1)}},
-		{Script: `b(a)`, Input: map[string]any{"a": float64(1.25), "b": func(c float32) float32 { return c }}, RunOutput: float32(1.25), Output: map[string]any{"a": float64(1.25)}},
-		{Script: `b(a)`, Input: map[string]any{"a": float32(1.25), "b": func(c float64) float64 { return c }}, RunOutput: float64(1.25), Output: map[string]any{"a": float32(1.25)}},
-		{Script: `b(a)`, Input: map[string]any{"a": true, "b": func(c string) string { return c }}, RunError: fmt.Errorf("function wants argument type string but received type bool"), Output: map[string]any{"a": true}},
+		{Script: `b(a)`, Input: map[string]any{"a": "a", "b": func(c bool) bool { return c }}, RunError: fmt.Errorf("function wants argument type bool but received type string"), Output: map[string]any{"a": "a"}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": int64(1), "b": func(c int32) int32 { return c }}, RunOutput: int32(1), Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": int32(1), "b": func(c int64) int64 { return c }}, RunOutput: int64(1), Output: map[string]any{"a": int32(1)}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": float64(1.25), "b": func(c float32) float32 { return c }}, RunOutput: float32(1.25), Output: map[string]any{"a": float64(1.25)}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": float32(1.25), "b": func(c float64) float64 { return c }}, RunOutput: float64(1.25), Output: map[string]any{"a": float32(1.25)}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": true, "b": func(c string) string { return c }}, RunError: fmt.Errorf("function wants argument type string but received type bool"), Output: map[string]any{"a": true}, Name: ""},
 
-		{Script: `b(a)`, Input: map[string]any{"a": testVarValueBool, "b": func(c any) any { return c }}, RunOutput: testVarValueBool, Output: map[string]any{"a": testVarValueBool}},
-		{Script: `b(a)`, Input: map[string]any{"a": testVarValueInt32, "b": func(c any) any { return c }}, RunOutput: testVarValueInt32, Output: map[string]any{"a": testVarValueInt32}},
-		{Script: `b(a)`, Input: map[string]any{"a": testVarValueInt64, "b": func(c any) any { return c }}, RunOutput: testVarValueInt64, Output: map[string]any{"a": testVarValueInt64}},
-		{Script: `b(a)`, Input: map[string]any{"a": testVarValueFloat32, "b": func(c any) any { return c }}, RunOutput: testVarValueFloat32, Output: map[string]any{"a": testVarValueFloat32}},
-		{Script: `b(a)`, Input: map[string]any{"a": testVarValueFloat64, "b": func(c any) any { return c }}, RunOutput: testVarValueFloat64, Output: map[string]any{"a": testVarValueFloat64}},
-		{Script: `b(a)`, Input: map[string]any{"a": testVarValueString, "b": func(c any) any { return c }}, RunOutput: testVarValueString, Output: map[string]any{"a": testVarValueString}},
+		{Script: `b(a)`, Input: map[string]any{"a": testVarValueBool, "b": func(c any) any { return c }}, RunOutput: testVarValueBool, Output: map[string]any{"a": testVarValueBool}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": testVarValueInt32, "b": func(c any) any { return c }}, RunOutput: testVarValueInt32, Output: map[string]any{"a": testVarValueInt32}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": testVarValueInt64, "b": func(c any) any { return c }}, RunOutput: testVarValueInt64, Output: map[string]any{"a": testVarValueInt64}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": testVarValueFloat32, "b": func(c any) any { return c }}, RunOutput: testVarValueFloat32, Output: map[string]any{"a": testVarValueFloat32}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": testVarValueFloat64, "b": func(c any) any { return c }}, RunOutput: testVarValueFloat64, Output: map[string]any{"a": testVarValueFloat64}, Name: ""},
+		{Script: `b(a)`, Input: map[string]any{"a": testVarValueString, "b": func(c any) any { return c }}, RunOutput: testVarValueString, Output: map[string]any{"a": testVarValueString}, Name: ""},
 
-		{Script: `func aFunc() {}; aFunc()`, RunOutput: nil},
-		{Script: `func aFunc() {return}; aFunc()`, RunOutput: nil},
-		{Script: `func aFunc() {return}; a = aFunc()`, RunOutput: nil, Output: map[string]any{"a": nil}},
+		{Script: `func aFunc() {}; aFunc()`, RunOutput: nil, Name: ""},
+		{Script: `func aFunc() {return}; aFunc()`, RunOutput: nil, Name: ""},
+		{Script: `func aFunc() {return}; a = aFunc()`, RunOutput: nil, Output: map[string]any{"a": nil}, Name: ""},
 
-		{Script: `func aFunc() {return nil}; aFunc()`, RunOutput: nil},
-		{Script: `func aFunc() {return true}; aFunc()`, RunOutput: true},
-		{Script: `func aFunc() {return 1}; aFunc()`, RunOutput: int64(1)},
-		{Script: `func aFunc() {return 1.1}; aFunc()`, RunOutput: float64(1.1)},
-		{Script: `func aFunc() {return "a"}; aFunc()`, RunOutput: "a"},
+		{Script: `func aFunc() {return nil}; aFunc()`, RunOutput: nil, Name: ""},
+		{Script: `func aFunc() {return true}; aFunc()`, RunOutput: true, Name: ""},
+		{Script: `func aFunc() {return 1}; aFunc()`, RunOutput: int64(1), Name: ""},
+		{Script: `func aFunc() {return 1.1}; aFunc()`, RunOutput: float64(1.1), Name: ""},
+		{Script: `func aFunc() {return "a"}; aFunc()`, RunOutput: "a", Name: ""},
 
-		{Script: `func aFunc() {return 1 + 2}; aFunc()`, RunOutput: int64(3)},
-		{Script: `func aFunc() {return 1.25 + 2.25}; aFunc()`, RunOutput: float64(3.5)},
-		{Script: `func aFunc() {return "a" + "b"}; aFunc()`, RunOutput: "ab"},
+		{Script: `func aFunc() {return 1 + 2}; aFunc()`, RunOutput: int64(3), Name: ""},
+		{Script: `func aFunc() {return 1.25 + 2.25}; aFunc()`, RunOutput: float64(3.5), Name: ""},
+		{Script: `func aFunc() {return "a" + "b"}; aFunc()`, RunOutput: "ab", Name: ""},
 
-		{Script: `func aFunc() {return 1 + 2, 3 + 4}; aFunc()`, RunOutput: []any{int64(3), int64(7)}},
-		{Script: `func aFunc() {return 1.25 + 2.25, 3.25 + 4.25}; aFunc()`, RunOutput: []any{float64(3.5), float64(7.5)}},
-		{Script: `func aFunc() {return "a" + "b", "c" + "d"}; aFunc()`, RunOutput: []any{"ab", "cd"}},
+		{Script: `func aFunc() {return 1 + 2, 3 + 4}; aFunc()`, RunOutput: []any{int64(3), int64(7)}, Name: ""},
+		{Script: `func aFunc() {return 1.25 + 2.25, 3.25 + 4.25}; aFunc()`, RunOutput: []any{float64(3.5), float64(7.5)}, Name: ""},
+		{Script: `func aFunc() {return "a" + "b", "c" + "d"}; aFunc()`, RunOutput: []any{"ab", "cd"}, Name: ""},
 
-		{Script: `func aFunc() {return nil, nil}; aFunc()`, RunOutput: []any{nil, nil}},
-		{Script: `func aFunc() {return true, false}; aFunc()`, RunOutput: []any{true, false}},
-		{Script: `func aFunc() {return 1, 2}; aFunc()`, RunOutput: []any{int64(1), int64(2)}},
-		{Script: `func aFunc() {return 1.1, 2.2}; aFunc()`, RunOutput: []any{float64(1.1), float64(2.2)}},
-		{Script: `func aFunc() {return "a", "b"}; aFunc()`, RunOutput: []any{"a", "b"}},
+		{Script: `func aFunc() {return nil, nil}; aFunc()`, RunOutput: []any{nil, nil}, Name: ""},
+		{Script: `func aFunc() {return true, false}; aFunc()`, RunOutput: []any{true, false}, Name: ""},
+		{Script: `func aFunc() {return 1, 2}; aFunc()`, RunOutput: []any{int64(1), int64(2)}, Name: ""},
+		{Script: `func aFunc() {return 1.1, 2.2}; aFunc()`, RunOutput: []any{float64(1.1), float64(2.2)}, Name: ""},
+		{Script: `func aFunc() {return "a", "b"}; aFunc()`, RunOutput: []any{"a", "b"}, Name: ""},
 
-		{Script: `func aFunc() {return [nil]}; aFunc()`, RunOutput: []any{nil}},
-		{Script: `func aFunc() {return [nil, nil]}; aFunc()`, RunOutput: []any{nil, nil}},
-		{Script: `func aFunc() {return [nil, nil, nil]}; aFunc()`, RunOutput: []any{nil, nil, nil}},
-		{Script: `func aFunc() {return [nil, nil], [nil, nil]}; aFunc()`, RunOutput: []any{[]any{nil, nil}, []any{nil, nil}}},
+		{Script: `func aFunc() {return [nil]}; aFunc()`, RunOutput: []any{nil}, Name: ""},
+		{Script: `func aFunc() {return [nil, nil]}; aFunc()`, RunOutput: []any{nil, nil}, Name: ""},
+		{Script: `func aFunc() {return [nil, nil, nil]}; aFunc()`, RunOutput: []any{nil, nil, nil}, Name: ""},
+		{Script: `func aFunc() {return [nil, nil], [nil, nil]}; aFunc()`, RunOutput: []any{[]any{nil, nil}, []any{nil, nil}}, Name: ""},
 
-		{Script: `func aFunc() {return [true]}; aFunc()`, RunOutput: []any{true}},
-		{Script: `func aFunc() {return [true, false]}; aFunc()`, RunOutput: []any{true, false}},
-		{Script: `func aFunc() {return [true, false, true]}; aFunc()`, RunOutput: []any{true, false, true}},
-		{Script: `func aFunc() {return [true, false], [false, true]}; aFunc()`, RunOutput: []any{[]any{true, false}, []any{false, true}}},
+		{Script: `func aFunc() {return [true]}; aFunc()`, RunOutput: []any{true}, Name: ""},
+		{Script: `func aFunc() {return [true, false]}; aFunc()`, RunOutput: []any{true, false}, Name: ""},
+		{Script: `func aFunc() {return [true, false, true]}; aFunc()`, RunOutput: []any{true, false, true}, Name: ""},
+		{Script: `func aFunc() {return [true, false], [false, true]}; aFunc()`, RunOutput: []any{[]any{true, false}, []any{false, true}}, Name: ""},
 
-		{Script: `func aFunc() {return []}; aFunc()`, RunOutput: []any{}},
-		{Script: `func aFunc() {return [1]}; aFunc()`, RunOutput: []any{int64(1)}},
-		{Script: `func aFunc() {return [1, 2]}; aFunc()`, RunOutput: []any{int64(1), int64(2)}},
-		{Script: `func aFunc() {return [1, 2, 3]}; aFunc()`, RunOutput: []any{int64(1), int64(2), int64(3)}},
-		{Script: `func aFunc() {return [1, 2], [3, 4]}; aFunc()`, RunOutput: []any{[]any{int64(1), int64(2)}, []any{int64(3), int64(4)}}},
+		{Script: `func aFunc() {return []}; aFunc()`, RunOutput: []any{}, Name: ""},
+		{Script: `func aFunc() {return [1]}; aFunc()`, RunOutput: []any{int64(1)}, Name: ""},
+		{Script: `func aFunc() {return [1, 2]}; aFunc()`, RunOutput: []any{int64(1), int64(2)}, Name: ""},
+		{Script: `func aFunc() {return [1, 2, 3]}; aFunc()`, RunOutput: []any{int64(1), int64(2), int64(3)}, Name: ""},
+		{Script: `func aFunc() {return [1, 2], [3, 4]}; aFunc()`, RunOutput: []any{[]any{int64(1), int64(2)}, []any{int64(3), int64(4)}}, Name: ""},
 
-		{Script: `func aFunc() {return [1.1]}; aFunc()`, RunOutput: []any{float64(1.1)}},
-		{Script: `func aFunc() {return [1.1, 2.2]}; aFunc()`, RunOutput: []any{float64(1.1), float64(2.2)}},
-		{Script: `func aFunc() {return [1.1, 2.2, 3.3]}; aFunc()`, RunOutput: []any{float64(1.1), float64(2.2), float64(3.3)}},
-		{Script: `func aFunc() {return [1.1, 2.2], [3.3, 4.4]}; aFunc()`, RunOutput: []any{[]any{float64(1.1), float64(2.2)}, []any{float64(3.3), float64(4.4)}}},
+		{Script: `func aFunc() {return [1.1]}; aFunc()`, RunOutput: []any{float64(1.1)}, Name: ""},
+		{Script: `func aFunc() {return [1.1, 2.2]}; aFunc()`, RunOutput: []any{float64(1.1), float64(2.2)}, Name: ""},
+		{Script: `func aFunc() {return [1.1, 2.2, 3.3]}; aFunc()`, RunOutput: []any{float64(1.1), float64(2.2), float64(3.3)}, Name: ""},
+		{Script: `func aFunc() {return [1.1, 2.2], [3.3, 4.4]}; aFunc()`, RunOutput: []any{[]any{float64(1.1), float64(2.2)}, []any{float64(3.3), float64(4.4)}}, Name: ""},
 
-		{Script: `func aFunc() {return ["a"]}; aFunc()`, RunOutput: []any{"a"}},
-		{Script: `func aFunc() {return ["a", "b"]}; aFunc()`, RunOutput: []any{"a", "b"}},
-		{Script: `func aFunc() {return ["a", "b", "c"]}; aFunc()`, RunOutput: []any{"a", "b", "c"}},
-		{Script: `func aFunc() {return ["a", "b"], ["c", "d"]}; aFunc()`, RunOutput: []any{[]any{"a", "b"}, []any{"c", "d"}}},
+		{Script: `func aFunc() {return ["a"]}; aFunc()`, RunOutput: []any{"a"}, Name: ""},
+		{Script: `func aFunc() {return ["a", "b"]}; aFunc()`, RunOutput: []any{"a", "b"}, Name: ""},
+		{Script: `func aFunc() {return ["a", "b", "c"]}; aFunc()`, RunOutput: []any{"a", "b", "c"}, Name: ""},
+		{Script: `func aFunc() {return ["a", "b"], ["c", "d"]}; aFunc()`, RunOutput: []any{[]any{"a", "b"}, []any{"c", "d"}}, Name: ""},
 
-		{Script: `func aFunc() {return nil, nil}; aFunc()`, RunOutput: []any{any(nil), any(nil)}},
-		{Script: `func aFunc() {return true, false}; aFunc()`, RunOutput: []any{true, false}},
-		{Script: `func aFunc() {return 1, 2}; aFunc()`, RunOutput: []any{int64(1), int64(2)}},
-		{Script: `func aFunc() {return 1.1, 2.2}; aFunc()`, RunOutput: []any{float64(1.1), float64(2.2)}},
-		{Script: `func aFunc() {return "a", "b"}; aFunc()`, RunOutput: []any{"a", "b"}},
+		{Script: `func aFunc() {return nil, nil}; aFunc()`, RunOutput: []any{any(nil), any(nil)}, Name: ""},
+		{Script: `func aFunc() {return true, false}; aFunc()`, RunOutput: []any{true, false}, Name: ""},
+		{Script: `func aFunc() {return 1, 2}; aFunc()`, RunOutput: []any{int64(1), int64(2)}, Name: ""},
+		{Script: `func aFunc() {return 1.1, 2.2}; aFunc()`, RunOutput: []any{float64(1.1), float64(2.2)}, Name: ""},
+		{Script: `func aFunc() {return "a", "b"}; aFunc()`, RunOutput: []any{"a", "b"}, Name: ""},
 
-		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": reflect.Value{}}, RunOutput: reflect.Value{}, Output: map[string]any{"a": reflect.Value{}}},
+		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": reflect.Value{}}, RunOutput: reflect.Value{}, Output: map[string]any{"a": reflect.Value{}}, Name: ""},
 
-		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": nil}, RunOutput: nil, Output: map[string]any{"a": nil}},
-		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": true}, RunOutput: true, Output: map[string]any{"a": true}},
-		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": int64(1)}, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}},
-		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": float64(1.1)}, RunOutput: float64(1.1), Output: map[string]any{"a": float64(1.1)}},
-		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": "a"}, RunOutput: "a", Output: map[string]any{"a": "a"}},
+		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": nil}, RunOutput: nil, Output: map[string]any{"a": nil}, Name: ""},
+		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": true}, RunOutput: true, Output: map[string]any{"a": true}, Name: ""},
+		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": int64(1)}, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": float64(1.1)}, RunOutput: float64(1.1), Output: map[string]any{"a": float64(1.1)}, Name: ""},
+		{Script: `func aFunc() {return a}; aFunc()`, Input: map[string]any{"a": "a"}, RunOutput: "a", Output: map[string]any{"a": "a"}, Name: ""},
 
-		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": reflect.Value{}}, RunOutput: []any{reflect.Value{}, reflect.Value{}}, Output: map[string]any{"a": reflect.Value{}}},
-		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": nil}, RunOutput: []any{nil, nil}, Output: map[string]any{"a": nil}},
-		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": true}, RunOutput: []any{true, true}, Output: map[string]any{"a": true}},
-		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": int32(1)}, RunOutput: []any{int32(1), int32(1)}, Output: map[string]any{"a": int32(1)}},
-		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": int64(1)}, RunOutput: []any{int64(1), int64(1)}, Output: map[string]any{"a": int64(1)}},
-		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": float32(1.1)}, RunOutput: []any{float32(1.1), float32(1.1)}, Output: map[string]any{"a": float32(1.1)}},
-		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": float64(1.1)}, RunOutput: []any{float64(1.1), float64(1.1)}, Output: map[string]any{"a": float64(1.1)}},
-		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": "a"}, RunOutput: []any{"a", "a"}, Output: map[string]any{"a": "a"}},
+		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": reflect.Value{}}, RunOutput: []any{reflect.Value{}, reflect.Value{}}, Output: map[string]any{"a": reflect.Value{}}, Name: ""},
+		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": nil}, RunOutput: []any{nil, nil}, Output: map[string]any{"a": nil}, Name: ""},
+		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": true}, RunOutput: []any{true, true}, Output: map[string]any{"a": true}, Name: ""},
+		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": int32(1)}, RunOutput: []any{int32(1), int32(1)}, Output: map[string]any{"a": int32(1)}, Name: ""},
+		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": int64(1)}, RunOutput: []any{int64(1), int64(1)}, Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": float32(1.1)}, RunOutput: []any{float32(1.1), float32(1.1)}, Output: map[string]any{"a": float32(1.1)}, Name: ""},
+		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": float64(1.1)}, RunOutput: []any{float64(1.1), float64(1.1)}, Output: map[string]any{"a": float64(1.1)}, Name: ""},
+		{Script: `func aFunc() {return a, a}; aFunc()`, Input: map[string]any{"a": "a"}, RunOutput: []any{"a", "a"}, Output: map[string]any{"a": "a"}, Name: ""},
 
-		{Script: `func a(x) { return x}; a(nil)`, RunOutput: nil},
-		{Script: `func a(x) { return x}; a(true)`, RunOutput: true},
-		{Script: `func a(x) { return x}; a(1)`, RunOutput: int64(1)},
-		{Script: `func a(x) { return x}; a(1.1)`, RunOutput: float64(1.1)},
-		{Script: `func a(x) { return x}; a("a")`, RunOutput: "a"},
+		{Script: `func a(x) { return x}; a(nil)`, RunOutput: nil, Name: ""},
+		{Script: `func a(x) { return x}; a(true)`, RunOutput: true, Name: ""},
+		{Script: `func a(x) { return x}; a(1)`, RunOutput: int64(1), Name: ""},
+		{Script: `func a(x) { return x}; a(1.1)`, RunOutput: float64(1.1), Name: ""},
+		{Script: `func a(x) { return x}; a("a")`, RunOutput: "a", Name: ""},
 
-		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": nil}, RunOutput: nil, Output: map[string]any{"a": nil}},
-		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": true}, RunOutput: nil, Output: map[string]any{"a": true}},
-		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": int64(1)}, RunOutput: nil, Output: map[string]any{"a": int64(1)}},
-		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": float64(1.1)}, RunOutput: nil, Output: map[string]any{"a": float64(1.1)}},
-		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": "a"}, RunOutput: nil, Output: map[string]any{"a": "a"}},
+		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": nil}, RunOutput: nil, Output: map[string]any{"a": nil}, Name: ""},
+		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": true}, RunOutput: nil, Output: map[string]any{"a": true}, Name: ""},
+		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": int64(1)}, RunOutput: nil, Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": float64(1.1)}, RunOutput: nil, Output: map[string]any{"a": float64(1.1)}, Name: ""},
+		{Script: `func aFunc() {return a}; for {aFunc(); break}`, Input: map[string]any{"a": "a"}, RunOutput: nil, Output: map[string]any{"a": "a"}, Name: ""},
 
-		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": nil}, RunOutput: nil, Output: map[string]any{"a": nil}},
-		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": true}, RunOutput: true, Output: map[string]any{"a": true}},
-		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": int64(1)}, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}},
-		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": float64(1.1)}, RunOutput: float64(1.1), Output: map[string]any{"a": float64(1.1)}},
-		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": "a"}, RunOutput: "a", Output: map[string]any{"a": "a"}},
+		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": nil}, RunOutput: nil, Output: map[string]any{"a": nil}, Name: ""},
+		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": true}, RunOutput: true, Output: map[string]any{"a": true}, Name: ""},
+		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": int64(1)}, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": float64(1.1)}, RunOutput: float64(1.1), Output: map[string]any{"a": float64(1.1)}, Name: ""},
+		{Script: `func aFunc() {for {return a}}; aFunc()`, Input: map[string]any{"a": "a"}, RunOutput: "a", Output: map[string]any{"a": "a"}, Name: ""},
 
-		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": nil}, RunOutput: nil, Output: map[string]any{"a": nil}},
-		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": true}, RunOutput: true, Output: map[string]any{"a": true}},
-		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": int64(1)}, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}},
-		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": float64(1.1)}, RunOutput: float64(1.1), Output: map[string]any{"a": float64(1.1)}},
-		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": "a"}, RunOutput: "a", Output: map[string]any{"a": "a"}},
+		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": nil}, RunOutput: nil, Output: map[string]any{"a": nil}, Name: ""},
+		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": true}, RunOutput: true, Output: map[string]any{"a": true}, Name: ""},
+		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": int64(1)}, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": float64(1.1)}, RunOutput: float64(1.1), Output: map[string]any{"a": float64(1.1)}, Name: ""},
+		{Script: `func aFunc() {for {if true {return a}}}; aFunc()`, Input: map[string]any{"a": "a"}, RunOutput: "a", Output: map[string]any{"a": "a"}, Name: ""},
 
-		{Script: `func aFunc() {return nil, nil}; a, b = aFunc()`, RunOutput: nil, Output: map[string]any{"a": nil, "b": nil}},
-		{Script: `func aFunc() {return true, false}; a, b = aFunc()`, RunOutput: false, Output: map[string]any{"a": true, "b": false}},
-		{Script: `func aFunc() {return 1, 2}; a, b = aFunc()`, RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}},
-		{Script: `func aFunc() {return 1.1, 2.2}; a, b = aFunc()`, RunOutput: float64(2.2), Output: map[string]any{"a": float64(1.1), "b": float64(2.2)}},
-		{Script: `func aFunc() {return "a", "b"}; a, b = aFunc()`, RunOutput: "b", Output: map[string]any{"a": "a", "b": "b"}},
+		{Script: `func aFunc() {return nil, nil}; a, b = aFunc()`, RunOutput: nil, Output: map[string]any{"a": nil, "b": nil}, Name: ""},
+		{Script: `func aFunc() {return true, false}; a, b = aFunc()`, RunOutput: false, Output: map[string]any{"a": true, "b": false}, Name: ""},
+		{Script: `func aFunc() {return 1, 2}; a, b = aFunc()`, RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
+		{Script: `func aFunc() {return 1.1, 2.2}; a, b = aFunc()`, RunOutput: float64(2.2), Output: map[string]any{"a": float64(1.1), "b": float64(2.2)}, Name: ""},
+		{Script: `func aFunc() {return "a", "b"}; a, b = aFunc()`, RunOutput: "b", Output: map[string]any{"a": "a", "b": "b"}, Name: ""},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestFunctions(t *testing.T) {
@@ -381,7 +383,9 @@ func TestFunctions(t *testing.T) {
 			return false
 		}}, RunOutput: true},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestPointerFunctions(t *testing.T) {
@@ -414,9 +418,11 @@ func TestPointerFunctions(t *testing.T) {
 		return "good"
 	}
 	tests := []Test{
-		{Script: `b = 1; a(&b)`, Input: map[string]any{"a": testFunctionPointer}, RunOutput: "good", Output: map[string]any{"b": []any{"b"}}},
+		{Script: `b = 1; a(&b)`, Input: map[string]any{"a": testFunctionPointer}, RunOutput: "good", Output: map[string]any{"b": []any{"b"}}, Name: ""},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestVariadicFunctions(t *testing.T) {
@@ -478,7 +484,9 @@ func TestVariadicFunctions(t *testing.T) {
 		{Script: `func a(b, c) { return c }; a(1, [true, 2]...)`, RunOutput: true},
 		{Script: `func a(b, c) { return c }; a([1, true, 2]...)`, RunOutput: true},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestFunctionsInArraysAndMaps(t *testing.T) {
@@ -520,7 +528,9 @@ func TestFunctionsInArraysAndMaps(t *testing.T) {
 		{Script: `a = {"b": func () { return 1.1 }}; func c(d) { return d() }; c(a.b)`, RunOutput: float64(1.1)},
 		{Script: `a = {"b": func () { return "a" }}; func c(d) { return d() }; c(a.b)`, RunOutput: "a"},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestFunctionConvertions(t *testing.T) {
@@ -637,7 +647,9 @@ func TestFunctionConvertions(t *testing.T) {
 		{Script: `b = {"a":1.1}; c = "a"; d = a(b, c)`, Input: map[string]any{"a": func(b map[string]float64, c string) float64 { return b[c] }}, RunOutput: float64(1.1), Output: map[string]any{"b": map[any]any{"a": float64(1.1)}, "c": "a"}},
 		{Script: `b = {"a":"b"}; c = "a"; d = a(b, c)`, Input: map[string]any{"a": func(b map[string]string, c string) string { return b[c] }}, RunOutput: "b", Output: map[string]any{"b": map[any]any{"a": "b"}, "c": "a"}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 
 	_ = os.Unsetenv("ANKO_DEBUG")
 	tests = []Test{
@@ -666,7 +678,9 @@ func TestFunctionConvertions(t *testing.T) {
 				return b()
 			}}, RunError: fmt.Errorf("function wants return type bool but received type string")},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestVariadicFunctionConvertions(t *testing.T) {
@@ -689,7 +703,9 @@ func TestVariadicFunctionConvertions(t *testing.T) {
 
 		// TODO: add more tests
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestLen(t *testing.T) {
@@ -758,7 +774,9 @@ func TestLen(t *testing.T) {
 
 		{Script: `len(a[0][0])`, Input: map[string]any{"a": [][]any{{"test"}}}, RunOutput: int64(4), Output: map[string]any{"a": [][]any{{"test"}}}},
 	}
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }
 
 func TestCallFunctionWithVararg(t *testing.T) {
@@ -814,5 +832,7 @@ aFunc()`,
 			Output: map[string]any{"a": int64(123)}},
 	}
 
-	runTests(t, tests, nil)
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
+	}
 }

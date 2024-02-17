@@ -116,6 +116,26 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 			return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 		}
 
+		// Validate return values types
+		if len(funcExpr.Returns) > 0 {
+			if rv.Len() != len(funcExpr.Returns) {
+				err = fmt.Errorf("invalid number of returned values")
+				return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+			}
+			for i := 0; i < rv.Len(); i++ {
+				rvv := rv.Index(i)
+				rvvT := reflect.TypeOf(rvv.Interface())
+				expectedT, err := makeType(vmp, env, funcExpr.Returns[i].TypeData)
+				if err != nil {
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+				}
+				if rvvT != expectedT {
+					err = fmt.Errorf("invalid type for returned value %d", i)
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+				}
+			}
+		}
+
 		// the reflect.ValueOf of rv is needed to work in the reflect.Value slice
 		// reflectValueErrorNilValue is already a double reflect.ValueOf
 		return []reflect.Value{reflect.ValueOf(rv), reflectValueErrorNilValue}

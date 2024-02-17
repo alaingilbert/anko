@@ -521,8 +521,10 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 
 	if vmp.validate {
 		for _, s := range vmp.validateLater {
-			newEnv := envCopy.NewEnv()
-			_, err := runSingleStmtL(vmp, newEnv, s)
+			var err error
+			envCopy.WithNewEnv(func(newenv *envPkg.Env) {
+				_, err = runSingleStmtL(vmp, newenv, s)
+			})
 			if err != nil {
 				return nil, nilValue, err
 			}

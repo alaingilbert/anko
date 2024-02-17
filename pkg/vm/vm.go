@@ -373,6 +373,17 @@ func (e *Executor) runWithContext(ctx context.Context, stmts ast.Stmt) (any, err
 	return rv.Interface(), err
 }
 
+func (e *Executor) runWithContext2(ctx context.Context, stmts ast.Stmt) (any, error) {
+	rv, err := e.mainRun2(ctx, stmts, false)
+	if errors.Is(err, ErrReturn) {
+		err = nil
+	}
+	if !rv.IsValid() || !rv.CanInterface() {
+		return nil, err
+	}
+	return rv.Interface(), err
+}
+
 func (e *Executor) validate(ctx context.Context, src string) (any, error) {
 	stmts, err := srcToStmt(src)
 	if err != nil {
@@ -442,6 +453,12 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool) (r
 	return rv, err
 }
 
+// mainRun executes statements in the specified environment.
+func (e *Executor) mainRun2(ctx context.Context, stmt ast.Stmt, validate bool) (reflect.Value, error) {
+	_, rv, err := e.mainRun3(ctx, stmt, validate, nil)
+	return rv, err
+}
+
 func (e *Executor) mainRunValidate(ctx context.Context, stmt ast.Stmt) error {
 	_, _, err := e.mainRun1(ctx, stmt, true, nil)
 	return err
@@ -458,20 +475,8 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	runSingleStmtL := runSingleStmt
-
-	oks := make([]bool, len(targets))
-	has := make(map[any]bool)
-	validateLater := make(map[string]ast.Stmt)
-	for _, vv := range targets {
-		has[fmt.Sprintf("%v", vv)] = false
-	}
-	envCopy := e.env
-	rvCh := make(chan Result)
-	vmp := newVmParams(ctx, rvCh, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
-
 	if e.importCore {
-		_ = envCopy.Define("load", loadFn(e, ctx, validate))
+		_ = e.env.Define("load", loadFn(e, ctx, validate))
 	}
 
 	go func() {
@@ -489,6 +494,28 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 			}
 		}
 	}()
+
+	return e.mainRun3(ctx, stmt, validate, targets)
+}
+
+func (e *Executor) mainRun3(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
+	stmt1 := stmt.(*ast.StmtsStmt)
+	if stmt1 == nil {
+		return nil, nilValue, ErrInvalidInput
+	}
+
+	envCopy := e.env
+
+	runSingleStmtL := runSingleStmt
+
+	oks := make([]bool, len(targets))
+	has := make(map[any]bool)
+	validateLater := make(map[string]ast.Stmt)
+	for _, vv := range targets {
+		has[fmt.Sprintf("%v", vv)] = false
+	}
+	rvCh := make(chan Result)
+	vmp := newVmParams(ctx, rvCh, e.stats, e.doNotProtectMaps, e.mapMutex, e.pause, e.rateLimit, validate, has, validateLater)
 
 	go func() {
 		rv, err := runSingleStmtL(vmp, envCopy, stmt1)

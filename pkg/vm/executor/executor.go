@@ -185,6 +185,7 @@ func (e *Executor) stop() {
 	if e.cancel != nil {
 		e.cancel()
 	}
+	e.resume()
 }
 
 func (e *Executor) pauseFn() {

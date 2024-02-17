@@ -28,7 +28,6 @@ var (
 	reflectValueType   = reflect.TypeOf(reflect.Value{})
 	errorType          = reflect.TypeOf((*error)(nil)).Elem()
 	vmErrorType        = reflect.TypeOf(&Error{})
-	contextType        = reflect.TypeOf((*context.Context)(nil)).Elem()
 	isVmFuncType       = reflect.TypeOf((*IsVmFunc)(nil))
 
 	nilValue                  = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()

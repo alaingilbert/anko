@@ -464,6 +464,22 @@ func (e *Executor) mainRunValidate(ctx context.Context, stmt ast.Stmt) error {
 	return err
 }
 
+func (e *Executor) watchDog(ctx context.Context, cancel context.CancelFunc) {
+	for {
+		select {
+		case <-time.After(time.Second):
+		case <-ctx.Done():
+			return
+		}
+		//fmt.Println(e.env.ChildCount())
+		if e.env.ChildCount() > e.maxEnvCount.Load() {
+			cancel()
+			fmt.Println("KILLED")
+			break
+		}
+	}
+}
+
 func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	// We use rvCh because the script can start goroutines and crash in one of them.
 	// So we need a way to stop the vm from another thread...
@@ -472,28 +488,14 @@ func (e *Executor) mainRun1(ctx context.Context, stmt ast.Stmt, validate bool, t
 		return nil, nilValue, ErrInvalidInput
 	}
 
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	if e.importCore {
 		_ = e.env.Define("load", loadFn(e, ctx, validate))
 	}
 
-	go func() {
-		for {
-			select {
-			case <-time.After(time.Second):
-			case <-ctx.Done():
-				return
-			}
-			//fmt.Println(e.env.ChildCount())
-			if e.env.ChildCount() > e.maxEnvCount.Load() {
-				cancel()
-				fmt.Println("KILLED")
-				break
-			}
-		}
-	}()
+	// Start thread to watch for memory leaking scripts
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	go e.watchDog(ctx, cancel)
 
 	return e.mainRun3(ctx, stmt, validate, targets)
 }

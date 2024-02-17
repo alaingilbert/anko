@@ -472,8 +472,7 @@ func invokeMemberExpr(vmp *vmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 		}
 	}
 
-	method, found := v.Type().MethodByName(e.Name)
-	if found {
+	if method, found := v.Type().MethodByName(e.Name); found {
 		return v.Method(method.Index), nil
 	}
 

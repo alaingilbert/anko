@@ -3,6 +3,7 @@ package vm
 import (
 	"context"
 	"github.com/alaingilbert/anko/pkg/packages"
+	"github.com/alaingilbert/anko/pkg/utils"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"github.com/alaingilbert/anko/pkg/vm/executor"
 	"time"
@@ -116,7 +117,7 @@ func (v *VM) executor() *executor.Executor {
 }
 
 func (v *VM) validate(ctx context.Context, val any) error {
-	ctx = defaultCtx(ctx)
+	ctx = utils.DefaultCtx(ctx)
 	e := v.executor()
 	switch vv := val.(type) {
 	case string:
@@ -129,7 +130,7 @@ func (v *VM) validate(ctx context.Context, val any) error {
 }
 
 func (v *VM) has(ctx context.Context, val any, targets []any) ([]bool, error) {
-	ctx = defaultCtx(ctx)
+	ctx = utils.DefaultCtx(ctx)
 	e := v.executor()
 	switch vv := val.(type) {
 	case string:
@@ -139,11 +140,4 @@ func (v *VM) has(ctx context.Context, val any, targets []any) ([]bool, error) {
 	default:
 		return nil, executor.ErrInvalidInput
 	}
-}
-
-func defaultCtx(ctx context.Context) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	return ctx
 }

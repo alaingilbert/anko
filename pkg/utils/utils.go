@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 )
@@ -37,4 +38,11 @@ func MustErr[T any](v T, err error) error {
 		panic("error expected")
 	}
 	return err
+}
+
+func DefaultCtx(ctx context.Context) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return ctx
 }

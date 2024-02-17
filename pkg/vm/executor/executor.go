@@ -7,6 +7,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/compiler"
 	"github.com/alaingilbert/anko/pkg/parser"
+	"github.com/alaingilbert/anko/pkg/utils"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"github.com/alaingilbert/anko/pkg/vm/ratelimitanything"
 	"github.com/alaingilbert/anko/pkg/vm/runner"
@@ -122,15 +123,8 @@ func (e *Executor) GetEnv() envPkg.IEnv {
 	return e.env
 }
 
-func defaultCtx(ctx context.Context) context.Context {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	return ctx
-}
-
 func (e *Executor) run(ctx context.Context, input any) (any, error) {
-	ctx = defaultCtx(ctx)
+	ctx = utils.DefaultCtx(ctx)
 	ctx, e.cancel = context.WithCancel(ctx)
 	switch vv := input.(type) {
 	case string:

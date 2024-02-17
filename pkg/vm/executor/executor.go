@@ -338,7 +338,7 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 
 	envCopy := e.env
 
-	runSingleStmtL := runner.RunSingleStmt
+	runSingleStmtL := runner.Run
 
 	oks := make([]bool, len(targets))
 	has := make(map[any]bool)

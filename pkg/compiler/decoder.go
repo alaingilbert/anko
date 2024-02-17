@@ -676,6 +676,10 @@ func decodeParamExpr(d *Decoder) *ast.ParamExpr {
 }
 
 func (d *Decoder) readFuncReturnValuesExprArray() []*ast.FuncReturnValuesExpr {
+	isNil := d.readBool()
+	if isNil {
+		return nil
+	}
 	nbElems := d.readInt32()
 	out := make([]*ast.FuncReturnValuesExpr, 0)
 	for i := 0; int32(i) < nbElems; i++ {

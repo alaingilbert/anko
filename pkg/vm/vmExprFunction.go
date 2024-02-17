@@ -117,7 +117,7 @@ func funcExpr(vmp *vmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 		}
 
 		// Validate return values types
-		if len(funcExpr.Returns) > 0 {
+		if funcExpr.Returns != nil {
 			if rv.Type() == interfaceSliceType {
 				if rv.Len() != len(funcExpr.Returns) {
 					err = fmt.Errorf("invalid number of returned values, have %d, expected: %d", rv.Len(), len(funcExpr.Returns))

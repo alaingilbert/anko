@@ -488,7 +488,7 @@ expr_idents :
 
 opt_func_return_expr_idents :
 	{
-		$$ = []*ast.FuncReturnValuesExpr{}
+		$$ = nil
 	}
 	| ':' type_data
 	{

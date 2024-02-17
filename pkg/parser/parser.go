@@ -1848,7 +1848,7 @@ yydefault:
 		yyDollar = yyS[yypt-0 : yypt+1]
 //line parser.go.y:490
 		{
-			yyVAL.opt_func_return_expr_idents = []*ast.FuncReturnValuesExpr{}
+			yyVAL.opt_func_return_expr_idents = nil
 		}
 	case 70:
 		yyDollar = yyS[yypt-2 : yypt+1]

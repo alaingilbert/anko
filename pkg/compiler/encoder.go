@@ -647,9 +647,13 @@ func encodeParamExpr(w *Encoder, expr *ast.ParamExpr) {
 }
 
 func encodeFuncReturnValuesExprArray(w *Encoder, exprs []*ast.FuncReturnValuesExpr) {
-	encode(w, int32(len(exprs)))
-	for _, e := range exprs {
-		encodeFuncReturnValuesExpr(w, e)
+	isNil := exprs == nil
+	encodeBool(w, isNil)
+	if !isNil {
+		encode(w, int32(len(exprs)))
+		for _, e := range exprs {
+			encodeFuncReturnValuesExpr(w, e)
+		}
 	}
 }
 

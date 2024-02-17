@@ -416,15 +416,15 @@ a  =  1;
 func TestModule(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `module a.b { }`, ParseError: fmt.Errorf("syntax error")},
-		{Script: `module a { 1++ }`, RunError: fmt.Errorf("invalid operation")},
-		{Script: `module a { }; a.b`, RunError: fmt.Errorf("invalid operation 'b'")},
+		{Script: `module a.b { }`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `module a { 1++ }`, RunError: fmt.Errorf("invalid operation"), Name: ""},
+		{Script: `module a { }; a.b`, RunError: fmt.Errorf("invalid operation 'b'"), Name: ""},
 
-		{Script: `module a { b = nil }; a.b`, RunOutput: nil},
-		{Script: `module a { b = true }; a.b`, RunOutput: true},
-		{Script: `module a { b = 1 }; a.b`, RunOutput: int64(1)},
-		{Script: `module a { b = 1.1 }; a.b`, RunOutput: float64(1.1)},
-		{Script: `module a { b = "a" }; a.b`, RunOutput: "a"},
+		{Script: `module a { b = nil }; a.b`, RunOutput: nil, Name: ""},
+		{Script: `module a { b = true }; a.b`, RunOutput: true, Name: ""},
+		{Script: `module a { b = 1 }; a.b`, RunOutput: int64(1), Name: ""},
+		{Script: `module a { b = 1.1 }; a.b`, RunOutput: float64(1.1), Name: ""},
+		{Script: `module a { b = "a" }; a.b`, RunOutput: "a", Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -434,15 +434,15 @@ func TestModule(t *testing.T) {
 func TestNew(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `new(foo)`, RunError: fmt.Errorf("undefined type 'foo'")},
-		{Script: `new(nilT)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for make")},
+		{Script: `new(foo)`, RunError: fmt.Errorf("undefined type 'foo'"), Name: ""},
+		{Script: `new(nilT)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for make"), Name: ""},
 
-		{Script: `a = new(bool); *a`, RunOutput: false},
-		{Script: `a = new(int32); *a`, RunOutput: int32(0)},
-		{Script: `a = new(int64); *a`, RunOutput: int64(0)},
-		{Script: `a = new(float32); *a`, RunOutput: float32(0)},
-		{Script: `a = new(float64); *a`, RunOutput: float64(0)},
-		{Script: `a = new(string); *a`, RunOutput: ""},
+		{Script: `a = new(bool); *a`, RunOutput: false, Name: ""},
+		{Script: `a = new(int32); *a`, RunOutput: int32(0), Name: ""},
+		{Script: `a = new(int64); *a`, RunOutput: int64(0), Name: ""},
+		{Script: `a = new(float32); *a`, RunOutput: float32(0), Name: ""},
+		{Script: `a = new(float64); *a`, RunOutput: float64(0), Name: ""},
+		{Script: `a = new(string); *a`, RunOutput: "", Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -452,18 +452,18 @@ func TestNew(t *testing.T) {
 func TestMake(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `make(foo)`, RunError: fmt.Errorf("undefined type 'foo'")},
-		{Script: `make(a.b)`, Types: map[string]any{"a": true}, RunError: fmt.Errorf("no namespace called: a")},
-		{Script: `make(a.b)`, Types: map[string]any{"b": true}, RunError: fmt.Errorf("no namespace called: a")},
+		{Script: `make(foo)`, RunError: fmt.Errorf("undefined type 'foo'"), Name: ""},
+		{Script: `make(a.b)`, Types: map[string]any{"a": true}, RunError: fmt.Errorf("no namespace called: a"), Name: ""},
+		{Script: `make(a.b)`, Types: map[string]any{"b": true}, RunError: fmt.Errorf("no namespace called: a"), Name: ""},
 
-		{Script: `make(nilT)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for make")},
+		{Script: `make(nilT)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for make"), Name: ""},
 
-		{Script: `make(bool)`, RunOutput: false},
-		{Script: `make(int32)`, RunOutput: int32(0)},
-		{Script: `make(int64)`, RunOutput: int64(0)},
-		{Script: `make(float32)`, RunOutput: float32(0)},
-		{Script: `make(float64)`, RunOutput: float64(0)},
-		{Script: `make(string)`, RunOutput: ""},
+		{Script: `make(bool)`, RunOutput: false, Name: ""},
+		{Script: `make(int32)`, RunOutput: int32(0), Name: ""},
+		{Script: `make(int64)`, RunOutput: int64(0), Name: ""},
+		{Script: `make(float32)`, RunOutput: float32(0), Name: ""},
+		{Script: `make(float64)`, RunOutput: float64(0), Name: ""},
+		{Script: `make(string)`, RunOutput: "", Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -473,13 +473,13 @@ func TestMake(t *testing.T) {
 func TestMakeType(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `make(type a, 1++)`, RunError: fmt.Errorf("invalid operation")},
+		{Script: `make(type a, 1++)`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 
-		{Script: `make(type a, true)`, RunOutput: reflect.TypeOf(true)},
-		{Script: `a = make(type a, true)`, RunOutput: reflect.TypeOf(true), Output: map[string]any{"a": reflect.TypeOf(true)}},
-		{Script: `make(type a, true); a = make([]a)`, RunOutput: []bool{}, Output: map[string]any{"a": []bool{}}},
-		{Script: `make(type a, make([]bool))`, RunOutput: reflect.TypeOf([]bool{})},
-		{Script: `make(type a, make([]bool)); a = make(a)`, RunOutput: []bool{}, Output: map[string]any{"a": []bool{}}},
+		{Script: `make(type a, true)`, RunOutput: reflect.TypeOf(true), Name: ""},
+		{Script: `a = make(type a, true)`, RunOutput: reflect.TypeOf(true), Output: map[string]any{"a": reflect.TypeOf(true)}, Name: ""},
+		{Script: `make(type a, true); a = make([]a)`, RunOutput: []bool{}, Output: map[string]any{"a": []bool{}}, Name: ""},
+		{Script: `make(type a, make([]bool))`, RunOutput: reflect.TypeOf([]bool{}), Name: ""},
+		{Script: `make(type a, make([]bool)); a = make(a)`, RunOutput: []bool{}, Output: map[string]any{"a": []bool{}}, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -500,11 +500,11 @@ func TestReferencingAndDereference(t *testing.T) {
 func TestMakeChan(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `make(chan foobar, 2)`, RunError: fmt.Errorf("undefined type 'foobar'")},
-		{Script: `make(chan nilT, 2)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for make")},
-		{Script: `make(chan bool, 1++)`, RunError: fmt.Errorf("invalid operation")},
+		{Script: `make(chan foobar, 2)`, RunError: fmt.Errorf("undefined type 'foobar'"), Name: ""},
+		{Script: `make(chan nilT, 2)`, Types: map[string]any{"nilT": nil}, RunError: fmt.Errorf("type cannot be nil for make"), Name: ""},
+		{Script: `make(chan bool, 1++)`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 
-		{Script: `a = make(chan bool); b = func (c) { c <- true }; go b(a); <- a`, RunOutput: true},
+		{Script: `a = make(chan bool); b = func (c) { c <- true }; go b(a); <- a`, RunOutput: true, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -560,7 +560,7 @@ func TestChan(t *testing.T) {
 func TestCloseChan(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `a = make(chan int64, 1); close(a); <- a`, RunOutput: int64(0)},
+		{Script: `a = make(chan int64, 1); close(a); <- a`, RunOutput: int64(0), Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -570,19 +570,19 @@ func TestCloseChan(t *testing.T) {
 func TestVMDelete(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `delete(1++)`, RunError: fmt.Errorf("invalid operation")},
-		{Script: `delete("a", 1++)`, RunError: fmt.Errorf("invalid operation")},
+		{Script: `delete(1++)`, RunError: fmt.Errorf("invalid operation"), Name: ""},
+		{Script: `delete("a", 1++)`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 
-		{Script: `a = 1; delete("a"); a`, RunError: fmt.Errorf("undefined symbol 'a'")},
+		{Script: `a = 1; delete("a"); a`, RunError: fmt.Errorf("undefined symbol 'a'"), Name: ""},
 
-		{Script: `delete("a")`},
-		{Script: `delete("a", false)`},
-		{Script: `delete("a", true)`},
-		{Script: `delete("a", nil)`},
+		{Script: `delete("a")`, Name: ""},
+		{Script: `delete("a", false)`, Name: ""},
+		{Script: `delete("a", true)`, Name: ""},
+		{Script: `delete("a", nil)`, Name: ""},
 
-		{Script: `a = 1; func b() { delete("a") }; b()`, Output: map[string]any{"a": int64(1)}},
-		{Script: `a = 1; func b() { delete("a", false) }; b()`, Output: map[string]any{"a": int64(1)}},
-		{Script: `a = 1; func b() { delete("a", true) }; b(); a`, RunError: fmt.Errorf("undefined symbol 'a'")},
+		{Script: `a = 1; func b() { delete("a") }; b()`, Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `a = 1; func b() { delete("a", false) }; b()`, Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `a = 1; func b() { delete("a", true) }; b(); a`, RunError: fmt.Errorf("undefined symbol 'a'"), Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -592,115 +592,115 @@ func TestVMDelete(t *testing.T) {
 func TestComment(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `# 1`},
-		{Script: `# 1;`},
-		{Script: `# 1 // 2`},
-		{Script: `# 1 \n 2`},
-		{Script: `# 1 # 2`},
+		{Script: `# 1`, Name: ""},
+		{Script: `# 1;`, Name: ""},
+		{Script: `# 1 // 2`, Name: ""},
+		{Script: `# 1 \n 2`, Name: ""},
+		{Script: `# 1 # 2`, Name: ""},
 
-		{Script: `1# 1`, RunOutput: int64(1)},
-		{Script: `1# 1;`, RunOutput: int64(1)},
-		{Script: `1# 1 // 2`, RunOutput: int64(1)},
-		{Script: `1# 1 \n 2`, RunOutput: int64(1)},
-		{Script: `1# 1 # 2`, RunOutput: int64(1)},
-
-		{Script: `1
-# 1`, RunOutput: int64(1)},
-		{Script: `1
-# 1;`, RunOutput: int64(1)},
-		{Script: `1
-# 1 // 2`, RunOutput: int64(1)},
-		{Script: `1
-# 1 \n 2`, RunOutput: int64(1)},
-		{Script: `1
-# 1 # 2`, RunOutput: int64(1)},
-
-		{Script: `// 1`},
-		{Script: `// 1;`},
-		{Script: `// 1 // 2`},
-		{Script: `// 1 \n 2`},
-		{Script: `// 1 # 2`},
-
-		{Script: `1// 1`, RunOutput: int64(1)},
-		{Script: `1// 1;`, RunOutput: int64(1)},
-		{Script: `1// 1 // 2`, RunOutput: int64(1)},
-		{Script: `1// 1 \n 2`, RunOutput: int64(1)},
-		{Script: `1// 1 # 2`, RunOutput: int64(1)},
+		{Script: `1# 1`, RunOutput: int64(1), Name: ""},
+		{Script: `1# 1;`, RunOutput: int64(1), Name: ""},
+		{Script: `1# 1 // 2`, RunOutput: int64(1), Name: ""},
+		{Script: `1# 1 \n 2`, RunOutput: int64(1), Name: ""},
+		{Script: `1# 1 # 2`, RunOutput: int64(1), Name: ""},
 
 		{Script: `1
-// 1`, RunOutput: int64(1)},
+# 1`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-// 1;`, RunOutput: int64(1)},
+# 1;`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-// 1 // 2`, RunOutput: int64(1)},
+# 1 // 2`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-// 1 \n 2`, RunOutput: int64(1)},
+# 1 \n 2`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-// 1 # 2`, RunOutput: int64(1)},
+# 1 # 2`, RunOutput: int64(1), Name: ""},
 
-		{Script: `/* 1 */`},
-		{Script: `/* * 1 */`},
-		{Script: `/* 1 * */`},
-		{Script: `/** 1 */`},
-		{Script: `/*** 1 */`},
-		{Script: `/**** 1 */`},
-		{Script: `/* 1 **/`},
-		{Script: `/* 1 ***/`},
-		{Script: `/* 1 ****/`},
-		{Script: `/** 1 ****/`},
-		{Script: `/*** 1 ****/`},
-		{Script: `/**** 1 ****/`},
+		{Script: `// 1`, Name: ""},
+		{Script: `// 1;`, Name: ""},
+		{Script: `// 1 // 2`, Name: ""},
+		{Script: `// 1 \n 2`, Name: ""},
+		{Script: `// 1 # 2`, Name: ""},
 
-		{Script: `1/* 1 */`, RunOutput: int64(1)},
-		{Script: `1/* * 1 */`, RunOutput: int64(1)},
-		{Script: `1/* 1 * */`, RunOutput: int64(1)},
-		{Script: `1/** 1 */`, RunOutput: int64(1)},
-		{Script: `1/*** 1 */`, RunOutput: int64(1)},
-		{Script: `1/**** 1 */`, RunOutput: int64(1)},
-		{Script: `1/* 1 **/`, RunOutput: int64(1)},
-		{Script: `1/* 1 ***/`, RunOutput: int64(1)},
-		{Script: `1/* 1 ****/`, RunOutput: int64(1)},
-		{Script: `1/** 1 ****/`, RunOutput: int64(1)},
-		{Script: `1/*** 1 ****/`, RunOutput: int64(1)},
-		{Script: `1/**** 1 ****/`, RunOutput: int64(1)},
-
-		{Script: `/* 1 */1`, RunOutput: int64(1)},
-		{Script: `/* * 1 */1`, RunOutput: int64(1)},
-		{Script: `/* 1 * */1`, RunOutput: int64(1)},
-		{Script: `/** 1 */1`, RunOutput: int64(1)},
-		{Script: `/*** 1 */1`, RunOutput: int64(1)},
-		{Script: `/**** 1 */1`, RunOutput: int64(1)},
-		{Script: `/* 1 **/1`, RunOutput: int64(1)},
-		{Script: `/* 1 ***/1`, RunOutput: int64(1)},
-		{Script: `/* 1 ****/1`, RunOutput: int64(1)},
-		{Script: `/** 1 ****/1`, RunOutput: int64(1)},
-		{Script: `/*** 1 ****/1`, RunOutput: int64(1)},
-		{Script: `/**** 1 ****/1`, RunOutput: int64(1)},
+		{Script: `1// 1`, RunOutput: int64(1), Name: ""},
+		{Script: `1// 1;`, RunOutput: int64(1), Name: ""},
+		{Script: `1// 1 // 2`, RunOutput: int64(1), Name: ""},
+		{Script: `1// 1 \n 2`, RunOutput: int64(1), Name: ""},
+		{Script: `1// 1 # 2`, RunOutput: int64(1), Name: ""},
 
 		{Script: `1
-/* 1 */`, RunOutput: int64(1)},
+// 1`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/* * 1 */`, RunOutput: int64(1)},
+// 1;`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/* 1 * */`, RunOutput: int64(1)},
+// 1 // 2`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/** 1 */`, RunOutput: int64(1)},
+// 1 \n 2`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/*** 1 */`, RunOutput: int64(1)},
+// 1 # 2`, RunOutput: int64(1), Name: ""},
+
+		{Script: `/* 1 */`, Name: ""},
+		{Script: `/* * 1 */`, Name: ""},
+		{Script: `/* 1 * */`, Name: ""},
+		{Script: `/** 1 */`, Name: ""},
+		{Script: `/*** 1 */`, Name: ""},
+		{Script: `/**** 1 */`, Name: ""},
+		{Script: `/* 1 **/`, Name: ""},
+		{Script: `/* 1 ***/`, Name: ""},
+		{Script: `/* 1 ****/`, Name: ""},
+		{Script: `/** 1 ****/`, Name: ""},
+		{Script: `/*** 1 ****/`, Name: ""},
+		{Script: `/**** 1 ****/`, Name: ""},
+
+		{Script: `1/* 1 */`, RunOutput: int64(1), Name: ""},
+		{Script: `1/* * 1 */`, RunOutput: int64(1), Name: ""},
+		{Script: `1/* 1 * */`, RunOutput: int64(1), Name: ""},
+		{Script: `1/** 1 */`, RunOutput: int64(1), Name: ""},
+		{Script: `1/*** 1 */`, RunOutput: int64(1), Name: ""},
+		{Script: `1/**** 1 */`, RunOutput: int64(1), Name: ""},
+		{Script: `1/* 1 **/`, RunOutput: int64(1), Name: ""},
+		{Script: `1/* 1 ***/`, RunOutput: int64(1), Name: ""},
+		{Script: `1/* 1 ****/`, RunOutput: int64(1), Name: ""},
+		{Script: `1/** 1 ****/`, RunOutput: int64(1), Name: ""},
+		{Script: `1/*** 1 ****/`, RunOutput: int64(1), Name: ""},
+		{Script: `1/**** 1 ****/`, RunOutput: int64(1), Name: ""},
+
+		{Script: `/* 1 */1`, RunOutput: int64(1), Name: ""},
+		{Script: `/* * 1 */1`, RunOutput: int64(1), Name: ""},
+		{Script: `/* 1 * */1`, RunOutput: int64(1), Name: ""},
+		{Script: `/** 1 */1`, RunOutput: int64(1), Name: ""},
+		{Script: `/*** 1 */1`, RunOutput: int64(1), Name: ""},
+		{Script: `/**** 1 */1`, RunOutput: int64(1), Name: ""},
+		{Script: `/* 1 **/1`, RunOutput: int64(1), Name: ""},
+		{Script: `/* 1 ***/1`, RunOutput: int64(1), Name: ""},
+		{Script: `/* 1 ****/1`, RunOutput: int64(1), Name: ""},
+		{Script: `/** 1 ****/1`, RunOutput: int64(1), Name: ""},
+		{Script: `/*** 1 ****/1`, RunOutput: int64(1), Name: ""},
+		{Script: `/**** 1 ****/1`, RunOutput: int64(1), Name: ""},
+
 		{Script: `1
-/**** 1 */`, RunOutput: int64(1)},
+/* 1 */`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/* 1 **/`, RunOutput: int64(1)},
+/* * 1 */`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/* 1 ***/`, RunOutput: int64(1)},
+/* 1 * */`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/* 1 ****/`, RunOutput: int64(1)},
+/** 1 */`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/** 1 ****/`, RunOutput: int64(1)},
+/*** 1 */`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/*** 1 ****/`, RunOutput: int64(1)},
+/**** 1 */`, RunOutput: int64(1), Name: ""},
 		{Script: `1
-/**** 1 ****/`, RunOutput: int64(1)},
+/* 1 **/`, RunOutput: int64(1), Name: ""},
+		{Script: `1
+/* 1 ***/`, RunOutput: int64(1), Name: ""},
+		{Script: `1
+/* 1 ****/`, RunOutput: int64(1), Name: ""},
+		{Script: `1
+/** 1 ****/`, RunOutput: int64(1), Name: ""},
+		{Script: `1
+/*** 1 ****/`, RunOutput: int64(1), Name: ""},
+		{Script: `1
+/**** 1 ****/`, RunOutput: int64(1), Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -1213,30 +1213,30 @@ func TestStrconv(t *testing.T) {
 		return fmt.Sprint(v)
 	}
 	tests := []Test{
-		{Script: `strconv = import("strconv"); a = true; b = strconv.FormatBool(a)`, RunOutput: "true", Output: map[string]any{"a": true, "b": "true"}},
-		{Script: `strconv = import("strconv"); a = 1.1; b = strconv.FormatFloat(a, toRune("f"), -1, 64)`, Input: map[string]any{"toRune": toRune}, RunOutput: "1.1", Output: map[string]any{"a": float64(1.1), "b": "1.1"}},
-		{Script: `strconv = import("strconv"); a = 1; b = strconv.FormatInt(a, 10)`, RunOutput: "1", Output: map[string]any{"a": int64(1), "b": "1"}},
-		{Script: `strconv = import("strconv"); b = strconv.FormatInt(a, 10)`, Input: map[string]any{"a": uint64(1)}, RunOutput: "1", Output: map[string]any{"a": uint64(1), "b": "1"}},
+		{Script: `strconv = import("strconv"); a = true; b = strconv.FormatBool(a)`, RunOutput: "true", Output: map[string]any{"a": true, "b": "true"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = 1.1; b = strconv.FormatFloat(a, toRune("f"), -1, 64)`, Input: map[string]any{"toRune": toRune}, RunOutput: "1.1", Output: map[string]any{"a": float64(1.1), "b": "1.1"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = 1; b = strconv.FormatInt(a, 10)`, RunOutput: "1", Output: map[string]any{"a": int64(1), "b": "1"}, Name: ""},
+		{Script: `strconv = import("strconv"); b = strconv.FormatInt(a, 10)`, Input: map[string]any{"a": uint64(1)}, RunOutput: "1", Output: map[string]any{"a": uint64(1), "b": "1"}, Name: ""},
 
-		{Script: `strconv = import("strconv"); a = "true"; b, err = strconv.ParseBool(a); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "true", "b": true, "err": "<nil>"}},
-		{Script: `strconv = import("strconv"); a = "2"; b, err = strconv.ParseBool(a); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseBool: parsing "2": invalid syntax`, Output: map[string]any{"a": "2", "b": false, "err": `strconv.ParseBool: parsing "2": invalid syntax`}},
-		{Script: `strconv = import("strconv"); a = "1.1"; b, err = strconv.ParseFloat(a, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1.1", "b": float64(1.1), "err": "<nil>"}},
-		{Script: `strconv = import("strconv"); a = "a"; b, err = strconv.ParseFloat(a, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseFloat: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": float64(0), "err": `strconv.ParseFloat: parsing "a": invalid syntax`}},
-		{Script: `strconv = import("strconv"); a = "1"; b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1", "b": int64(1), "err": "<nil>"}},
-		{Script: `strconv = import("strconv"); a = "1.1"; b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseInt: parsing "1.1": invalid syntax`, Output: map[string]any{"a": "1.1", "b": int64(0), "err": `strconv.ParseInt: parsing "1.1": invalid syntax`}},
-		{Script: `strconv = import("strconv"); a = "a"; b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseInt: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": int64(0), "err": `strconv.ParseInt: parsing "a": invalid syntax`}},
-		{Script: `strconv = import("strconv"); a = "1"; b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1", "b": uint64(1), "err": "<nil>"}},
-		{Script: `strconv = import("strconv"); a = "a"; b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseUint: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": uint64(0), "err": `strconv.ParseUint: parsing "a": invalid syntax`}},
+		{Script: `strconv = import("strconv"); a = "true"; b, err = strconv.ParseBool(a); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "true", "b": true, "err": "<nil>"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "2"; b, err = strconv.ParseBool(a); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseBool: parsing "2": invalid syntax`, Output: map[string]any{"a": "2", "b": false, "err": `strconv.ParseBool: parsing "2": invalid syntax`}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "1.1"; b, err = strconv.ParseFloat(a, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1.1", "b": float64(1.1), "err": "<nil>"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "a"; b, err = strconv.ParseFloat(a, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseFloat: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": float64(0), "err": `strconv.ParseFloat: parsing "a": invalid syntax`}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "1"; b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1", "b": int64(1), "err": "<nil>"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "1.1"; b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseInt: parsing "1.1": invalid syntax`, Output: map[string]any{"a": "1.1", "b": int64(0), "err": `strconv.ParseInt: parsing "1.1": invalid syntax`}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "a"; b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseInt: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": int64(0), "err": `strconv.ParseInt: parsing "a": invalid syntax`}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "1"; b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1", "b": uint64(1), "err": "<nil>"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "a"; b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseUint: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": uint64(0), "err": `strconv.ParseUint: parsing "a": invalid syntax`}, Name: ""},
 
-		{Script: `strconv = import("strconv"); a = "true"; var b, err = strconv.ParseBool(a); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "true", "b": true, "err": "<nil>"}},
-		{Script: `strconv = import("strconv"); a = "2"; var b, err = strconv.ParseBool(a); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseBool: parsing "2": invalid syntax`, Output: map[string]any{"a": "2", "b": false, "err": `strconv.ParseBool: parsing "2": invalid syntax`}},
-		{Script: `strconv = import("strconv"); a = "1.1"; var b, err = strconv.ParseFloat(a, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1.1", "b": float64(1.1), "err": "<nil>"}},
-		{Script: `strconv = import("strconv"); a = "a"; var b, err = strconv.ParseFloat(a, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseFloat: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": float64(0), "err": `strconv.ParseFloat: parsing "a": invalid syntax`}},
-		{Script: `strconv = import("strconv"); a = "1"; var b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1", "b": int64(1), "err": "<nil>"}},
-		{Script: `strconv = import("strconv"); a = "1.1"; var b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseInt: parsing "1.1": invalid syntax`, Output: map[string]any{"a": "1.1", "b": int64(0), "err": `strconv.ParseInt: parsing "1.1": invalid syntax`}},
-		{Script: `strconv = import("strconv"); a = "a"; var b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseInt: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": int64(0), "err": `strconv.ParseInt: parsing "a": invalid syntax`}},
-		{Script: `strconv = import("strconv"); a = "1"; var b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1", "b": uint64(1), "err": "<nil>"}},
-		{Script: `strconv = import("strconv"); a = "a"; var b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseUint: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": uint64(0), "err": `strconv.ParseUint: parsing "a": invalid syntax`}},
+		{Script: `strconv = import("strconv"); a = "true"; var b, err = strconv.ParseBool(a); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "true", "b": true, "err": "<nil>"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "2"; var b, err = strconv.ParseBool(a); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseBool: parsing "2": invalid syntax`, Output: map[string]any{"a": "2", "b": false, "err": `strconv.ParseBool: parsing "2": invalid syntax`}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "1.1"; var b, err = strconv.ParseFloat(a, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1.1", "b": float64(1.1), "err": "<nil>"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "a"; var b, err = strconv.ParseFloat(a, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseFloat: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": float64(0), "err": `strconv.ParseFloat: parsing "a": invalid syntax`}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "1"; var b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1", "b": int64(1), "err": "<nil>"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "1.1"; var b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseInt: parsing "1.1": invalid syntax`, Output: map[string]any{"a": "1.1", "b": int64(0), "err": `strconv.ParseInt: parsing "1.1": invalid syntax`}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "a"; var b, err = strconv.ParseInt(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseInt: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": int64(0), "err": `strconv.ParseInt: parsing "a": invalid syntax`}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "1"; var b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: "<nil>", Output: map[string]any{"a": "1", "b": uint64(1), "err": "<nil>"}, Name: ""},
+		{Script: `strconv = import("strconv"); a = "a"; var b, err = strconv.ParseUint(a, 10, 64); err = toString(err)`, Input: map[string]any{"toString": toString}, RunOutput: `strconv.ParseUint: parsing "a": invalid syntax`, Output: map[string]any{"a": "a", "b": uint64(0), "err": `strconv.ParseUint: parsing "a": invalid syntax`}, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
@@ -1246,9 +1246,9 @@ func TestStrconv(t *testing.T) {
 func TestSort(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `sort = import("sort"); a = make([]int); a += [5, 3, 1, 4, 2]; sort.Ints(a); a`, RunOutput: []int{1, 2, 3, 4, 5}, Output: map[string]any{"a": []int{1, 2, 3, 4, 5}}},
-		{Script: `sort = import("sort"); a = make([]float64); a += [5.5, 3.3, 1.1, 4.4, 2.2]; sort.Float64s(a); a`, RunOutput: []float64{1.1, 2.2, 3.3, 4.4, 5.5}, Output: map[string]any{"a": []float64{1.1, 2.2, 3.3, 4.4, 5.5}}},
-		{Script: `sort = import("sort"); a = make([]string); a += ["e", "c", "a", "d", "b"]; sort.Strings(a); a`, RunOutput: []string{"a", "b", "c", "d", "e"}, Output: map[string]any{"a": []string{"a", "b", "c", "d", "e"}}},
+		{Script: `sort = import("sort"); a = make([]int); a += [5, 3, 1, 4, 2]; sort.Ints(a); a`, RunOutput: []int{1, 2, 3, 4, 5}, Output: map[string]any{"a": []int{1, 2, 3, 4, 5}}, Name: ""},
+		{Script: `sort = import("sort"); a = make([]float64); a += [5.5, 3.3, 1.1, 4.4, 2.2]; sort.Float64s(a); a`, RunOutput: []float64{1.1, 2.2, 3.3, 4.4, 5.5}, Output: map[string]any{"a": []float64{1.1, 2.2, 3.3, 4.4, 5.5}}, Name: ""},
+		{Script: `sort = import("sort"); a = make([]string); a += ["e", "c", "a", "d", "b"]; sort.Strings(a); a`, RunOutput: []string{"a", "b", "c", "d", "e"}, Output: map[string]any{"a": []string{"a", "b", "c", "d", "e"}}, Name: ""},
 		{Script: `
 sort = import("sort")
 a = [5, 1.1, 3, "f", "2", "4.4"]
@@ -1259,7 +1259,7 @@ sortFuncs.SwapFunc = func(i, j) { temp = a[i]; a[i] = a[j]; a[j] = temp }
 sort.Sort(sortFuncs)
 a
 `,
-			RunOutput: []any{"f", float64(1.1), "2", int64(3), "4.4", int64(5)}, Output: map[string]any{"a": []any{"f", float64(1.1), "2", int64(3), "4.4", int64(5)}}},
+			RunOutput: []any{"f", float64(1.1), "2", int64(3), "4.4", int64(5)}, Output: map[string]any{"a": []any{"f", float64(1.1), "2", int64(3), "4.4", int64(5)}}, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
@@ -1269,25 +1269,25 @@ a
 func TestRegexp(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^simple$"); re.MatchString("simple")`, RunOutput: true},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^simple$"); re.MatchString("no match")`, RunOutput: false},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^simple$"); re.MatchString("simple")`, RunOutput: true, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^simple$"); re.MatchString("no match")`, RunOutput: false, Name: ""},
 
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^simple$", "b": "simple"}, RunOutput: true, Output: map[string]any{"a": "^simple$", "b": "simple"}},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^simple$", "b": "no match"}, RunOutput: false, Output: map[string]any{"a": "^simple$", "b": "no match"}},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^simple$", "b": "simple"}, RunOutput: true, Output: map[string]any{"a": "^simple$", "b": "simple"}, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^simple$", "b": "no match"}, RunOutput: false, Output: map[string]any{"a": "^simple$", "b": "no match"}, Name: ""},
 
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.String()`, RunOutput: "^a\\.\\d+\\.b$"},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("a.1.b")`, RunOutput: true},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("a.22.b")`, RunOutput: true},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("a.333.b")`, RunOutput: true},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("no match")`, RunOutput: false},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("a+1+b")`, RunOutput: false},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.String()`, RunOutput: "^a\\.\\d+\\.b$", Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("a.1.b")`, RunOutput: true, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("a.22.b")`, RunOutput: true, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("a.333.b")`, RunOutput: true, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("no match")`, RunOutput: false, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile("^a\\.\\d+\\.b$"); re.MatchString("a+1+b")`, RunOutput: false, Name: ""},
 
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.String()`, Input: map[string]any{"a": "^a\\.\\d+\\.b$"}, RunOutput: "^a\\.\\d+\\.b$", Output: map[string]any{"a": "^a\\.\\d+\\.b$"}},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.1.b"}, RunOutput: true, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.1.b"}},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.22.b"}, RunOutput: true, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.22.b"}},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.333.b"}, RunOutput: true, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.333.b"}},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "no match"}, RunOutput: false, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "no match"}},
-		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a+1+b"}, RunOutput: false, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a+1+b"}},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.String()`, Input: map[string]any{"a": "^a\\.\\d+\\.b$"}, RunOutput: "^a\\.\\d+\\.b$", Output: map[string]any{"a": "^a\\.\\d+\\.b$"}, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.1.b"}, RunOutput: true, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.1.b"}, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.22.b"}, RunOutput: true, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.22.b"}, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.333.b"}, RunOutput: true, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a.333.b"}, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "no match"}, RunOutput: false, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "no match"}, Name: ""},
+		{Script: `regexp = import("regexp"); re = regexp.MustCompile(a); re.MatchString(b)`, Input: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a+1+b"}, RunOutput: false, Output: map[string]any{"a": "^a\\.\\d+\\.b$", "b": "a+1+b"}, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
@@ -1297,10 +1297,10 @@ func TestRegexp(t *testing.T) {
 func TestJson(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `json = import("encoding/json"); a = make(mapStringInterface); a["b"] = "b"; c, err = json.Marshal(a); err`, Types: map[string]any{"mapStringInterface": map[string]any{}}, Output: map[string]any{"a": map[string]any{"b": "b"}, "c": []byte(`{"b":"b"}`)}},
-		{Script: `json = import("encoding/json"); b = 1; err = json.Unmarshal(a, &b); err`, Input: map[string]any{"a": []byte(`{"b": "b"}`)}, Output: map[string]any{"a": []byte(`{"b": "b"}`), "b": map[string]any{"b": "b"}}},
-		{Script: `json = import("encoding/json"); b = 1; err = json.Unmarshal(a, &b); err`, Input: map[string]any{"a": `{"b": "b"}`}, Output: map[string]any{"a": `{"b": "b"}`, "b": map[string]any{"b": "b"}}},
-		{Script: `json = import("encoding/json"); b = 1; err = json.Unmarshal(a, &b); err`, Input: map[string]any{"a": `[["1", "2"],["3", "4"]]`}, Output: map[string]any{"a": `[["1", "2"],["3", "4"]]`, "b": []any{[]any{"1", "2"}, []any{"3", "4"}}}},
+		{Script: `json = import("encoding/json"); a = make(mapStringInterface); a["b"] = "b"; c, err = json.Marshal(a); err`, Types: map[string]any{"mapStringInterface": map[string]any{}}, Output: map[string]any{"a": map[string]any{"b": "b"}, "c": []byte(`{"b":"b"}`)}, Name: ""},
+		{Script: `json = import("encoding/json"); b = 1; err = json.Unmarshal(a, &b); err`, Input: map[string]any{"a": []byte(`{"b": "b"}`)}, Output: map[string]any{"a": []byte(`{"b": "b"}`), "b": map[string]any{"b": "b"}}, Name: ""},
+		{Script: `json = import("encoding/json"); b = 1; err = json.Unmarshal(a, &b); err`, Input: map[string]any{"a": `{"b": "b"}`}, Output: map[string]any{"a": `{"b": "b"}`, "b": map[string]any{"b": "b"}}, Name: ""},
+		{Script: `json = import("encoding/json"); b = 1; err = json.Unmarshal(a, &b); err`, Input: map[string]any{"a": `[["1", "2"],["3", "4"]]`}, Output: map[string]any{"a": `[["1", "2"],["3", "4"]]`, "b": []any{[]any{"1", "2"}, []any{"3", "4"}}}, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
@@ -1310,8 +1310,8 @@ func TestJson(t *testing.T) {
 func TestBytes(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `bytes = import("bytes"); a = make(bytes.Buffer); n, err = a.WriteString("a"); if err != nil { return err }; n`, RunOutput: 1},
-		{Script: `bytes = import("bytes"); a = make(bytes.Buffer); n, err = a.WriteString("a"); if err != nil { return err }; a.String()`, RunOutput: "a"},
+		{Script: `bytes = import("bytes"); a = make(bytes.Buffer); n, err = a.WriteString("a"); if err != nil { return err }; n`, RunOutput: 1, Name: ""},
+		{Script: `bytes = import("bytes"); a = make(bytes.Buffer); n, err = a.WriteString("a"); if err != nil { return err }; a.String()`, RunOutput: "a", Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true}) })
@@ -1321,17 +1321,17 @@ func TestBytes(t *testing.T) {
 func TestAnk(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "")
 	tests := []Test{
-		{Script: `load('testdata/testing.ank'); load('testdata/let.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/toString.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/op.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/func.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/len.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/for.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/switch.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/if.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/toBytes.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/toRunes.ank')`},
-		{Script: `load('testdata/testing.ank'); load('testdata/chan.ank')`},
+		{Script: `load('testdata/testing.ank'); load('testdata/let.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/toString.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/op.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/func.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/len.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/for.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/switch.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/if.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/toBytes.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/toRunes.ank')`, Name: ""},
+		{Script: `load('testdata/testing.ank'); load('testdata/chan.ank')`, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
@@ -1341,9 +1341,9 @@ func TestAnk(t *testing.T) {
 func TestKeys(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `a = {}; b = keys(a)`, RunOutput: []any{}, Output: map[string]any{"a": map[any]any{}}},
-		{Script: `a = {"a": nil}; b = keys(a)`, RunOutput: []any{"a"}, Output: map[string]any{"a": map[any]any{"a": nil}}},
-		{Script: `a = {"a": 1}; b = keys(a)`, RunOutput: []any{"a"}, Output: map[string]any{"a": map[any]any{"a": int64(1)}}},
+		{Script: `a = {}; b = keys(a)`, RunOutput: []any{}, Output: map[string]any{"a": map[any]any{}}, Name: ""},
+		{Script: `a = {"a": nil}; b = keys(a)`, RunOutput: []any{"a"}, Output: map[string]any{"a": map[any]any{"a": nil}}, Name: ""},
+		{Script: `a = {"a": 1}; b = keys(a)`, RunOutput: []any{"a"}, Output: map[string]any{"a": map[any]any{"a": int64(1)}}, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
@@ -1457,140 +1457,140 @@ func TestDefined(t *testing.T) {
 func TestToX(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `toBool(-2)`, RunOutput: false},
-		{Script: `toBool(-1.5)`, RunOutput: false},
-		{Script: `toBool(-1)`, RunOutput: false},
-		{Script: `toBool(-0.4)`, RunOutput: false},
-		{Script: `toBool(0)`, RunOutput: false},
-		{Script: `toBool(0.4)`, RunOutput: true},
-		{Script: `toBool(1)`, RunOutput: true},
-		{Script: `toBool(1.5)`, RunOutput: true},
-		{Script: `toBool(2)`, RunOutput: true},
-		{Script: `toBool(true)`, RunOutput: true},
-		{Script: `toBool(false)`, RunOutput: false},
-		{Script: `toBool("true")`, RunOutput: true},
-		{Script: `toBool("false")`, RunOutput: false},
-		{Script: `toBool("yes")`, RunOutput: true},
-		{Script: `toBool("ye")`, RunOutput: false},
-		{Script: `toBool("y")`, RunOutput: true},
-		{Script: `toBool("false")`, RunOutput: false},
-		{Script: `toBool("f")`, RunOutput: false},
-		{Script: `toBool("")`, RunOutput: false},
-		{Script: `toBool(nil)`, RunOutput: false},
-		{Script: `toBool({})`, RunOutput: false},
-		{Script: `toBool([])`, RunOutput: false},
-		{Script: `toBool([true])`, RunOutput: false},
-		{Script: `toBool({"true": "true"})`, RunOutput: false},
-		{Script: `toString(nil)`, RunOutput: "<nil>"},
-		{Script: `toString("")`, RunOutput: ""},
-		{Script: `toString(1)`, RunOutput: "1"},
-		{Script: `toString(1.2)`, RunOutput: "1.2"},
-		{Script: `toString(1/3)`, RunOutput: "0.3333333333333333"},
-		{Script: `toString(false)`, RunOutput: "false"},
-		{Script: `toString(true)`, RunOutput: "true"},
-		{Script: `toString({})`, RunOutput: "map[]"},
-		{Script: `toString({"foo": "bar"})`, RunOutput: "map[foo:bar]"},
-		{Script: `toString([true,nil])`, RunOutput: "[true <nil>]"},
-		{Script: `toString(toByteSlice("foo"))`, RunOutput: "foo"},
-		{Script: `toInt(nil)`, RunOutput: int64(0)},
-		{Script: `toInt(-2)`, RunOutput: int64(-2)},
-		{Script: `toInt(-1.4)`, RunOutput: int64(-1)},
-		{Script: `toInt(-1)`, RunOutput: int64(-1)},
-		{Script: `toInt(0)`, RunOutput: int64(0)},
-		{Script: `toInt(1)`, RunOutput: int64(1)},
-		{Script: `toInt(1.4)`, RunOutput: int64(1)},
-		{Script: `toInt(1.5)`, RunOutput: int64(1)},
-		{Script: `toInt(1.9)`, RunOutput: int64(1)},
-		{Script: `toInt(2)`, RunOutput: int64(2)},
-		{Script: `toInt(2.1)`, RunOutput: int64(2)},
-		{Script: `toInt("2")`, RunOutput: int64(2)},
-		{Script: `toInt("2.1")`, RunOutput: int64(2)},
-		{Script: `toInt(true)`, RunOutput: int64(1)},
-		{Script: `toInt(false)`, RunOutput: int64(0)},
-		{Script: `toInt({})`, RunOutput: int64(0)},
-		{Script: `toInt([])`, RunOutput: int64(0)},
-		{Script: `toFloat(nil)`, RunOutput: float64(0.0)},
-		{Script: `toFloat(-2)`, RunOutput: float64(-2.0)},
-		{Script: `toFloat(-1.4)`, RunOutput: float64(-1.4)},
-		{Script: `toFloat(-1)`, RunOutput: float64(-1.0)},
-		{Script: `toFloat(0)`, RunOutput: float64(0.0)},
-		{Script: `toFloat(1)`, RunOutput: float64(1.0)},
-		{Script: `toFloat(1.4)`, RunOutput: float64(1.4)},
-		{Script: `toFloat(1.5)`, RunOutput: float64(1.5)},
-		{Script: `toFloat(1.9)`, RunOutput: float64(1.9)},
-		{Script: `toFloat(2)`, RunOutput: float64(2.0)},
-		{Script: `toFloat(2.1)`, RunOutput: float64(2.1)},
-		{Script: `toFloat("2")`, RunOutput: float64(2.0)},
-		{Script: `toFloat("2.1")`, RunOutput: float64(2.1)},
-		{Script: `toFloat(true)`, RunOutput: float64(1.0)},
-		{Script: `toFloat(false)`, RunOutput: float64(0.0)},
-		{Script: `toFloat({})`, RunOutput: float64(0.0)},
-		{Script: `toFloat([])`, RunOutput: float64(0.0)},
-		{Script: `toChar(0x1F431)`, RunOutput: "🐱"},
-		{Script: `toChar(0)`, RunOutput: "\x00"},
-		{Script: `toRune("")`, RunOutput: rune(0)},
-		{Script: `toRune("🐱")`, RunOutput: rune(0x1F431)},
-		{Script: `toBoolSlice(nil)`, RunOutput: []bool{}},
-		{Script: `toBoolSlice(1)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type int64")},
-		{Script: `toBoolSlice(1.2)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type float64")},
-		{Script: `toBoolSlice(false)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type bool")},
-		{Script: `toBoolSlice({})`, RunError: fmt.Errorf("function wants argument type []interface {} but received type map[interface {}]interface {}")},
-		{Script: `toBoolSlice([])`, RunOutput: []bool{}},
-		{Script: `toBoolSlice([nil])`, RunOutput: []bool{false}},
-		{Script: `toBoolSlice([1])`, RunOutput: []bool{false}},
-		{Script: `toBoolSlice([1.1])`, RunOutput: []bool{false}},
-		{Script: `toBoolSlice([true])`, RunOutput: []bool{true}},
-		{Script: `toBoolSlice([[]])`, RunOutput: []bool{false}},
-		{Script: `toBoolSlice([{}])`, RunOutput: []bool{false}},
-		{Script: `toIntSlice(nil)`, RunOutput: []int64{}},
-		{Script: `toIntSlice(1)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type int64")},
-		{Script: `toIntSlice(1.2)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type float64")},
-		{Script: `toIntSlice(false)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type bool")},
-		{Script: `toIntSlice({})`, RunError: fmt.Errorf("function wants argument type []interface {} but received type map[interface {}]interface {}")},
-		{Script: `toIntSlice([])`, RunOutput: []int64{}},
-		{Script: `toIntSlice([nil])`, RunOutput: []int64{0}},
-		{Script: `toIntSlice([1])`, RunOutput: []int64{1}},
-		{Script: `toIntSlice([1.1])`, RunOutput: []int64{1}},
-		{Script: `toIntSlice([true])`, RunOutput: []int64{0}},
-		{Script: `toIntSlice([[]])`, RunOutput: []int64{0}},
-		{Script: `toIntSlice([{}])`, RunOutput: []int64{0}},
-		{Script: `toFloatSlice(nil)`, RunOutput: []float64{}},
-		{Script: `toFloatSlice(1)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type int64")},
-		{Script: `toFloatSlice(1.2)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type float64")},
-		{Script: `toFloatSlice(false)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type bool")},
-		{Script: `toFloatSlice({})`, RunError: fmt.Errorf("function wants argument type []interface {} but received type map[interface {}]interface {}")},
-		{Script: `toFloatSlice([])`, RunOutput: []float64{}},
-		{Script: `toFloatSlice([nil])`, RunOutput: []float64{0.0}},
-		{Script: `toFloatSlice([1])`, RunOutput: []float64{1.0}},
-		{Script: `toFloatSlice([1.1])`, RunOutput: []float64{1.1}},
-		{Script: `toFloatSlice([true])`, RunOutput: []float64{0.0}},
-		{Script: `toFloatSlice([[]])`, RunOutput: []float64{0.0}},
-		{Script: `toFloatSlice([{}])`, RunOutput: []float64{0.0}},
-		{Script: `toByteSlice(nil)`, RunOutput: []byte{}},
-		{Script: `toByteSlice([])`, RunError: fmt.Errorf("function wants argument type string but received type []interface {}")},
-		{Script: `toByteSlice(1)`, RunOutput: []byte{0x01}}, // FIXME?
-		{Script: `toByteSlice(1.1)`, RunError: fmt.Errorf("function wants argument type string but received type float64")},
-		{Script: `toByteSlice(true)`, RunError: fmt.Errorf("function wants argument type string but received type bool")},
-		{Script: `toByteSlice("foo")`, RunOutput: []byte{'f', 'o', 'o'}},
-		{Script: `toByteSlice("世界")`, RunOutput: []byte{0xe4, 0xb8, 0x96, 0xe7, 0x95, 0x8c}},
-		{Script: `toRuneSlice(nil)`, RunOutput: []rune{}},
-		{Script: `toRuneSlice([])`, RunError: fmt.Errorf("function wants argument type string but received type []interface {}")},
-		{Script: `toRuneSlice(1)`, RunOutput: []rune{0x01}}, // FIXME?
-		{Script: `toRuneSlice(1.1)`, RunError: fmt.Errorf("function wants argument type string but received type float64")},
-		{Script: `toRuneSlice(true)`, RunError: fmt.Errorf("function wants argument type string but received type bool")},
-		{Script: `toRuneSlice("foo")`, RunOutput: []rune{'f', 'o', 'o'}},
-		{Script: `toRuneSlice("世界")`, RunOutput: []rune{'世', '界'}},
-		{Script: `toStringSlice([true,false,1])`, RunOutput: []string{"", "", "\x01"}}, // FIXME?
-		{Script: `toDuration(nil)`, RunOutput: time.Duration(0)},
-		{Script: `toDuration(0)`, RunOutput: time.Duration(0)},
-		{Script: `toDuration(true)`, RunError: fmt.Errorf("function wants argument type int64 but received type bool")},
-		{Script: `toDuration([])`, RunError: fmt.Errorf("function wants argument type int64 but received type []interface {}")},
-		{Script: `toDuration({})`, RunError: fmt.Errorf("function wants argument type int64 but received type map[interface {}]interface {}")},
-		{Script: `toDuration("")`, RunError: fmt.Errorf("function wants argument type int64 but received type string")},
-		{Script: `toDuration("1s")`, RunError: fmt.Errorf("function wants argument type int64 but received type string")}, // TODO
-		{Script: `toDuration(a)`, Input: map[string]any{"a": int64(time.Duration(123 * time.Minute))}, RunOutput: time.Duration(123 * time.Minute)},
-		{Script: `toDuration(a)`, Input: map[string]any{"a": float64(time.Duration(123 * time.Minute))}, RunOutput: time.Duration(123 * time.Minute)},
-		{Script: `toDuration(a)`, Input: map[string]any{"a": time.Duration(123 * time.Minute)}, RunOutput: time.Duration(123 * time.Minute)},
+		{Script: `toBool(-2)`, RunOutput: false, Name: ""},
+		{Script: `toBool(-1.5)`, RunOutput: false, Name: ""},
+		{Script: `toBool(-1)`, RunOutput: false, Name: ""},
+		{Script: `toBool(-0.4)`, RunOutput: false, Name: ""},
+		{Script: `toBool(0)`, RunOutput: false, Name: ""},
+		{Script: `toBool(0.4)`, RunOutput: true, Name: ""},
+		{Script: `toBool(1)`, RunOutput: true, Name: ""},
+		{Script: `toBool(1.5)`, RunOutput: true, Name: ""},
+		{Script: `toBool(2)`, RunOutput: true, Name: ""},
+		{Script: `toBool(true)`, RunOutput: true, Name: ""},
+		{Script: `toBool(false)`, RunOutput: false, Name: ""},
+		{Script: `toBool("true")`, RunOutput: true, Name: ""},
+		{Script: `toBool("false")`, RunOutput: false, Name: ""},
+		{Script: `toBool("yes")`, RunOutput: true, Name: ""},
+		{Script: `toBool("ye")`, RunOutput: false, Name: ""},
+		{Script: `toBool("y")`, RunOutput: true, Name: ""},
+		{Script: `toBool("false")`, RunOutput: false, Name: ""},
+		{Script: `toBool("f")`, RunOutput: false, Name: ""},
+		{Script: `toBool("")`, RunOutput: false, Name: ""},
+		{Script: `toBool(nil)`, RunOutput: false, Name: ""},
+		{Script: `toBool({})`, RunOutput: false, Name: ""},
+		{Script: `toBool([])`, RunOutput: false, Name: ""},
+		{Script: `toBool([true])`, RunOutput: false, Name: ""},
+		{Script: `toBool({"true": "true"})`, RunOutput: false, Name: ""},
+		{Script: `toString(nil)`, RunOutput: "<nil>", Name: ""},
+		{Script: `toString("")`, RunOutput: "", Name: ""},
+		{Script: `toString(1)`, RunOutput: "1", Name: ""},
+		{Script: `toString(1.2)`, RunOutput: "1.2", Name: ""},
+		{Script: `toString(1/3)`, RunOutput: "0.3333333333333333", Name: ""},
+		{Script: `toString(false)`, RunOutput: "false", Name: ""},
+		{Script: `toString(true)`, RunOutput: "true", Name: ""},
+		{Script: `toString({})`, RunOutput: "map[]", Name: ""},
+		{Script: `toString({"foo": "bar"})`, RunOutput: "map[foo:bar]", Name: ""},
+		{Script: `toString([true,nil])`, RunOutput: "[true <nil>]", Name: ""},
+		{Script: `toString(toByteSlice("foo"))`, RunOutput: "foo", Name: ""},
+		{Script: `toInt(nil)`, RunOutput: int64(0), Name: ""},
+		{Script: `toInt(-2)`, RunOutput: int64(-2), Name: ""},
+		{Script: `toInt(-1.4)`, RunOutput: int64(-1), Name: ""},
+		{Script: `toInt(-1)`, RunOutput: int64(-1), Name: ""},
+		{Script: `toInt(0)`, RunOutput: int64(0), Name: ""},
+		{Script: `toInt(1)`, RunOutput: int64(1), Name: ""},
+		{Script: `toInt(1.4)`, RunOutput: int64(1), Name: ""},
+		{Script: `toInt(1.5)`, RunOutput: int64(1), Name: ""},
+		{Script: `toInt(1.9)`, RunOutput: int64(1), Name: ""},
+		{Script: `toInt(2)`, RunOutput: int64(2), Name: ""},
+		{Script: `toInt(2.1)`, RunOutput: int64(2), Name: ""},
+		{Script: `toInt("2")`, RunOutput: int64(2), Name: ""},
+		{Script: `toInt("2.1")`, RunOutput: int64(2), Name: ""},
+		{Script: `toInt(true)`, RunOutput: int64(1), Name: ""},
+		{Script: `toInt(false)`, RunOutput: int64(0), Name: ""},
+		{Script: `toInt({})`, RunOutput: int64(0), Name: ""},
+		{Script: `toInt([])`, RunOutput: int64(0), Name: ""},
+		{Script: `toFloat(nil)`, RunOutput: float64(0.0), Name: ""},
+		{Script: `toFloat(-2)`, RunOutput: float64(-2.0), Name: ""},
+		{Script: `toFloat(-1.4)`, RunOutput: float64(-1.4), Name: ""},
+		{Script: `toFloat(-1)`, RunOutput: float64(-1.0), Name: ""},
+		{Script: `toFloat(0)`, RunOutput: float64(0.0), Name: ""},
+		{Script: `toFloat(1)`, RunOutput: float64(1.0), Name: ""},
+		{Script: `toFloat(1.4)`, RunOutput: float64(1.4), Name: ""},
+		{Script: `toFloat(1.5)`, RunOutput: float64(1.5), Name: ""},
+		{Script: `toFloat(1.9)`, RunOutput: float64(1.9), Name: ""},
+		{Script: `toFloat(2)`, RunOutput: float64(2.0), Name: ""},
+		{Script: `toFloat(2.1)`, RunOutput: float64(2.1), Name: ""},
+		{Script: `toFloat("2")`, RunOutput: float64(2.0), Name: ""},
+		{Script: `toFloat("2.1")`, RunOutput: float64(2.1), Name: ""},
+		{Script: `toFloat(true)`, RunOutput: float64(1.0), Name: ""},
+		{Script: `toFloat(false)`, RunOutput: float64(0.0), Name: ""},
+		{Script: `toFloat({})`, RunOutput: float64(0.0), Name: ""},
+		{Script: `toFloat([])`, RunOutput: float64(0.0), Name: ""},
+		{Script: `toChar(0x1F431)`, RunOutput: "🐱", Name: ""},
+		{Script: `toChar(0)`, RunOutput: "\x00", Name: ""},
+		{Script: `toRune("")`, RunOutput: rune(0), Name: ""},
+		{Script: `toRune("🐱")`, RunOutput: rune(0x1F431), Name: ""},
+		{Script: `toBoolSlice(nil)`, RunOutput: []bool{}, Name: ""},
+		{Script: `toBoolSlice(1)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type int64"), Name: ""},
+		{Script: `toBoolSlice(1.2)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type float64"), Name: ""},
+		{Script: `toBoolSlice(false)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type bool"), Name: ""},
+		{Script: `toBoolSlice({})`, RunError: fmt.Errorf("function wants argument type []interface {} but received type map[interface {}]interface {}"), Name: ""},
+		{Script: `toBoolSlice([])`, RunOutput: []bool{}, Name: ""},
+		{Script: `toBoolSlice([nil])`, RunOutput: []bool{false}, Name: ""},
+		{Script: `toBoolSlice([1])`, RunOutput: []bool{false}, Name: ""},
+		{Script: `toBoolSlice([1.1])`, RunOutput: []bool{false}, Name: ""},
+		{Script: `toBoolSlice([true])`, RunOutput: []bool{true}, Name: ""},
+		{Script: `toBoolSlice([[]])`, RunOutput: []bool{false}, Name: ""},
+		{Script: `toBoolSlice([{}])`, RunOutput: []bool{false}, Name: ""},
+		{Script: `toIntSlice(nil)`, RunOutput: []int64{}, Name: ""},
+		{Script: `toIntSlice(1)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type int64"), Name: ""},
+		{Script: `toIntSlice(1.2)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type float64"), Name: ""},
+		{Script: `toIntSlice(false)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type bool"), Name: ""},
+		{Script: `toIntSlice({})`, RunError: fmt.Errorf("function wants argument type []interface {} but received type map[interface {}]interface {}"), Name: ""},
+		{Script: `toIntSlice([])`, RunOutput: []int64{}, Name: ""},
+		{Script: `toIntSlice([nil])`, RunOutput: []int64{0}, Name: ""},
+		{Script: `toIntSlice([1])`, RunOutput: []int64{1}, Name: ""},
+		{Script: `toIntSlice([1.1])`, RunOutput: []int64{1}, Name: ""},
+		{Script: `toIntSlice([true])`, RunOutput: []int64{0}, Name: ""},
+		{Script: `toIntSlice([[]])`, RunOutput: []int64{0}, Name: ""},
+		{Script: `toIntSlice([{}])`, RunOutput: []int64{0}, Name: ""},
+		{Script: `toFloatSlice(nil)`, RunOutput: []float64{}, Name: ""},
+		{Script: `toFloatSlice(1)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type int64"), Name: ""},
+		{Script: `toFloatSlice(1.2)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type float64"), Name: ""},
+		{Script: `toFloatSlice(false)`, RunError: fmt.Errorf("function wants argument type []interface {} but received type bool"), Name: ""},
+		{Script: `toFloatSlice({})`, RunError: fmt.Errorf("function wants argument type []interface {} but received type map[interface {}]interface {}"), Name: ""},
+		{Script: `toFloatSlice([])`, RunOutput: []float64{}, Name: ""},
+		{Script: `toFloatSlice([nil])`, RunOutput: []float64{0.0}, Name: ""},
+		{Script: `toFloatSlice([1])`, RunOutput: []float64{1.0}, Name: ""},
+		{Script: `toFloatSlice([1.1])`, RunOutput: []float64{1.1}, Name: ""},
+		{Script: `toFloatSlice([true])`, RunOutput: []float64{0.0}, Name: ""},
+		{Script: `toFloatSlice([[]])`, RunOutput: []float64{0.0}, Name: ""},
+		{Script: `toFloatSlice([{}])`, RunOutput: []float64{0.0}, Name: ""},
+		{Script: `toByteSlice(nil)`, RunOutput: []byte{}, Name: ""},
+		{Script: `toByteSlice([])`, RunError: fmt.Errorf("function wants argument type string but received type []interface {}"), Name: ""},
+		{Script: `toByteSlice(1)`, RunOutput: []byte{0x01}, Name: ""}, // FIXME?
+		{Script: `toByteSlice(1.1)`, RunError: fmt.Errorf("function wants argument type string but received type float64"), Name: ""},
+		{Script: `toByteSlice(true)`, RunError: fmt.Errorf("function wants argument type string but received type bool"), Name: ""},
+		{Script: `toByteSlice("foo")`, RunOutput: []byte{'f', 'o', 'o'}, Name: ""},
+		{Script: `toByteSlice("世界")`, RunOutput: []byte{0xe4, 0xb8, 0x96, 0xe7, 0x95, 0x8c}, Name: ""},
+		{Script: `toRuneSlice(nil)`, RunOutput: []rune{}, Name: ""},
+		{Script: `toRuneSlice([])`, RunError: fmt.Errorf("function wants argument type string but received type []interface {}"), Name: ""},
+		{Script: `toRuneSlice(1)`, RunOutput: []rune{0x01}, Name: ""}, // FIXME?
+		{Script: `toRuneSlice(1.1)`, RunError: fmt.Errorf("function wants argument type string but received type float64"), Name: ""},
+		{Script: `toRuneSlice(true)`, RunError: fmt.Errorf("function wants argument type string but received type bool"), Name: ""},
+		{Script: `toRuneSlice("foo")`, RunOutput: []rune{'f', 'o', 'o'}, Name: ""},
+		{Script: `toRuneSlice("世界")`, RunOutput: []rune{'世', '界'}, Name: ""},
+		{Script: `toStringSlice([true,false,1])`, RunOutput: []string{"", "", "\x01"}, Name: ""}, // FIXME?
+		{Script: `toDuration(nil)`, RunOutput: time.Duration(0), Name: ""},
+		{Script: `toDuration(0)`, RunOutput: time.Duration(0), Name: ""},
+		{Script: `toDuration(true)`, RunError: fmt.Errorf("function wants argument type int64 but received type bool"), Name: ""},
+		{Script: `toDuration([])`, RunError: fmt.Errorf("function wants argument type int64 but received type []interface {}"), Name: ""},
+		{Script: `toDuration({})`, RunError: fmt.Errorf("function wants argument type int64 but received type map[interface {}]interface {}"), Name: ""},
+		{Script: `toDuration("")`, RunError: fmt.Errorf("function wants argument type int64 but received type string"), Name: ""},
+		{Script: `toDuration("1s")`, RunError: fmt.Errorf("function wants argument type int64 but received type string"), Name: ""}, // TODO
+		{Script: `toDuration(a)`, Input: map[string]any{"a": int64(time.Duration(123 * time.Minute))}, RunOutput: time.Duration(123 * time.Minute), Name: ""},
+		{Script: `toDuration(a)`, Input: map[string]any{"a": float64(time.Duration(123 * time.Minute))}, RunOutput: time.Duration(123 * time.Minute), Name: ""},
+		{Script: `toDuration(a)`, Input: map[string]any{"a": time.Duration(123 * time.Minute)}, RunOutput: time.Duration(123 * time.Minute), Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
@@ -1676,15 +1676,15 @@ func TestAddPackage(t *testing.T) {
 func TestEnvRef(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `func(x){return func(){return x}}(1)()`, RunOutput: int64(1)},
-		{Script: `func(x){if true {return func(){return x}}}(1)()`, RunOutput: int64(1)},
-		{Script: `func(x){if false {} else if true {return func(){return x}}}(1)()`, RunOutput: int64(1)},
-		{Script: `func(x){if false {} else {return func(){return x}}}(1)()`, RunOutput: int64(1)},
-		{Script: `func(x){for a = 1; a < 2; a++ { return func(){return x}}}(1)()`, RunOutput: int64(1)},
-		{Script: `func(x){for a in [1] { return func(){return x}}}(1)()`, RunOutput: int64(1)},
-		{Script: `func(x){for { return func(){return x}}}(1)()`, RunOutput: int64(1)},
-		{Script: `module m { f=func(x){return func(){return x}} }; m.f(1)()`, RunOutput: int64(1)},
-		{Script: `module m { f=func(x){return func(){return x}}(1)() }; m.f`, RunOutput: int64(1)},
+		{Script: `func(x){return func(){return x}}(1)()`, RunOutput: int64(1), Name: ""},
+		{Script: `func(x){if true {return func(){return x}}}(1)()`, RunOutput: int64(1), Name: ""},
+		{Script: `func(x){if false {} else if true {return func(){return x}}}(1)()`, RunOutput: int64(1), Name: ""},
+		{Script: `func(x){if false {} else {return func(){return x}}}(1)()`, RunOutput: int64(1), Name: ""},
+		{Script: `func(x){for a = 1; a < 2; a++ { return func(){return x}}}(1)()`, RunOutput: int64(1), Name: ""},
+		{Script: `func(x){for a in [1] { return func(){return x}}}(1)()`, RunOutput: int64(1), Name: ""},
+		{Script: `func(x){for { return func(){return x}}}(1)()`, RunOutput: int64(1), Name: ""},
+		{Script: `module m { f=func(x){return func(){return x}} }; m.f(1)()`, RunOutput: int64(1), Name: ""},
+		{Script: `module m { f=func(x){return func(){return x}}(1)() }; m.f`, RunOutput: int64(1), Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -1694,23 +1694,23 @@ func TestEnvRef(t *testing.T) {
 func TestFuncTypedParams(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `func a(x:any){return x}; a(1)`, RunOutput: int64(1)},
-		{Script: `func a(x:any){return x}; a("1")`, RunOutput: "1"},
-		{Script: `func a(x:int64){return x}; a(1)`, RunOutput: int64(1)},
-		{Script: `func a(x:int64){return x}; a("1")`, RunError: fmt.Errorf("function wants argument type int64 but received type string")},
-		{Script: `func a(x:string){return x}; a(1)`, RunError: fmt.Errorf("function wants argument type string but received type int64")},
-		{Script: `func a(x:string){return x}; a("1")`, RunOutput: "1"},
-		{Script: `func a(b, x:int64){return x}; a("", 1)`, RunOutput: int64(1)},
-		{Script: `func a(b, x:int64){return x}; a("", "1")`, RunError: fmt.Errorf("function wants argument type int64 but received type string")},
-		{Script: `func a(x:int64, b){return x}; a(1, "")`, RunOutput: int64(1)},
-		{Script: `func a(x:int64, b){return x}; a("1", "")`, RunError: fmt.Errorf("function wants argument type int64 but received type string")},
-		{Script: `func a(x...){return x}; a([]string{"1","2","3"}...)`, RunOutput: []any{"1", "2", "3"}},
-		{Script: `func a(x:int64...){return x}; a([]int64{1,2,3}...)`, RunOutput: []int64{1, 2, 3}},
-		{Script: `func a(x:string...){return x}; a([]string{"1","2","3"}...)`, RunOutput: []string{"1", "2", "3"}},
-		{Script: `func a(x:string...){return x}; a([]int64{1,2,3}...)`, RunError: fmt.Errorf("function wants argument type []string but received type []int64")},
-		{Script: `func a(x:int64...){return x}; a(1,2,3)`, RunOutput: []int64{1, 2, 3}},
-		{Script: `func a(x:int64...){return x}; a(1,"2",3)`, RunError: fmt.Errorf("function wants argument type []int64 but received type string")},
-		{Script: `func a(x:int64, y:int64, z:int64){return x}; a([]int64{1,2,3}...)`, RunOutput: int64(1)},
+		{Script: `func a(x:any){return x}; a(1)`, RunOutput: int64(1), Name: ""},
+		{Script: `func a(x:any){return x}; a("1")`, RunOutput: "1", Name: ""},
+		{Script: `func a(x:int64){return x}; a(1)`, RunOutput: int64(1), Name: ""},
+		{Script: `func a(x:int64){return x}; a("1")`, RunError: fmt.Errorf("function wants argument type int64 but received type string"), Name: ""},
+		{Script: `func a(x:string){return x}; a(1)`, RunError: fmt.Errorf("function wants argument type string but received type int64"), Name: ""},
+		{Script: `func a(x:string){return x}; a("1")`, RunOutput: "1", Name: ""},
+		{Script: `func a(b, x:int64){return x}; a("", 1)`, RunOutput: int64(1), Name: ""},
+		{Script: `func a(b, x:int64){return x}; a("", "1")`, RunError: fmt.Errorf("function wants argument type int64 but received type string"), Name: ""},
+		{Script: `func a(x:int64, b){return x}; a(1, "")`, RunOutput: int64(1), Name: ""},
+		{Script: `func a(x:int64, b){return x}; a("1", "")`, RunError: fmt.Errorf("function wants argument type int64 but received type string"), Name: ""},
+		{Script: `func a(x...){return x}; a([]string{"1","2","3"}...)`, RunOutput: []any{"1", "2", "3"}, Name: ""},
+		{Script: `func a(x:int64...){return x}; a([]int64{1,2,3}...)`, RunOutput: []int64{1, 2, 3}, Name: ""},
+		{Script: `func a(x:string...){return x}; a([]string{"1","2","3"}...)`, RunOutput: []string{"1", "2", "3"}, Name: ""},
+		{Script: `func a(x:string...){return x}; a([]int64{1,2,3}...)`, RunError: fmt.Errorf("function wants argument type []string but received type []int64"), Name: ""},
+		{Script: `func a(x:int64...){return x}; a(1,2,3)`, RunOutput: []int64{1, 2, 3}, Name: ""},
+		{Script: `func a(x:int64...){return x}; a(1,"2",3)`, RunError: fmt.Errorf("function wants argument type []int64 but received type string"), Name: ""},
+		{Script: `func a(x:int64, y:int64, z:int64){return x}; a([]int64{1,2,3}...)`, RunOutput: int64(1), Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -1720,19 +1720,19 @@ func TestFuncTypedParams(t *testing.T) {
 func TestFuncTypedReturns(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `errors = import("errors");func a() {return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
-		{Script: `errors = import("errors");func a() error {return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
-		{Script: `errors = import("errors");func a() (error) {return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err")},
-		{Script: `errors = import("errors");func a() (int) {return errors.New("err")}; a()`, RunError: fmt.Errorf("invalid type for returned value, have: error, expected: int")},
-		{Script: `errors = import("errors");func a() int64 {return 1}; a()`, RunOutput: int64(1)},
-		{Script: `errors = import("errors");func a() any {return 1}; a()`, RunOutput: int64(1)},
-		{Script: `errors = import("errors");func a() any {return "1"}; a()`, RunOutput: "1"},
-		{Script: `errors = import("errors");func a() () {return 1}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 1, expected: 0")},
-		{Script: `errors = import("errors");func a() () {}; a()`},
-		{Script: `errors = import("errors");func a() (int64) {return 1}; a()`, RunOutput: int64(1)},
-		{Script: `errors = import("errors");func a() (int64,error) {return 1, nil}; b,c=a();b`, RunOutput: int64(1)},
-		{Script: `errors = import("errors");func a() (int64) {return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 1")},
-		{Script: `errors = import("errors");func a() (int64,int64,int64) {return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 3")},
+		{Script: `errors = import("errors");func a() {return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err"), Name: ""},
+		{Script: `errors = import("errors");func a() error {return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err"), Name: ""},
+		{Script: `errors = import("errors");func a() (error) {return errors.New("err")}; a()`, RunOutput: fmt.Errorf("err"), Name: ""},
+		{Script: `errors = import("errors");func a() (int) {return errors.New("err")}; a()`, RunError: fmt.Errorf("invalid type for returned value, have: error, expected: int"), Name: ""},
+		{Script: `errors = import("errors");func a() int64 {return 1}; a()`, RunOutput: int64(1), Name: ""},
+		{Script: `errors = import("errors");func a() any {return 1}; a()`, RunOutput: int64(1), Name: ""},
+		{Script: `errors = import("errors");func a() any {return "1"}; a()`, RunOutput: "1", Name: ""},
+		{Script: `errors = import("errors");func a() () {return 1}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 1, expected: 0"), Name: ""},
+		{Script: `errors = import("errors");func a() () {}; a()`, Name: ""},
+		{Script: `errors = import("errors");func a() (int64) {return 1}; a()`, RunOutput: int64(1), Name: ""},
+		{Script: `errors = import("errors");func a() (int64,error) {return 1, nil}; b,c=a();b`, RunOutput: int64(1), Name: ""},
+		{Script: `errors = import("errors");func a() (int64) {return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 1"), Name: ""},
+		{Script: `errors = import("errors");func a() (int64,int64,int64) {return 1,2}; a()`, RunError: fmt.Errorf("invalid number of returned values, have 2, expected: 3"), Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })

@@ -46,6 +46,7 @@ type Executor struct {
 	importCore       bool                                 // either or not to import core functions in executor's env
 	watchdogEnabled  bool                                 // either or not to run the watchdog
 	maxEnvCount      *mtx.Mtx[int64]                      // maximum sub-env allowed before the watchdog kills the script
+	isRunning        atomic.Bool
 }
 
 type Config struct {
@@ -132,6 +133,10 @@ func (e *Executor) GetEnv() envPkg.IEnv {
 }
 
 func (e *Executor) run(ctx context.Context, input any) (any, error) {
+	if !e.isRunning.CompareAndSwap(false, true) {
+		return nil, ErrAlreadyRunning
+	}
+	defer e.isRunning.Store(false)
 	ctx = utils.DefaultCtx(ctx)
 	ctx, e.cancel = context.WithCancel(ctx)
 	switch vv := input.(type) {
@@ -326,6 +331,7 @@ func (e *Executor) mainRunWithWatchdog(ctx context.Context, stmt ast.Stmt, valid
 
 var nilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
 var ErrInvalidInput = errors.New("invalid input")
+var ErrAlreadyRunning = errors.New("executor already running")
 
 func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	stmt1, ok := stmt.(*ast.StmtsStmt)

@@ -210,7 +210,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		return rv, newError(stmt.If, err)
 	}
 
-	if toBool(rv) {
+	if toBool(rv) || vmp.Validate {
 		// then
 		env.WithNewEnv(func(newenv envPkg.IEnv) {
 			rv, err = runSingleStmt(vmp, newenv, stmt.Then)
@@ -230,7 +230,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		if err != nil {
 			return rv, newError(elseIf.If, err)
 		}
-		if !toBool(rv) {
+		if !toBool(rv) && !vmp.Validate {
 			continue
 		}
 

@@ -350,15 +350,6 @@ for i=0; i<10; i++ {
 
 	mux := http.DefaultServeMux
 	mux.HandleFunc("/favicon.ico", func(resp http.ResponseWriter, req *http.Request) {})
-	mux.HandleFunc("/api/v1/status", func(resp http.ResponseWriter, req *http.Request) {
-		resp.WriteHeader(http.StatusOK)
-		data := map[string]any{
-			"IsRunning": e.IsRunning(),
-			"IsPaused":  e.IsPaused(),
-		}
-		by, _ := json.Marshal(data)
-		_, _ = resp.Write(by)
-	})
 	mux.HandleFunc("/sse", func(resp http.ResponseWriter, req *http.Request) {
 		flusher := resp.(http.Flusher)
 		resp.Header().Set("Content-Type", "text/event-stream")

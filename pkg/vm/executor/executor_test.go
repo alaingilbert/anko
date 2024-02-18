@@ -85,6 +85,7 @@ func TestExecutor_Validate(t *testing.T) {
 		{input: "ch1 = make(chan int); ch2 = make(chan int); select { case <-ch1: invalidFn(); case <-ch2: 2; }", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
 		{input: "ch1 = make(chan int); ch2 = make(chan int); select { case <-ch1: 1; case <-ch2: invalidFn(); }", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
 		{input: "ch1 = make(chan int); select { case <-ch1: 1; default: invalidFn(); }", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+		{input: "a = func() { defer func() { invalidFn(); }(); }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
 	}
 	e := NewExecutor(&Config{Env: envPkg.NewEnv()})
 	ctx := context.Background()

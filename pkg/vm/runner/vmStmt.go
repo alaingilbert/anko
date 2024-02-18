@@ -263,10 +263,11 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 }
 
 func runTryStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Value, error) {
+	validate := vmp.Validate
 	newenv := env.NewEnv()
 	defer newenv.Destroy()
 	_, err := runSingleStmt(vmp, newenv, stmt.Try)
-	if err != nil {
+	if err != nil || validate {
 		// Catch
 		env.WithNewEnv(func(catchEnv envPkg.IEnv) {
 			if stmt.Var != "" {

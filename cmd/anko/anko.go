@@ -431,18 +431,11 @@ for i=0; i<10; i++ {
 				formData.append('submit', 'stop');
 				fetch("/", {method: 'POST', body: formData});
 			}
-			async function refresh() {
-				const response = await fetch("/api/v1/status", {method: 'POST'});
-				const data = await response.json();
-				document.getElementById("is_running").textContent = data.IsRunning ? "running" : "stopped";
-				document.getElementById("is_paused").textContent = data.IsPaused ? "paused" : "not paused";
-			}
 			function clearLogs() {
 				document.getElementById("logs").innerHTML = '';
 			}
 		</script>
 		<div>
-			<button type="button" onclick="refresh()">refresh status</button>
 			<button type="button" onclick="run()">run</button>
 			<button type="button" onclick="stop()">stop</button>
 			<button type="button" onclick="toggle_pause()">pause/resume</button>

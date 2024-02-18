@@ -26,13 +26,15 @@ func (s *StateCh) IsClosed() bool {
 }
 
 // Close the channel if not already closed
-func (s *StateCh) Close() {
+func (s *StateCh) Close() (changed bool) {
 	s.Lock()
 	defer s.Unlock()
 	if !s.closed {
 		close(s.state)
 		s.closed = true
+		return true
 	}
+	return false
 }
 
 // Open creates a new channel if currently closed

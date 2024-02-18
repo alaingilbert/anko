@@ -240,9 +240,8 @@ func (e *Executor) pauseFn() {
 }
 
 func (e *Executor) resume() {
-	if e.IsPaused() {
+	if e.pause.Close() {
 		e.pubSubEvts.Pub(executorTopic, ResumedEvt)
-		e.pause.Close()
 	}
 }
 

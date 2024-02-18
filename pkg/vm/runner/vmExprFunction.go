@@ -215,7 +215,7 @@ func anonCallExpr(vmp *VmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Val
 }
 
 // callExpr handles *ast.CallExpr which calls a function
-func callExpr(vmp *VmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.Value, err error) {
+func callExpr(vmp *VmParams, envArg env.IEnv, callExpr *ast.CallExpr) (rv reflect.Value, err error) {
 	// Note that if the function type looks the same as the VM function type, the returned values will probably be wrong
 	nilValueL := nilValue
 
@@ -224,7 +224,7 @@ func callExpr(vmp *VmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 	f := callExpr.Func
 	if !f.IsValid() {
 		// if function is not valid try to get by function name
-		f, err = env.GetValue(callExpr.Name)
+		f, err = envArg.GetValue(callExpr.Name)
 		if err != nil {
 			err = newError(callExpr, err)
 			return
@@ -246,6 +246,13 @@ func callExpr(vmp *VmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 		err = newStringError(callExpr, "cannot call type invalid")
 		return
 	}
+
+	injectCtx := false
+	if val, ok := f.Interface().(env.InjectCtx); ok {
+		injectCtx = true
+		f = reflect.ValueOf(val.Value)
+	}
+
 	if f.Kind() != reflect.Func {
 		err = newStringError(callExpr, "cannot call type "+f.Type().String())
 		return
@@ -258,7 +265,7 @@ func callExpr(vmp *VmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 	// check if this is a runVMFunction type
 	isRunVMFunction := checkIfRunVMFunction(fType)
 	// create/convert the args to the function
-	args, _, useCallSlice, err = makeCallArgs(vmp, env, fType, isRunVMFunction, callExpr)
+	args, _, useCallSlice, err = makeCallArgs(vmp, envArg, fType, isRunVMFunction, callExpr, injectCtx)
 	if err != nil {
 		return
 	}
@@ -307,7 +314,7 @@ func callExpr(vmp *VmParams, env env.IEnv, callExpr *ast.CallExpr) (rv reflect.V
 		for i, expr := range callExpr.SubExprs {
 			if addrExpr, ok := expr.(*ast.AddrExpr); ok {
 				if identExpr, ok := addrExpr.Expr.(*ast.IdentExpr); ok {
-					_, _ = invokeLetExpr(vmp, env, identExpr, args[i].Elem())
+					_, _ = invokeLetExpr(vmp, envArg, identExpr, args[i].Elem())
 				}
 			}
 		}
@@ -333,12 +340,15 @@ func checkIfRunVMFunction(rt reflect.Type) bool {
 
 // makeCallArgs creates the arguments reflect.Value slice for the four different kinds of functions.
 // Also returns true if CallSlice should be used on the arguments, or false if Call should be used.
-func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr) ([]reflect.Value, []reflect.Type, bool, error) {
+func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction bool, callExpr *ast.CallExpr, injectCtx bool) ([]reflect.Value, []reflect.Type, bool, error) {
 	// number of arguments
 	numInReal := rt.NumIn()
 	numIn := numInReal
 	if isRunVMFunction {
 		// for runVMFunction the first arg is context so does not count against number of SubExprs
+		numIn--
+	}
+	if injectCtx {
 		numIn--
 	}
 	if numIn < 1 {
@@ -380,6 +390,13 @@ func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 		argCtx := reflect.ValueOf(&IsVmFunc{vmp.ctx})
 		args = append(args, argCtx)
 		types = append(types, argCtx.Type())
+		indexInReal++
+	}
+
+	if injectCtx {
+		arg = reflect.ValueOf(vmp.ctx)
+		types = append(types, arg.Type())
+		args = append(args, arg)
 		indexInReal++
 	}
 

@@ -51,6 +51,7 @@ type IEnv interface {
 	DeepCopy() IEnv
 	Defers() *mtx.Slice[CapturedFunc]
 	Define(k string, v any) error
+	DefineCtx(k string, v any) error
 	DefineGlobalValue(k string, v reflect.Value) error
 	DefineReflectType(k string, t reflect.Type) error
 	DefineType(k string, t any) error
@@ -154,6 +155,10 @@ func (e *Env) DefineGlobalValue(k string, v reflect.Value) error { return e.defi
 
 // Define defines symbol in current scope.
 func (e *Env) Define(k string, v any) error { return e.define(k, v) }
+
+// DefineCtx is like Define but the running context will be injected at runtime
+// as argument to v if v is a function
+func (e *Env) DefineCtx(k string, v any) error { return e.defineCtx(k, v) }
 
 // DefineValue defines symbol in current scope.
 func (e *Env) DefineValue(k string, v reflect.Value) error { return e.defineValue(k, v) }
@@ -443,6 +448,13 @@ func (e *Env) define(k string, v any) error {
 	if v != nil {
 		val = reflect.ValueOf(v)
 	}
+	return e.defineValue(k, val)
+}
+
+type InjectCtx struct{ Value any }
+
+func (e *Env) defineCtx(k string, v any) error {
+	val := reflect.ValueOf(InjectCtx{v})
 	return e.defineValue(k, val)
 }
 

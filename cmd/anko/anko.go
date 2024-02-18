@@ -28,6 +28,7 @@ import (
 	"slices"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 const (
@@ -331,9 +332,16 @@ func runWeb() int {
 
 	e := v.Executor()
 
+	_ = e.DefineCtx("sleep", func(ctx context.Context, duration time.Duration) {
+		select {
+		case <-time.After(duration):
+		case <-ctx.Done():
+		}
+	})
+
 	defaultScript := `time = import("time")
 for i=0; i<10; i++ {
-  time.Sleep(time.Second)
+  sleep(time.Second)
   log("test " + i)
 }`
 

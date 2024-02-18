@@ -695,7 +695,7 @@ func runDeferStmtCallExpr(vmp *VmParams, t *ast.CallExpr, env envPkg.IEnv) (refl
 func runDeferStmtMakeDefer(vmp *VmParams, f reflect.Value, env envPkg.IEnv, callExprInst *ast.CallExpr) (reflect.Value, error) {
 	fType := f.Type()
 	isRunVmFunction := checkIfRunVMFunction(fType)
-	args, _, useCallSlice, err := makeCallArgs(vmp, env, fType, isRunVmFunction, callExprInst)
+	args, _, useCallSlice, err := makeCallArgs(vmp, env, fType, isRunVmFunction, callExprInst, false)
 	if err != nil {
 		return f, err
 	}

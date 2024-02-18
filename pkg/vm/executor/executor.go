@@ -20,6 +20,7 @@ import (
 )
 
 type IExecutor interface {
+	DefineCtx(string, any) error
 	GetCycles() int64
 	Has(ctx context.Context, input any, targets []any) ([]bool, error)
 	IsPaused() bool
@@ -133,6 +134,10 @@ func (e *Executor) GetCycles() int64 {
 	return atomic.LoadInt64(&e.stats.Cycles)
 }
 
+func (e *Executor) DefineCtx(key string, value any) error {
+	return e.defineCtx(key, value)
+}
+
 func (e *Executor) GetEnv() envPkg.IEnv {
 	return e.env
 }
@@ -201,6 +206,10 @@ func (e *Executor) pauseFn() {
 
 func (e *Executor) resume() {
 	e.pause.Close()
+}
+
+func (e *Executor) defineCtx(key string, value any) error {
+	return e.env.DefineCtx(key, value)
 }
 
 func srcToStmt(src string) (ast.Stmt, error) {

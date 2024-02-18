@@ -26,6 +26,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"sync/atomic"
 )
 
 const (
@@ -316,18 +317,46 @@ func compileAndSave(source, fileName string) error {
 }
 
 func runWeb(args []string) int {
-	e := vm.New(&vm.Config{ImportCore: true, DefineImport: true}).Executor()
+	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
+
+	logCh := make(chan string)
+
+	_ = v.Define("log", func(msg string) {
+		select {
+		case logCh <- msg:
+		default:
+		}
+	})
+
+	e := v.Executor()
 
 	defaultScript := `time = import("time")
-i = 0
-for {
-  i++
-  println("test", i)
+for i=0; i<10; i++ {
   time.Sleep(time.Second)
+  log("test " + i)
 }`
 
 	mux := http.DefaultServeMux
 	mux.HandleFunc("/favicon.ico", func(resp http.ResponseWriter, req *http.Request) {})
+	mux.HandleFunc("/sse", func(resp http.ResponseWriter, req *http.Request) {
+		flusher := resp.(http.Flusher)
+		resp.Header().Set("Content-Type", "text/event-stream")
+		resp.Header().Set("Cache-Control", "no-cache")
+		resp.Header().Set("Connection", "keep-alive")
+		resp.Header().Set("Access-Control-Allow-Origin", "*")
+		var msgID int32
+		for {
+			var msg string
+			select {
+			case msg = <-logCh:
+			case <-req.Context().Done():
+				return
+			}
+			newMsgID := atomic.AddInt32(&msgID, 1)
+			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, msg)
+			flusher.Flush()
+		}
+	})
 	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		resp.WriteHeader(http.StatusOK)
 		script := defaultScript
@@ -359,7 +388,16 @@ for {
 				Paused: {{ if .IsPaused }}paused{{ else }}not paused{{ end }}
 			</div>
 			<textarea name="source" rows="10" cols="80">` + script + `</textarea>
+			<div id="logs"></div>
 		</form>
+		<script>
+			const evtSource = new EventSource("/sse");
+			evtSource.onmessage = (evt) => {
+				var newDiv = document.createElement("div");
+    			newDiv.textContent = evt.data;
+				document.getElementById("logs").appendChild(newDiv);
+			};
+		</script>
 	</body>
 </html>`
 		data := map[string]any{

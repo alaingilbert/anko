@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/compiler"
 	"github.com/alaingilbert/anko/pkg/parser"
@@ -63,25 +64,32 @@ func TestInvalidString(t *testing.T) {
 	assert.ErrorAs(t, err, &target)
 }
 
-func TestValidate(t *testing.T) {
+func TestExecutor_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   any
+		wantErr error
+	}{
+		{input: "a = 1; b = 2; if a == b { return a; }; return b", wantErr: nil, name: ""},
+		{input: "a = func(){ return 1; }; a()", wantErr: nil, name: ""},
+		{input: "a = func(){ invalidFn() }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+		{input: "a = func(){ if (true) { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+		{input: "a = func(){ if (false) { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+		// {input: "a = func(){ if (true) { return 1; } else { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+		{input: "a = func(){ if (true) { } else { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+		{input: "a = func(){ if true { } else if true { } else { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+		{input: "a = func(){ if true { } else if true { invalidFn() } else { } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+	}
 	e := NewExecutor(&Config{Env: envPkg.NewEnv()})
 	ctx := context.Background()
-	script := "a = 1; b = 2; if a == b { return a; }; return b"
-	assert.NoError(t, e.Validate(ctx, script))
-	script = "a = func(){ return 1; }; a()"
-	assert.NoError(t, e.Validate(ctx, script))
-	script = "a = func(){ invalidFn() }; a()"
-	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
-	script = "a = func(){ if (true) { invalidFn() } }; a()"
-	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
-	script = "a = func(){ if (false) { invalidFn() } }; a()"
-	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
-	//script = "a = func(){ if (true) { return 1; } else { invalidFn() } }; a()" // TODO: fix ErrReturn
-	//assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
-	script = "a = func(){ if (true) { } else { invalidFn() } }; a()"
-	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
-	script = "a = func(){ if true { } else if true { } else { invalidFn() } }; a()"
-	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
-	script = "a = func(){ if true { } else if true { invalidFn() } else { } }; a()"
-	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := e.Validate(ctx, tt.input)
+			if tt.wantErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorContains(t, err, tt.wantErr.Error())
+			}
+		})
+	}
 }

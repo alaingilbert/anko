@@ -379,8 +379,8 @@ for i=0; i<10; i++ {
 				e.Stop()
 			} else if submit == "toggle_pause" {
 				utils.Ternary(e.IsPaused(), e.Resume, e.Pause)()
-			} else if submit == "refresh" {
 			}
+			return
 		}
 		pageHtml := `<!DOCTYPE html>
 <html>

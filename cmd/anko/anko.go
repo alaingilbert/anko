@@ -463,7 +463,8 @@ for i=0; i<10; i++ {
 			const evtSource = new EventSource("/sse");
 			evtSource.onmessage = (evt) => {
 				var newDiv = document.createElement("div");
-    			newDiv.textContent = evt.data;
+				var data = JSON.parse(evt.data)
+    			newDiv.textContent = data.Type + ": " + data.Msg;
 				document.getElementById("logs").appendChild(newDiv);
 			};
 		</script>

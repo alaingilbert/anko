@@ -451,6 +451,8 @@ func (e *Env) define(k string, v any) error {
 	return e.defineValue(k, val)
 }
 
+// InjectCtx is a special type that instruct the VM that it needs to
+// inject the running ctx as argument to the function being called.
 type InjectCtx struct{ Value any }
 
 func (e *Env) defineCtx(k string, v any) error {

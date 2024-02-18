@@ -8,6 +8,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/compiler"
 	"github.com/alaingilbert/anko/pkg/parser"
 	"github.com/alaingilbert/anko/pkg/utils"
+	"github.com/alaingilbert/anko/pkg/utils/pubsub"
 	"github.com/alaingilbert/anko/pkg/utils/ratelimitanything"
 	"github.com/alaingilbert/anko/pkg/utils/stateCh"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
@@ -29,6 +30,7 @@ type IExecutor interface {
 	Run(ctx context.Context, input any) (any, error)
 	RunAsync(ctx context.Context, input any)
 	Stop()
+	Subscribe() *pubsub.Sub[string, string]
 	Validate(ctx context.Context, input any) error
 
 	GetEnv() envPkg.IEnv
@@ -48,6 +50,7 @@ type Executor struct {
 	watchdogEnabled  bool                                 // either or not to run the watchdog
 	maxEnvCount      *mtx.Mtx[int64]                      // maximum sub-env allowed before the watchdog kills the script
 	isRunning        atomic.Bool
+	pubSubEvts       *pubsub.PubSub[string, string]
 }
 
 type Config struct {
@@ -90,6 +93,7 @@ func NewExecutor(cfg *Config) *Executor {
 	if cfg.RateLimit > 0 {
 		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
 	}
+	e.pubSubEvts = pubsub.NewPubSub[string]()
 	return e
 }
 
@@ -121,6 +125,10 @@ func (e *Executor) Resume() {
 	e.resume()
 }
 
+func (e *Executor) Subscribe() *pubsub.Sub[string, string] {
+	return e.pubSubEvts.Subscribe("executor")
+}
+
 func (e *Executor) IsPaused() bool {
 	return !e.pause.IsClosed()
 }
@@ -142,6 +150,8 @@ func (e *Executor) run(ctx context.Context, input any) (any, error) {
 		return nil, ErrAlreadyRunning
 	}
 	defer e.isRunning.Store(false)
+	e.pubSubEvts.Pub("executor", "started")
+	defer e.pubSubEvts.Pub("executor", "completed")
 	ctx = utils.DefaultCtx(ctx)
 	ctx, e.cancel = context.WithCancel(ctx)
 	switch vv := input.(type) {

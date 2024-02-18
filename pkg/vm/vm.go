@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// IVM interface that VM implements
 type IVM interface {
 	Executor() executor.IExecutor
 	Validate(context.Context, any) error

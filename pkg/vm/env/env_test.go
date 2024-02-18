@@ -1,6 +1,7 @@
 package env
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -1378,4 +1379,27 @@ func TestEnv_SetValue(t *testing.T) {
 func TestEnv_Name(t *testing.T) {
 	env := NewEnv()
 	assert.Equal(t, "n/a", env.Name())
+}
+
+func TestDefineCtx(t *testing.T) {
+	env := NewEnv()
+	_ = env.DefineCtx("a", func(ctx context.Context) {})
+	_, err := env.Get("a")
+	assert.NoError(t, err)
+}
+
+func TestWithNewEnv(t *testing.T) {
+	env := NewEnv()
+	env.WithNewEnv(func(e IEnv) {
+		assert.Equal(t, int64(1), env.ChildCount())
+	})
+	assert.Equal(t, int64(0), env.ChildCount())
+}
+
+func TestDestroy(t *testing.T) {
+	env := NewEnv()
+	newenv := env.newEnv()
+	assert.Equal(t, int64(1), env.ChildCount())
+	newenv.Destroy()
+	assert.Equal(t, int64(0), env.ChildCount())
 }

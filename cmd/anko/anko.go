@@ -392,11 +392,13 @@ for i=0; i<10; i++ {
 			script = req.PostFormValue("source")
 			submit := req.PostFormValue("submit")
 			if submit == "run" {
-				ps.Pub(systemTopic, "run script")
-				e.RunAsync(context.Background(), script)
+				if e.RunAsync(context.Background(), script) {
+					ps.Pub(systemTopic, "run script")
+				}
 			} else if submit == "stop" {
-				e.Stop()
-				ps.Pub(systemTopic, "stop script")
+				if e.Stop() {
+					ps.Pub(systemTopic, "stop script")
+				}
 			} else if submit == "toggle_pause" {
 				if e.IsPaused() {
 					if e.Resume() {

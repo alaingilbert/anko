@@ -30,8 +30,8 @@ type IExecutor interface {
 	Pause() bool
 	Resume() bool
 	Run(ctx context.Context, input any) (any, error)
-	RunAsync(ctx context.Context, input any)
-	Stop()
+	RunAsync(ctx context.Context, input any) bool
+	Stop() bool
 	Subscribe() *Sub
 	Validate(ctx context.Context, input any) error
 
@@ -126,16 +126,16 @@ func NewExecutor(cfg *Config) *Executor {
 	return e
 }
 
-func (e *Executor) Stop() {
-	e.stop()
+func (e *Executor) Stop() bool {
+	return e.stop()
 }
 
 func (e *Executor) Run(ctx context.Context, input any) (any, error) {
 	return e.run(ctx, input)
 }
 
-func (e *Executor) RunAsync(ctx context.Context, input any) {
-	e.runAsync(ctx, input)
+func (e *Executor) RunAsync(ctx context.Context, input any) bool {
+	return e.runAsync(ctx, input)
 }
 
 func (e *Executor) Validate(ctx context.Context, input any) error {
@@ -217,19 +217,27 @@ func (e *Executor) has(ctx context.Context, input any, targets []any) ([]bool, e
 	}
 }
 
-func (e *Executor) runAsync(ctx context.Context, input any) {
+func (e *Executor) runAsync(ctx context.Context, input any) bool {
+	if e.isRunning.Load() {
+		return false
+	}
 	go func() {
 		if rv, err := e.run(ctx, input); err != nil {
 			fmt.Println(rv, err)
 		}
 	}()
+	return true
 }
 
-func (e *Executor) stop() {
+func (e *Executor) stop() bool {
+	if !e.isRunning.Load() {
+		return false
+	}
 	if e.cancel != nil {
 		e.cancel()
 	}
 	e.resume()
+	return true
 }
 
 func (e *Executor) pauseFn() (changed bool) {

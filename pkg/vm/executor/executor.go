@@ -20,6 +20,8 @@ import (
 	"time"
 )
 
+type Sub = pubsub.Sub[string, Evt]
+
 type IExecutor interface {
 	GetCycles() int64
 	Has(ctx context.Context, input any, targets []any) ([]bool, error)
@@ -30,13 +32,40 @@ type IExecutor interface {
 	Run(ctx context.Context, input any) (any, error)
 	RunAsync(ctx context.Context, input any)
 	Stop()
-	Subscribe() *pubsub.Sub[string, string]
+	Subscribe() *Sub
 	Validate(ctx context.Context, input any) error
 
 	GetEnv() envPkg.IEnv
 }
 
 var _ IExecutor = (*Executor)(nil)
+
+const (
+	executorTopic = "executor"
+)
+
+type Evt int
+
+func (e Evt) String() (out string) {
+	switch e {
+	case StartedEvt:
+		out = "started"
+	case CompletedEvt:
+		out = "completed"
+	case PausedEvt:
+		out = "paused"
+	case ResumedEvt:
+		out = "resumed"
+	}
+	return
+}
+
+const (
+	StartedEvt Evt = iota + 1
+	CompletedEvt
+	PausedEvt
+	ResumedEvt
+)
 
 type Executor struct {
 	env              envPkg.IEnv                          // executor's env
@@ -50,7 +79,7 @@ type Executor struct {
 	watchdogEnabled  bool                                 // either or not to run the watchdog
 	maxEnvCount      *mtx.Mtx[int64]                      // maximum sub-env allowed before the watchdog kills the script
 	isRunning        atomic.Bool
-	pubSubEvts       *pubsub.PubSub[string, string]
+	pubSubEvts       *pubsub.PubSub[string, Evt]
 }
 
 type Config struct {
@@ -93,7 +122,7 @@ func NewExecutor(cfg *Config) *Executor {
 	if cfg.RateLimit > 0 {
 		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
 	}
-	e.pubSubEvts = pubsub.NewPubSub[string]()
+	e.pubSubEvts = pubsub.NewPubSub[Evt]()
 	return e
 }
 
@@ -125,8 +154,8 @@ func (e *Executor) Resume() {
 	e.resume()
 }
 
-func (e *Executor) Subscribe() *pubsub.Sub[string, string] {
-	return e.pubSubEvts.Subscribe("executor")
+func (e *Executor) Subscribe() *Sub {
+	return e.pubSubEvts.Subscribe(executorTopic)
 }
 
 func (e *Executor) IsPaused() bool {
@@ -150,8 +179,8 @@ func (e *Executor) run(ctx context.Context, input any) (any, error) {
 		return nil, ErrAlreadyRunning
 	}
 	defer e.isRunning.Store(false)
-	e.pubSubEvts.Pub("executor", "started")
-	defer e.pubSubEvts.Pub("executor", "completed")
+	e.pubSubEvts.Pub(executorTopic, StartedEvt)
+	defer e.pubSubEvts.Pub(executorTopic, CompletedEvt)
 	ctx = utils.DefaultCtx(ctx)
 	ctx, e.cancel = context.WithCancel(ctx)
 	switch vv := input.(type) {
@@ -206,11 +235,15 @@ func (e *Executor) stop() {
 func (e *Executor) pauseFn() {
 	if e.isRunning.Load() {
 		e.pause.Open()
+		e.pubSubEvts.Pub(executorTopic, PausedEvt)
 	}
 }
 
 func (e *Executor) resume() {
-	e.pause.Close()
+	if e.IsPaused() {
+		e.pubSubEvts.Pub(executorTopic, ResumedEvt)
+		e.pause.Close()
+	}
 }
 
 func srcToStmt(src string) (ast.Stmt, error) {

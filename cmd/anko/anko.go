@@ -376,7 +376,7 @@ for i=0; i<10; i++ {
 				flusher.Flush()
 			case msg := <-sub2.ReceiveCh():
 				newMsgID := atomic.AddInt32(&msgID, 1)
-				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s: %s\r\n\r\n", newMsgID, msg.Topic, msg.Msg)
+				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s: %s\r\n\r\n", newMsgID, msg.Topic, msg.Msg.String())
 				flusher.Flush()
 			case <-req.Context().Done():
 				return

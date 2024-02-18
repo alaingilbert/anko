@@ -13,6 +13,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/decompiler"
 	"github.com/alaingilbert/anko/pkg/parser"
 	"github.com/alaingilbert/anko/pkg/utils"
+	"github.com/alaingilbert/anko/pkg/utils/pubsub"
 	"github.com/alaingilbert/anko/pkg/vm"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"github.com/alaingilbert/anko/pkg/vm/runner"
@@ -336,13 +337,10 @@ func (l *VmLog) Json() string {
 func runWeb() int {
 	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 
-	logCh := make(chan VmLog)
+	ps := pubsub.NewPubSub[VmLog]()
 
 	_ = v.Define("log", func(msg string) {
-		select {
-		case logCh <- VmLog{Type: ScriptLogType, Msg: msg}:
-		default:
-		}
+		ps.Pub("logs", VmLog{Type: ScriptLogType, Msg: msg})
 	})
 
 	// Custom sleep function that will quit faster if the running context is cancelled
@@ -379,16 +377,18 @@ for i=0; i<10; i++ {
 		resp.Header().Set("Cache-Control", "no-cache")
 		resp.Header().Set("Connection", "keep-alive")
 		resp.Header().Set("Access-Control-Allow-Origin", "*")
+		sub := ps.Subscribe("logs")
+		defer sub.Close()
 		var msgID int32
 		for {
-			var msg VmLog
+			var msg pubsub.Payload[string, VmLog]
 			select {
-			case msg = <-logCh:
+			case msg = <-sub.ReceiveCh():
 			case <-req.Context().Done():
 				return
 			}
 			newMsgID := atomic.AddInt32(&msgID, 1)
-			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, msg.Json())
+			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, msg.Msg.Json())
 			flusher.Flush()
 		}
 	})
@@ -399,18 +399,18 @@ for i=0; i<10; i++ {
 			script = req.PostFormValue("source")
 			submit := req.PostFormValue("submit")
 			if submit == "run" {
-				logCh <- VmLog{Type: SystemLogType, Msg: "run script"}
+				ps.Pub("logs", VmLog{Type: SystemLogType, Msg: "run script"})
 				e.RunAsync(context.Background(), script)
 			} else if submit == "stop" {
 				e.Stop()
-				logCh <- VmLog{Type: SystemLogType, Msg: "stop script"}
+				ps.Pub("logs", VmLog{Type: SystemLogType, Msg: "stop script"})
 			} else if submit == "toggle_pause" {
 				if e.IsPaused() {
-					logCh <- VmLog{Type: SystemLogType, Msg: "script resumed"}
+					ps.Pub("logs", VmLog{Type: SystemLogType, Msg: "script resumed"})
 					e.Resume()
 				} else {
 					e.Pause()
-					logCh <- VmLog{Type: SystemLogType, Msg: "script paused"}
+					ps.Pub("logs", VmLog{Type: SystemLogType, Msg: "script paused"})
 				}
 			}
 			return

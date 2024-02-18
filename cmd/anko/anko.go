@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -338,6 +339,15 @@ for i=0; i<10; i++ {
 
 	mux := http.DefaultServeMux
 	mux.HandleFunc("/favicon.ico", func(resp http.ResponseWriter, req *http.Request) {})
+	mux.HandleFunc("/api/v1/status", func(resp http.ResponseWriter, req *http.Request) {
+		resp.WriteHeader(http.StatusOK)
+		data := map[string]any{
+			"IsRunning": e.IsRunning(),
+			"IsPaused":  e.IsPaused(),
+		}
+		by, _ := json.Marshal(data)
+		_, _ = resp.Write(by)
+	})
 	mux.HandleFunc("/sse", func(resp http.ResponseWriter, req *http.Request) {
 		flusher := resp.(http.Flusher)
 		resp.Header().Set("Content-Type", "text/event-stream")
@@ -376,20 +386,43 @@ for i=0; i<10; i++ {
 <html>
 	<head><title>Test</title></head>
 	<body>
-		<form method="post">
-			<div>
-				<button type="submit" name="submit" value="refresh">refresh page</button>
-				<button type="submit" name="submit" value="run">run</button>
-				<button type="submit" name="submit" value="stop">stop</button>
-				<button type="submit" name="submit" value="toggle_pause">pause/resume</button>
-			</div>
-			<div>
-				Running: {{ if .IsRunning }}running{{ else }}stopped{{ end }} |
-				Paused: {{ if .IsPaused }}paused{{ else }}not paused{{ end }}
-			</div>
-			<textarea name="source" rows="10" cols="80">` + script + `</textarea>
-			<div id="logs"></div>
-		</form>
+		<script>
+			function toggle_pause() {
+				const formData = new FormData();
+				formData.append('submit', 'toggle_pause');
+				fetch("/", {method: 'POST', body: formData});
+			}
+			function run() {
+				const formData = new FormData();
+				formData.append('source', document.getElementById('source').value);
+				formData.append('submit', 'run');
+				fetch("/", {method: 'POST', body: formData});
+			}
+			function stop() {
+				const formData = new FormData();
+				formData.append('submit', 'stop');
+				fetch("/", {method: 'POST', body: formData});
+			}
+			async function refresh() {
+				const response = await fetch("/api/v1/status", {method: 'POST'});
+				const data = await response.json();
+				document.getElementById("is_running").textContent = data.IsRunning ? "running" : "stopped";
+				document.getElementById("is_paused").textContent = data.IsPaused ? "paused" : "not paused";
+				console.log(data);
+			}
+		</script>
+		<div>
+			<button type="button" onclick="refresh()">refresh status</button>
+			<button type="button" onclick="run()">run</button>
+			<button type="button" onclick="stop()">stop</button>
+			<button type="button" onclick="toggle_pause()">pause/resume</button>
+		</div>
+		<div>
+			Running: <span id="is_running">{{ if .IsRunning }}running{{ else }}stopped{{ end }}</span> |
+			Paused: <span id="is_paused">{{ if .IsPaused }}paused{{ else }}not paused{{ end }}</span>
+		</div>
+		<textarea name="source" id="source" rows="10" cols="80">` + script + `</textarea>
+		<div id="logs"></div>
 		<script>
 			const evtSource = new EventSource("/sse");
 			evtSource.onmessage = (evt) => {

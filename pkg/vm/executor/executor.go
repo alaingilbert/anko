@@ -32,7 +32,7 @@ type IExecutor interface {
 	Run(ctx context.Context, input any) (any, error)
 	RunAsync(ctx context.Context, input any) bool
 	Stop() bool
-	TogglePause() ToggleType
+	TogglePause() TogglePauseResult
 	Subscribe() *Sub
 	Validate(ctx context.Context, input any) error
 
@@ -147,7 +147,7 @@ func (e *Executor) Has(ctx context.Context, input any, targets []any) ([]bool, e
 	return e.has(ctx, input, targets)
 }
 
-func (e *Executor) TogglePause() ToggleType {
+func (e *Executor) TogglePause() TogglePauseResult {
 	return e.togglePause()
 }
 
@@ -245,15 +245,15 @@ func (e *Executor) stop() bool {
 	return true
 }
 
-type ToggleType int
+type TogglePauseResult int
 
 const (
-	NoopToggle ToggleType = iota
+	NoopToggle TogglePauseResult = iota
 	PausedToggle
 	ResumedToggle
 )
 
-func (e *Executor) togglePause() ToggleType {
+func (e *Executor) togglePause() TogglePauseResult {
 	if e.isRunning.Load() {
 		if e.pause.Toggle() {
 			e.pubSubEvts.Pub(executorTopic, PausedEvt)

@@ -454,7 +454,14 @@ func (e *Env) define(k string, v any) error {
 type InjectCtx struct{ Value any }
 
 func (e *Env) defineCtx(k string, v any) error {
-	val := reflect.ValueOf(&InjectCtx{v})
+	val := nilValue
+	if v != nil {
+		if reflect.TypeOf(v).Kind() == reflect.Func {
+			val = reflect.ValueOf(&InjectCtx{v})
+		} else {
+			val = reflect.ValueOf(v)
+		}
+	}
 	return e.defineValue(k, val)
 }
 

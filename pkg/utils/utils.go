@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 )
 
+func First[T any](a T, _ ...any) T { return a }
+
 func Ternary[T any](predicate bool, a, b T) T {
 	if predicate {
 		return a

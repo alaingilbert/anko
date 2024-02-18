@@ -471,8 +471,7 @@ for i=0; i<10; i++ {
 			"Script":    script,
 		}
 		buf := new(bytes.Buffer)
-		tmpl, _ := template.New("").Parse(pageHtml)
-		_ = tmpl.Execute(buf, data)
+		_ = utils.First(template.New("").Parse(pageHtml)).Execute(buf, data)
 		_, _ = resp.Write(buf.Bytes())
 	})
 

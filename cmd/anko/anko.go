@@ -322,12 +322,12 @@ func compileAndSave(source, fileName string) error {
 func runWeb() int {
 	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 
-	const logsTopic = "logs"
+	const scriptTopic = "script"
 	const systemTopic = "system"
 	ps := pubsub.NewPubSub[string]()
 
 	_ = v.Define("log", func(msg string) {
-		ps.Pub(logsTopic, msg)
+		ps.Pub(scriptTopic, msg)
 	})
 
 	// Custom sleep function that will quit faster if the running context is cancelled
@@ -363,7 +363,7 @@ for i=0; i<10; i++ {
 		resp.Header().Set("Content-Type", "text/event-stream")
 		resp.Header().Set("Cache-Control", "no-cache")
 		resp.Header().Set("Connection", "keep-alive")
-		sub := ps.Subscribe(logsTopic, systemTopic)
+		sub := ps.Subscribe(scriptTopic, systemTopic)
 		defer sub.Close()
 		var msgID int32
 		for {

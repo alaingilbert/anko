@@ -408,7 +408,9 @@ for i=0; i<10; i++ {
 				const data = await response.json();
 				document.getElementById("is_running").textContent = data.IsRunning ? "running" : "stopped";
 				document.getElementById("is_paused").textContent = data.IsPaused ? "paused" : "not paused";
-				console.log(data);
+			}
+			function clearLogs() {
+				document.getElementById("logs").innerHTML = '';
 			}
 		</script>
 		<div>
@@ -416,6 +418,7 @@ for i=0; i<10; i++ {
 			<button type="button" onclick="run()">run</button>
 			<button type="button" onclick="stop()">stop</button>
 			<button type="button" onclick="toggle_pause()">pause/resume</button>
+			<button type="button" onclick="clearLogs()">clear logs</button>
 		</div>
 		<div>
 			Running: <span id="is_running">{{ if .IsRunning }}running{{ else }}stopped{{ end }}</span> |

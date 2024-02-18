@@ -15,6 +15,7 @@ type IVM interface {
 	Has(context.Context, any, []any) ([]bool, error)
 
 	Define(k string, v any) error
+	DefineCtx(k string, v any) error
 	DefineType(k string, v any) error
 	AddPackage(name string, methods packages.PackageMap, types packages.PackageMap) (envPkg.IEnv, error)
 }
@@ -96,6 +97,10 @@ func (v *VM) AddPackage(name string, methods packages.PackageMap, types packages
 
 func (v *VM) Define(k string, val any) error {
 	return v.env.Define(k, val)
+}
+
+func (v *VM) DefineCtx(k string, val any) error {
+	return v.env.DefineCtx(k, val)
 }
 
 func (v *VM) DefineType(k string, val any) error {

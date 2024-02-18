@@ -1860,9 +1860,10 @@ func TestTest(t *testing.T) {
 }
 
 func TestDefineCtx(t *testing.T) {
-	e := New(nil).Executor()
-	_ = e.DefineCtx("a", func(context.Context) int64 { return 1 })
-	_ = e.DefineCtx("b", func(context.Context, int64) int64 { return 1 })
+	v := New(nil)
+	_ = v.DefineCtx("a", func(context.Context) int64 { return 1 })
+	_ = v.DefineCtx("b", func(context.Context, int64) int64 { return 1 })
+	e := v.Executor()
 	tests := []Test{
 		{Script: `a()`, RunOutput: int64(1), Name: ""},
 		{Script: `a(1)`, RunError: fmt.Errorf("function wants 0 arguments but received 1"), Name: ""},

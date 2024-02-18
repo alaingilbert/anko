@@ -330,16 +330,16 @@ func runWeb() int {
 		}
 	})
 
-	e := v.Executor()
-
 	// Custom sleep function that will quit faster if the running context is cancelled
-	_ = e.DefineCtx("sleep", func(ctx context.Context, duration time.Duration) {
+	_ = v.DefineCtx("sleep", func(ctx context.Context, duration time.Duration) {
 		select {
 		case <-time.After(duration):
 		case <-ctx.Done():
 			panic(ctx.Err())
 		}
 	})
+
+	e := v.Executor()
 
 	defaultScript := `time = import("time")
 for i=0; i<10; i++ {

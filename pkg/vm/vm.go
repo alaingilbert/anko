@@ -23,6 +23,7 @@ type IVM interface {
 // Compile time checks to ensure type satisfies IVM interface
 var _ IVM = (*VM)(nil)
 
+// Config for the vm
 type Config struct {
 	Env              envPkg.IEnv
 	RateLimit        int
@@ -33,6 +34,7 @@ type Config struct {
 	DoNotProtectMaps bool
 }
 
+// VM base vm
 type VM struct {
 	env              envPkg.IEnv
 	rateLimit        int
@@ -43,6 +45,7 @@ type VM struct {
 	doNotProtectMaps bool
 }
 
+// New creates a new vm
 func New(config *Config) *VM {
 	var env envPkg.IEnv
 	var rateLimit int
@@ -79,30 +82,38 @@ func New(config *Config) *VM {
 	}
 }
 
+// Executor creates a new executor
 func (v *VM) Executor() executor.IExecutor {
 	return v.executor()
 }
 
+// Validate a script without executing it
 func (v *VM) Validate(ctx context.Context, val any) error {
 	return v.validate(ctx, val)
 }
 
+// Has returns either or not the targets are being used in the script, without executing the script
 func (v *VM) Has(ctx context.Context, val any, targets []any) ([]bool, error) {
 	return v.has(ctx, val, targets)
 }
 
+// AddPackage adds a package in the Env
 func (v *VM) AddPackage(name string, methods packages.PackageMap, types packages.PackageMap) (envPkg.IEnv, error) {
 	return v.env.AddPackage(name, methods, types)
 }
 
+// Define defines a key/value in the Env
 func (v *VM) Define(k string, val any) error {
 	return v.env.Define(k, val)
 }
 
+// DefineCtx defines a key/value in the Env. If val is a function,
+// the running context will be injected in its arguments
 func (v *VM) DefineCtx(k string, val any) error {
 	return v.env.DefineCtx(k, val)
 }
 
+// DefineType defines a new type in the Env
 func (v *VM) DefineType(k string, val any) error {
 	return v.env.DefineType(k, val)
 }

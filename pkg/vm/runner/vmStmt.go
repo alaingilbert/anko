@@ -650,7 +650,7 @@ func runSwitchStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SwitchStmt) (reflec
 			if equal(rv, caseValue) || validate {
 				val, err := runSingleStmt(vmp, newenv, caseStmt.Stmt)
 				if err != nil {
-					return nilValue, newError(expr, err)
+					return val, newError(expr, err)
 				}
 				if !validate {
 					return val, err

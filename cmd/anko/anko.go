@@ -337,10 +337,11 @@ func (l *VmLog) Json() string {
 func runWeb() int {
 	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 
+	const logsTopic = "logs"
 	ps := pubsub.NewPubSub[VmLog]()
 
 	_ = v.Define("log", func(msg string) {
-		ps.Pub("logs", VmLog{Type: ScriptLogType, Msg: msg})
+		ps.Pub(logsTopic, VmLog{Type: ScriptLogType, Msg: msg})
 	})
 
 	// Custom sleep function that will quit faster if the running context is cancelled
@@ -377,7 +378,7 @@ for i=0; i<10; i++ {
 		resp.Header().Set("Cache-Control", "no-cache")
 		resp.Header().Set("Connection", "keep-alive")
 		resp.Header().Set("Access-Control-Allow-Origin", "*")
-		sub := ps.Subscribe("logs")
+		sub := ps.Subscribe(logsTopic)
 		defer sub.Close()
 		var msgID int32
 		for {
@@ -399,18 +400,18 @@ for i=0; i<10; i++ {
 			script = req.PostFormValue("source")
 			submit := req.PostFormValue("submit")
 			if submit == "run" {
-				ps.Pub("logs", VmLog{Type: SystemLogType, Msg: "run script"})
+				ps.Pub(logsTopic, VmLog{Type: SystemLogType, Msg: "run script"})
 				e.RunAsync(context.Background(), script)
 			} else if submit == "stop" {
 				e.Stop()
-				ps.Pub("logs", VmLog{Type: SystemLogType, Msg: "stop script"})
+				ps.Pub(logsTopic, VmLog{Type: SystemLogType, Msg: "stop script"})
 			} else if submit == "toggle_pause" {
 				if e.IsPaused() {
-					ps.Pub("logs", VmLog{Type: SystemLogType, Msg: "script resumed"})
+					ps.Pub(logsTopic, VmLog{Type: SystemLogType, Msg: "script resumed"})
 					e.Resume()
 				} else {
 					e.Pause()
-					ps.Pub("logs", VmLog{Type: SystemLogType, Msg: "script paused"})
+					ps.Pub(logsTopic, VmLog{Type: SystemLogType, Msg: "script paused"})
 				}
 			}
 			return

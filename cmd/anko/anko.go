@@ -370,20 +370,18 @@ for i=0; i<10; i++ {
 		defer sub2.Close()
 		var msgID int32
 		for {
+			var by []byte
 			select {
 			case msg := <-sub1.ReceiveCh():
-				newMsgID := atomic.AddInt32(&msgID, 1)
-				by, _ := json.Marshal(msg)
-				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, string(by))
-				flusher.Flush()
+				by, _ = json.Marshal(msg)
 			case msg := <-sub2.ReceiveCh():
-				newMsgID := atomic.AddInt32(&msgID, 1)
-				by, _ := json.Marshal(msg)
-				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, string(by))
-				flusher.Flush()
+				by, _ = json.Marshal(msg)
 			case <-req.Context().Done():
 				return
 			}
+			newMsgID := atomic.AddInt32(&msgID, 1)
+			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, string(by))
+			flusher.Flush()
 		}
 	})
 	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {

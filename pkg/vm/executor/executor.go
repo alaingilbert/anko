@@ -84,8 +84,8 @@ type Executor struct {
 	importCore       bool                                 // either or not to import core functions in executor's env
 	watchdogEnabled  bool                                 // either or not to run the watchdog
 	maxEnvCount      *mtx.Mtx[int64]                      // maximum sub-env allowed before the watchdog kills the script
-	isRunning        atomic.Bool
-	pubSubEvts       *pubsub.PubSub[string, Evt]
+	isRunning        atomic.Bool                          // Either or not the executor is running a script
+	pubSubEvts       *pubsub.PubSub[string, Evt]          // pubsub for executor's events
 }
 
 // Config for the executor

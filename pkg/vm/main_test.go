@@ -6,6 +6,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/compiler"
 	"github.com/alaingilbert/anko/pkg/parser"
+	"github.com/alaingilbert/anko/pkg/vm/executor"
 	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"reflect"
 	"testing"
@@ -110,6 +111,7 @@ type Test struct {
 type Options struct {
 	DefineImport bool
 	ImportCore   bool
+	Executor     executor.IExecutor
 }
 
 func runTest(t *testing.T, test Test, testingOptions *Options) {
@@ -187,6 +189,9 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	e := v.Executor()
+	if testingOptions != nil && testingOptions.Executor != nil {
+		e = testingOptions.Executor
+	}
 	if stmt, ok := stmt.(*ast.StmtsStmt); ok {
 		if stmt != nil {
 			value, err = e.Run(ctx, stmt)

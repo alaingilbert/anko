@@ -363,17 +363,24 @@ for i=0; i<10; i++ {
 		resp.Header().Set("Content-Type", "text/event-stream")
 		resp.Header().Set("Cache-Control", "no-cache")
 		resp.Header().Set("Connection", "keep-alive")
-		sub := ps.Subscribe(scriptTopic, systemTopic)
-		defer sub.Close()
+		sub1 := ps.Subscribe(scriptTopic, systemTopic)
+		defer sub1.Close()
+		sub2 := e.Subscribe()
+		defer sub2.Close()
 		var msgID int32
 		for {
-			topic, msg, err := sub.ReceiveContext(req.Context())
-			if err != nil {
+			select {
+			case msg := <-sub1.ReceiveCh():
+				newMsgID := atomic.AddInt32(&msgID, 1)
+				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s: %s\r\n\r\n", newMsgID, msg.Topic, msg.Msg)
+				flusher.Flush()
+			case msg := <-sub2.ReceiveCh():
+				newMsgID := atomic.AddInt32(&msgID, 1)
+				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s: %s\r\n\r\n", newMsgID, msg.Topic, msg.Msg)
+				flusher.Flush()
+			case <-req.Context().Done():
 				return
 			}
-			newMsgID := atomic.AddInt32(&msgID, 1)
-			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s: %s\r\n\r\n", newMsgID, topic, msg)
-			flusher.Flush()
 		}
 	})
 	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {

@@ -16,6 +16,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/utils/pubsub"
 	"github.com/alaingilbert/anko/pkg/vm"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	"github.com/alaingilbert/anko/pkg/vm/executor"
 	"github.com/alaingilbert/anko/pkg/vm/runner"
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"github.com/chzyer/readline"
@@ -401,9 +402,9 @@ for i=0; i<10; i++ {
 				}
 			} else if submit == "toggle_pause" {
 				res := e.TogglePause()
-				if res == 1 {
+				if res == executor.PausedToggle {
 					ps.Pub(systemTopic, "script paused")
-				} else if res == 2 {
+				} else if res == executor.ResumedToggle {
 					ps.Pub(systemTopic, "script resumed")
 				}
 			}

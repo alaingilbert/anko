@@ -248,7 +248,7 @@ func callExpr(vmp *VmParams, envArg env.IEnv, callExpr *ast.CallExpr) (rv reflec
 	}
 
 	injectCtx := false
-	if val, ok := f.Interface().(env.InjectCtx); ok {
+	if val, ok := f.Interface().(*env.InjectCtx); ok {
 		injectCtx = true
 		f = reflect.ValueOf(val.Value)
 	}

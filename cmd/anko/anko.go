@@ -318,14 +318,29 @@ func compileAndSave(source, fileName string) error {
 	return nil
 }
 
+const (
+	SystemLogType = "system"
+	ScriptLogType = "script"
+)
+
+type VmLog struct {
+	Type string
+	Msg  string
+}
+
+func (l *VmLog) Json() string {
+	by, _ := json.Marshal(l)
+	return string(by)
+}
+
 func runWeb() int {
 	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 
-	logCh := make(chan string)
+	logCh := make(chan VmLog)
 
 	_ = v.Define("log", func(msg string) {
 		select {
-		case logCh <- msg:
+		case logCh <- VmLog{Type: ScriptLogType, Msg: msg}:
 		default:
 		}
 	})
@@ -366,14 +381,14 @@ for i=0; i<10; i++ {
 		resp.Header().Set("Access-Control-Allow-Origin", "*")
 		var msgID int32
 		for {
-			var msg string
+			var msg VmLog
 			select {
 			case msg = <-logCh:
 			case <-req.Context().Done():
 				return
 			}
 			newMsgID := atomic.AddInt32(&msgID, 1)
-			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, msg)
+			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, msg.Json())
 			flusher.Flush()
 		}
 	})
@@ -384,11 +399,19 @@ for i=0; i<10; i++ {
 			script = req.PostFormValue("source")
 			submit := req.PostFormValue("submit")
 			if submit == "run" {
+				logCh <- VmLog{Type: SystemLogType, Msg: "run script"}
 				e.RunAsync(context.Background(), script)
 			} else if submit == "stop" {
 				e.Stop()
+				logCh <- VmLog{Type: SystemLogType, Msg: "stop script"}
 			} else if submit == "toggle_pause" {
-				utils.Ternary(e.IsPaused(), e.Resume, e.Pause)()
+				if e.IsPaused() {
+					logCh <- VmLog{Type: SystemLogType, Msg: "script resumed"}
+					e.Resume()
+				} else {
+					e.Pause()
+					logCh <- VmLog{Type: SystemLogType, Msg: "script paused"}
+				}
 			}
 			return
 		}

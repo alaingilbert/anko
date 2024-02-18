@@ -29,27 +29,60 @@ func (s *StateCh) IsClosed() bool {
 func (s *StateCh) Close() (changed bool) {
 	s.Lock()
 	defer s.Unlock()
-	if !s.closed {
-		close(s.state)
-		s.closed = true
-		return true
-	}
-	return false
+	return s.close()
 }
 
 // Open creates a new channel if currently closed
 func (s *StateCh) Open() (changed bool) {
 	s.Lock()
 	defer s.Unlock()
-	if s.closed {
-		s.state = make(chan struct{})
-		s.closed = false
-		return true
-	}
-	return false
+	return s.open()
+}
+
+// Toggle returns true if the state got opened, false otherwise
+func (s *StateCh) Toggle() bool {
+	s.Lock()
+	defer s.Unlock()
+	return s.toggle()
 }
 
 // Wait if channel is open, continue otherwise
 func (s *StateCh) Wait() <-chan struct{} {
 	return s.state
+}
+
+func (s *StateCh) close() (changed bool) {
+	if !s.closed {
+		s.closeCh()
+		return true
+	}
+	return false
+}
+
+func (s *StateCh) open() (changed bool) {
+	if s.closed {
+		s.makeCh()
+		return true
+	}
+	return false
+}
+
+func (s *StateCh) toggle() bool {
+	if s.closed {
+		s.makeCh()
+		return true
+	} else {
+		s.closeCh()
+		return false
+	}
+}
+
+func (s *StateCh) closeCh() {
+	close(s.state)
+	s.closed = true
+}
+
+func (s *StateCh) makeCh() {
+	s.state = make(chan struct{})
+	s.closed = false
 }

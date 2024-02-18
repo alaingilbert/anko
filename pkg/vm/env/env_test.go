@@ -1384,8 +1384,11 @@ func TestEnv_Name(t *testing.T) {
 func TestDefineCtx(t *testing.T) {
 	env := NewEnv()
 	_ = env.DefineCtx("a", func(ctx context.Context) {})
+	_ = env.DefineCtx("b", 1)
 	_, err := env.Get("a")
+	val, _ := env.Get("b")
 	assert.NoError(t, err)
+	assert.Equal(t, 1, val)
 }
 
 func TestWithNewEnv(t *testing.T) {

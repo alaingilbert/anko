@@ -382,14 +382,12 @@ for i=0; i<10; i++ {
 		defer sub.Close()
 		var msgID int32
 		for {
-			var msg pubsub.Payload[string, VmLog]
-			select {
-			case msg = <-sub.ReceiveCh():
-			case <-req.Context().Done():
+			_, msg, err := sub.ReceiveContext(req.Context())
+			if err != nil {
 				return
 			}
 			newMsgID := atomic.AddInt32(&msgID, 1)
-			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, msg.Msg.Json())
+			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, msg.Json())
 			flusher.Flush()
 		}
 	})

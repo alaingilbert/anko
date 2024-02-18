@@ -379,9 +379,9 @@ for i=0; i<10; i++ {
 		resp.WriteHeader(http.StatusOK)
 		script := defaultScript
 		if req.Method == http.MethodPost {
-			script = req.PostFormValue("source")
 			submit := req.PostFormValue("submit")
 			if submit == "run" {
+				script = req.PostFormValue("source")
 				if e.RunAsync(context.Background(), script) {
 					ps.Pub(systemTopic, "run script")
 				}

@@ -444,7 +444,7 @@ for i=0; i<10; i++ {
 			Running: <span id="is_running">{{ if .IsRunning }}running{{ else }}stopped{{ end }}</span> |
 			Paused: <span id="is_paused">{{ if .IsPaused }}paused{{ else }}not paused{{ end }}</span>
 		</div>
-		<textarea name="source" id="source" rows="10" cols="80">` + script + `</textarea>
+		<textarea name="source" id="source" rows="10" cols="80">{{ .Script }}</textarea>
 		<div id="logs"></div>
 		<script>
 			const evtSource = new EventSource("/sse");
@@ -469,6 +469,7 @@ for i=0; i<10; i++ {
 		data := map[string]any{
 			"IsRunning": e.IsRunning(),
 			"IsPaused":  e.IsPaused(),
+			"Script":    script,
 		}
 		buf := new(bytes.Buffer)
 		tmpl, _ := template.New("").Parse(pageHtml)

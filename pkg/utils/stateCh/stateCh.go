@@ -38,13 +38,15 @@ func (s *StateCh) Close() (changed bool) {
 }
 
 // Open creates a new channel if currently closed
-func (s *StateCh) Open() {
+func (s *StateCh) Open() (changed bool) {
 	s.Lock()
 	defer s.Unlock()
 	if s.closed {
 		s.state = make(chan struct{})
 		s.closed = false
+		return true
 	}
+	return false
 }
 
 // Wait if channel is open, continue otherwise

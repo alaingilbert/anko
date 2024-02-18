@@ -397,11 +397,13 @@ for i=0; i<10; i++ {
 				ps.Pub(systemTopic, "stop script")
 			} else if submit == "toggle_pause" {
 				if e.IsPaused() {
-					ps.Pub(systemTopic, "script resumed")
-					e.Resume()
+					if e.Resume() {
+						ps.Pub(systemTopic, "script resumed")
+					}
 				} else {
-					e.Pause()
-					ps.Pub(systemTopic, "script paused")
+					if e.Pause() {
+						ps.Pub(systemTopic, "script paused")
+					}
 				}
 			}
 			return

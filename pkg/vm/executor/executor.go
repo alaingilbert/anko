@@ -27,8 +27,8 @@ type IExecutor interface {
 	Has(ctx context.Context, input any, targets []any) ([]bool, error)
 	IsPaused() bool
 	IsRunning() bool
-	Pause()
-	Resume()
+	Pause() bool
+	Resume() bool
 	Run(ctx context.Context, input any) (any, error)
 	RunAsync(ctx context.Context, input any)
 	Stop()
@@ -146,12 +146,12 @@ func (e *Executor) Has(ctx context.Context, input any, targets []any) ([]bool, e
 	return e.has(ctx, input, targets)
 }
 
-func (e *Executor) Pause() {
-	e.pauseFn()
+func (e *Executor) Pause() bool {
+	return e.pauseFn()
 }
 
-func (e *Executor) Resume() {
-	e.resume()
+func (e *Executor) Resume() bool {
+	return e.resume()
 }
 
 func (e *Executor) Subscribe() *Sub {
@@ -232,17 +232,22 @@ func (e *Executor) stop() {
 	e.resume()
 }
 
-func (e *Executor) pauseFn() {
+func (e *Executor) pauseFn() (changed bool) {
 	if e.isRunning.Load() {
-		e.pause.Open()
-		e.pubSubEvts.Pub(executorTopic, PausedEvt)
+		changed = e.pause.Open()
+		if changed {
+			e.pubSubEvts.Pub(executorTopic, PausedEvt)
+		}
 	}
+	return changed
 }
 
-func (e *Executor) resume() {
-	if e.pause.Close() {
+func (e *Executor) resume() (changed bool) {
+	changed = e.pause.Close()
+	if changed {
 		e.pubSubEvts.Pub(executorTopic, ResumedEvt)
 	}
+	return changed
 }
 
 func srcToStmt(src string) (ast.Stmt, error) {

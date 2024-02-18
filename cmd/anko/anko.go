@@ -276,15 +276,15 @@ exit:
 	return OkExitCode
 }
 
-func rebuildCompleter(e envPkg.IEnv) {
+func rebuildCompleter(env envPkg.IEnv) {
 	newArr := base
 	keys := make([]string, 0)
-	e.Values().Each(func(s string, value reflect.Value) {
-		keys = append(keys, s)
+	env.Values().Each(func(key string, value reflect.Value) {
+		keys = append(keys, key)
 		if value.IsValid() {
-			if ee, ok := value.Interface().(envPkg.IEnv); ok {
-				ee.Values().Each(func(ss string, _ reflect.Value) {
-					keys = append(keys, s+"."+ss)
+			if module, ok := value.Interface().(envPkg.IEnv); ok {
+				module.Values().Each(func(modKey string, _ reflect.Value) {
+					keys = append(keys, key+"."+modKey)
 				})
 			}
 		}

@@ -80,6 +80,7 @@ func TestExecutor_Validate(t *testing.T) {
 		{input: "a = func(){ if true { } else if true { } else { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
 		{input: "a = func(){ if true { } else if true { invalidFn() } else { } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
 		{input: "a = func(){ try { } catch err { invalidFn() } finally { } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+		{input: "switch 0 { case 1: invalidFn(); }", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
 	}
 	e := NewExecutor(&Config{Env: envPkg.NewEnv()})
 	ctx := context.Background()

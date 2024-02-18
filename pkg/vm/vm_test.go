@@ -1749,14 +1749,6 @@ func TestExecuteError(t *testing.T) {
 	}
 }
 
-func TestCyclesExecuted(t *testing.T) {
-	script := "a = 1; b = 2; if a == b { return a; }; return b"
-	v := New(nil)
-	e := v.Executor()
-	_, _ = e.Run(nil, script)
-	assert.Equal(t, int64(11), e.GetCycles())
-}
-
 func TestHas(t *testing.T) {
 	toString := func(value any) string {
 		return fmt.Sprintf("%v", value)

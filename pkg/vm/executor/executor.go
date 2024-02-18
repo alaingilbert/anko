@@ -25,7 +25,6 @@ type Sub = pubsub.Sub[string, Evt]
 
 // IExecutor interface that the executor implements
 type IExecutor interface {
-	GetCycles() int64
 	Has(ctx context.Context, input any, targets []any) ([]bool, error)
 	IsPaused() bool
 	IsRunning() bool
@@ -190,11 +189,6 @@ func (e *Executor) IsRunning() bool {
 	return e.isRunning.Load()
 }
 
-// GetCycles returns how many expr/stmt were processed by the executor
-func (e *Executor) GetCycles() int64 {
-	return atomic.LoadInt64(&e.stats.Cycles)
-}
-
 // GetEnv returns the Env used by the executor
 func (e *Executor) GetEnv() envPkg.IEnv {
 	return e.env
@@ -302,6 +296,11 @@ func (e *Executor) resume() (changed bool) {
 		e.pubSubEvts.Pub(executorTopic, ResumedEvt)
 	}
 	return changed
+}
+
+// getCycles returns how many expr/stmt were processed by the executor
+func (e *Executor) getCycles() int64 {
+	return atomic.LoadInt64(&e.stats.Cycles)
 }
 
 func srcToStmt(src string) (ast.Stmt, error) {

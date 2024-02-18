@@ -356,9 +356,6 @@ func (e *Executor) runWithContextForLoad(ctx context.Context, stmts ast.Stmt) (a
 }
 
 func valueToAny(rv reflect.Value, err error) (any, error) {
-	if errors.Is(err, runner.ErrReturn) {
-		err = nil
-	}
 	if !rv.IsValid() || !rv.CanInterface() {
 		return nil, err
 	}
@@ -476,6 +473,9 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 		Validate:         validate,
 		Has:              has,
 	})
+	if errors.Is(err, runner.ErrReturn) {
+		err = nil
+	}
 	if err != nil {
 		return nil, rv, err
 	}

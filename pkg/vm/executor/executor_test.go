@@ -11,6 +11,8 @@ func TestGetCycles(t *testing.T) {
 	script := "a = 1; b = 2; if a == b { return a; }; return b"
 	env := envPkg.NewEnv()
 	e := NewExecutor(&Config{Env: env})
-	_, _ = e.Run(context.Background(), script)
+	val, err := e.Run(context.Background(), script)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), val)
 	assert.Equal(t, int64(11), e.getCycles())
 }

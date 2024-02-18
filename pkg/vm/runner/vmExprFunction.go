@@ -351,11 +351,20 @@ func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 	if injectCtx {
 		numIn--
 	}
+
+	// number of expressions
+	numExprs := len(callExpr.SubExprs)
+
 	if numIn < 1 {
 		// no arguments needed
 		if isRunVMFunction {
 			// for runVMFunction first arg is always IsVmFunc & context
 			return []reflect.Value{reflect.ValueOf(&IsVmFunc{vmp.ctx})}, []reflect.Type{reflect.TypeOf(&IsVmFunc{vmp.ctx})}, false, nil
+		}
+
+		if numIn != numExprs {
+			err := newStringError(callExpr, fmt.Sprintf("function wants %v arguments but received %v", numIn, numExprs))
+			return []reflect.Value{}, []reflect.Type{}, false, err
 		}
 		args := make([]reflect.Value, 0)
 		types := make([]reflect.Type, 0)
@@ -367,8 +376,6 @@ func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 		return args, types, false, nil
 	}
 
-	// number of expressions
-	numExprs := len(callExpr.SubExprs)
 	// checks to short circuit wrong number of arguments
 	if (!rt.IsVariadic() && !callExpr.VarArg && numIn != numExprs) ||
 		(rt.IsVariadic() && callExpr.VarArg && (numIn < numExprs || numIn > numExprs+1)) ||

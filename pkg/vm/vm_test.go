@@ -1865,6 +1865,7 @@ func TestDefineCtx(t *testing.T) {
 	_ = e.DefineCtx("b", func(context.Context, int64) int64 { return 1 })
 	tests := []Test{
 		{Script: `a()`, RunOutput: int64(1), Name: ""},
+		{Script: `a(1)`, RunError: fmt.Errorf("function wants 0 arguments but received 1"), Name: ""},
 		{Script: `b(1, 2)`, RunError: fmt.Errorf("function wants 1 arguments but received 2"), Name: ""},
 	}
 	for _, tt := range tests {

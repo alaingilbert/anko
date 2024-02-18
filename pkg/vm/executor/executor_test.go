@@ -67,18 +67,21 @@ func TestValidate(t *testing.T) {
 	e := NewExecutor(&Config{Env: envPkg.NewEnv()})
 	ctx := context.Background()
 	script := "a = 1; b = 2; if a == b { return a; }; return b"
-	err := e.Validate(ctx, script)
-	assert.NoError(t, err)
-
+	assert.NoError(t, e.Validate(ctx, script))
 	script = "a = func(){ return 1; }; a()"
 	assert.NoError(t, e.Validate(ctx, script))
-
 	script = "a = func(){ invalidFn() }; a()"
 	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
-
 	script = "a = func(){ if (true) { invalidFn() } }; a()"
 	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
-
 	script = "a = func(){ if (false) { invalidFn() } }; a()"
+	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
+	//script = "a = func(){ if (true) { return 1; } else { invalidFn() } }; a()" // TODO: fix ErrReturn
+	//assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
+	script = "a = func(){ if (true) { } else { invalidFn() } }; a()"
+	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
+	script = "a = func(){ if true { } else if true { } else { invalidFn() } }; a()"
+	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
+	script = "a = func(){ if true { } else if true { invalidFn() } else { } }; a()"
 	assert.ErrorContains(t, e.Validate(ctx, script), "undefined symbol 'invalidFn'")
 }

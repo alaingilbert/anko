@@ -204,13 +204,14 @@ func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt)
 }
 
 func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value, error) {
+	validate := vmp.Validate
 	// if
 	rv, err := invokeExpr(vmp, env, stmt.If)
 	if err != nil {
 		return rv, newError(stmt.If, err)
 	}
 
-	if toBool(rv) || vmp.Validate {
+	if toBool(rv) || validate {
 		// then
 		env.WithNewEnv(func(newenv envPkg.IEnv) {
 			rv, err = runSingleStmt(vmp, newenv, stmt.Then)
@@ -218,7 +219,9 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		if err != nil {
 			return rv, newError(stmt, err)
 		}
-		return rv, nil
+		if !validate {
+			return rv, nil
+		}
 	}
 
 	for _, statement := range stmt.ElseIf {
@@ -230,7 +233,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		if err != nil {
 			return rv, newError(elseIf.If, err)
 		}
-		if !toBool(rv) && !vmp.Validate {
+		if !toBool(rv) && !validate {
 			continue
 		}
 
@@ -241,7 +244,9 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		if err != nil {
 			return rv, newError(elseIf, err)
 		}
-		return rv, nil
+		if !validate {
+			return rv, nil
+		}
 	}
 
 	if stmt.Else != nil {

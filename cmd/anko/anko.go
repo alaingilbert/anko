@@ -363,7 +363,6 @@ for i=0; i<10; i++ {
 		resp.Header().Set("Content-Type", "text/event-stream")
 		resp.Header().Set("Cache-Control", "no-cache")
 		resp.Header().Set("Connection", "keep-alive")
-		resp.Header().Set("Access-Control-Allow-Origin", "*")
 		sub := ps.Subscribe(logsTopic, systemTopic)
 		defer sub.Close()
 		var msgID int32

@@ -32,6 +32,7 @@ type IExecutor interface {
 	Run(ctx context.Context, input any) (any, error)
 	RunAsync(ctx context.Context, input any) bool
 	Stop() bool
+	TogglePause() int
 	Subscribe() *Sub
 	Validate(ctx context.Context, input any) error
 
@@ -146,6 +147,10 @@ func (e *Executor) Has(ctx context.Context, input any, targets []any) ([]bool, e
 	return e.has(ctx, input, targets)
 }
 
+func (e *Executor) TogglePause() int {
+	return e.togglePause()
+}
+
 func (e *Executor) Pause() bool {
 	return e.pauseFn()
 }
@@ -238,6 +243,18 @@ func (e *Executor) stop() bool {
 	}
 	e.resume()
 	return true
+}
+
+func (e *Executor) togglePause() int {
+	if e.isRunning.Load() {
+		if e.pause.Toggle() {
+			e.pubSubEvts.Pub(executorTopic, PausedEvt)
+			return 1
+		}
+		e.pubSubEvts.Pub(executorTopic, ResumedEvt)
+		return 2
+	}
+	return 0
 }
 
 func (e *Executor) pauseFn() (changed bool) {

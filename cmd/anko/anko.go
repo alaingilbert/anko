@@ -372,11 +372,13 @@ for i=0; i<10; i++ {
 			select {
 			case msg := <-sub1.ReceiveCh():
 				newMsgID := atomic.AddInt32(&msgID, 1)
-				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s: %s\r\n\r\n", newMsgID, msg.Topic, msg.Msg)
+				by, _ := json.Marshal(msg)
+				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, string(by))
 				flusher.Flush()
 			case msg := <-sub2.ReceiveCh():
 				newMsgID := atomic.AddInt32(&msgID, 1)
-				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s: %s\r\n\r\n", newMsgID, msg.Topic, msg.Msg.String())
+				by, _ := json.Marshal(msg)
+				_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, string(by))
 				flusher.Flush()
 			case <-req.Context().Done():
 				return
@@ -456,8 +458,18 @@ for i=0; i<10; i++ {
 			const evtSource = new EventSource("/sse");
 			evtSource.onmessage = (evt) => {
 				var newDiv = document.createElement("div");
-    			newDiv.textContent = evt.data;
-				document.getElementById("logs").appendChild(newDiv);
+				const data = JSON.parse(evt.data);
+    			newDiv.textContent = data.Topic + ": " + data.Msg;
+				if (data.Topic === "executor") {
+					switch (data.Msg) {
+						case 1: document.getElementById("is_running").innerHTML = "running"; break;
+						case 2: document.getElementById("is_running").innerHTML = "stopped"; break;
+						case 3: document.getElementById("is_paused").innerHTML = "paused"; break;
+						case 4: document.getElementById("is_paused").innerHTML = "not paused"; break;
+					}
+				} else {
+					document.getElementById("logs").appendChild(newDiv);
+				}
 			};
 		</script>
 	</body>

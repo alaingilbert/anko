@@ -337,6 +337,7 @@ func runWeb() int {
 		select {
 		case <-time.After(duration):
 		case <-ctx.Done():
+			panic(ctx.Err())
 		}
 	})
 

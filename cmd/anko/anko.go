@@ -319,29 +319,15 @@ func compileAndSave(source, fileName string) error {
 	return nil
 }
 
-const (
-	SystemLogType = "system"
-	ScriptLogType = "script"
-)
-
-type VmLog struct {
-	Type string
-	Msg  string
-}
-
-func (l *VmLog) Json() string {
-	by, _ := json.Marshal(l)
-	return string(by)
-}
-
 func runWeb() int {
 	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 
 	const logsTopic = "logs"
-	ps := pubsub.NewPubSub[VmLog]()
+	const systemTopic = "system"
+	ps := pubsub.NewPubSub[string]()
 
 	_ = v.Define("log", func(msg string) {
-		ps.Pub(logsTopic, VmLog{Type: ScriptLogType, Msg: msg})
+		ps.Pub(logsTopic, msg)
 	})
 
 	// Custom sleep function that will quit faster if the running context is cancelled
@@ -378,16 +364,16 @@ for i=0; i<10; i++ {
 		resp.Header().Set("Cache-Control", "no-cache")
 		resp.Header().Set("Connection", "keep-alive")
 		resp.Header().Set("Access-Control-Allow-Origin", "*")
-		sub := ps.Subscribe(logsTopic)
+		sub := ps.Subscribe(logsTopic, systemTopic)
 		defer sub.Close()
 		var msgID int32
 		for {
-			_, msg, err := sub.ReceiveContext(req.Context())
+			topic, msg, err := sub.ReceiveContext(req.Context())
 			if err != nil {
 				return
 			}
 			newMsgID := atomic.AddInt32(&msgID, 1)
-			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s\r\n\r\n", newMsgID, msg.Json())
+			_, _ = fmt.Fprintf(resp, "id: %d\r\ndata: %s: %s\r\n\r\n", newMsgID, topic, msg)
 			flusher.Flush()
 		}
 	})
@@ -398,18 +384,18 @@ for i=0; i<10; i++ {
 			script = req.PostFormValue("source")
 			submit := req.PostFormValue("submit")
 			if submit == "run" {
-				ps.Pub(logsTopic, VmLog{Type: SystemLogType, Msg: "run script"})
+				ps.Pub(systemTopic, "run script")
 				e.RunAsync(context.Background(), script)
 			} else if submit == "stop" {
 				e.Stop()
-				ps.Pub(logsTopic, VmLog{Type: SystemLogType, Msg: "stop script"})
+				ps.Pub(systemTopic, "stop script")
 			} else if submit == "toggle_pause" {
 				if e.IsPaused() {
-					ps.Pub(logsTopic, VmLog{Type: SystemLogType, Msg: "script resumed"})
+					ps.Pub(systemTopic, "script resumed")
 					e.Resume()
 				} else {
 					e.Pause()
-					ps.Pub(logsTopic, VmLog{Type: SystemLogType, Msg: "script paused"})
+					ps.Pub(systemTopic, "script paused")
 				}
 			}
 			return
@@ -462,8 +448,7 @@ for i=0; i<10; i++ {
 			const evtSource = new EventSource("/sse");
 			evtSource.onmessage = (evt) => {
 				var newDiv = document.createElement("div");
-				var data = JSON.parse(evt.data)
-    			newDiv.textContent = data.Type + ": " + data.Msg;
+    			newDiv.textContent = evt.data;
 				document.getElementById("logs").appendChild(newDiv);
 			};
 		</script>

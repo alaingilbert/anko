@@ -34,25 +34,37 @@ type Topic comparable
 // PubSub contains and manage the map of topics -> subscribers
 type PubSub[T Topic, V any] struct {
 	sync.RWMutex
-	m map[T]map[*Sub[T, V]]struct{}
+	m        map[T]map[*Sub[T, V]]struct{}
+	buffered int
+}
+
+// Config for pubsub
+type Config struct {
+	Buffered int
 }
 
 // NewPubSub creates a new PubSub
-func NewPubSub[V any]() *PubSub[string, V] {
-	return NewPubSubTopic[string, V]()
+func NewPubSub[V any](cfg *Config) *PubSub[string, V] {
+	return NewPubSubTopic[string, V](cfg)
 }
 
 // NewPubSubTopic creates a new PubSub with customizable Topic type
-func NewPubSubTopic[T Topic, V any]() *PubSub[T, V] {
+func NewPubSubTopic[T Topic, V any](cfg *Config) *PubSub[T, V] {
 	ps := PubSub[T, V]{}
 	ps.m = make(map[T]map[*Sub[T, V]]struct{})
+	if cfg != nil {
+		ps.buffered = cfg.Buffered
+	} else {
+		ps.buffered = 10
+	}
 	return &ps
 }
 
 // Subscribe to one or more topics
 func (p *PubSub[T, V]) Subscribe(topics ...T) *Sub[T, V] {
 	ctx, cancel := context.WithCancel(context.Background())
-	s := &Sub[T, V]{topics: topics, ch: make(chan Payload[T, V], 10), ctx: ctx, cancel: cancel, p: p}
+	ch := make(chan Payload[T, V], p.buffered)
+	s := &Sub[T, V]{topics: topics, ch: ch, ctx: ctx, cancel: cancel, p: p}
 	p.addSubscriber(s)
 	return s
 }

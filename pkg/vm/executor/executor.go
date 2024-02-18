@@ -123,7 +123,7 @@ func NewExecutor(cfg *Config) *Executor {
 	if cfg.RateLimit > 0 {
 		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
 	}
-	e.pubSubEvts = pubsub.NewPubSub[Evt]()
+	e.pubSubEvts = pubsub.NewPubSub[Evt](nil)
 	return e
 }
 

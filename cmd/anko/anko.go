@@ -325,7 +325,7 @@ func runWeb() int {
 
 	const scriptTopic = "script"
 	const systemTopic = "system"
-	ps := pubsub.NewPubSub[string]()
+	ps := pubsub.NewPubSub[string](nil)
 
 	_ = v.Define("log", func(msg string) {
 		ps.Pub(scriptTopic, msg)

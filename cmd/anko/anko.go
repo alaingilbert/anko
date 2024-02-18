@@ -62,7 +62,7 @@ func main() {
 	if appFlags.FlagExecute != "" || flag.NArg() > 0 {
 		exitCode = runNonInteractive(args, appFlags)
 	} else if appFlags.Web {
-		exitCode = runWeb(args)
+		exitCode = runWeb()
 	} else {
 		exitCode = runInteractive(args)
 	}
@@ -317,7 +317,7 @@ func compileAndSave(source, fileName string) error {
 	return nil
 }
 
-func runWeb(args []string) int {
+func runWeb() int {
 	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 
 	logCh := make(chan string)

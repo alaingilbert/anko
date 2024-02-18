@@ -1858,3 +1858,16 @@ func TestTest(t *testing.T) {
 	assert.Error(t, utils.MustErr(v.env.Get("a")))
 	assert.Equal(t, int64(2), utils.Must(e2.GetEnv().Get("b")).(int64))
 }
+
+func TestDefineCtx(t *testing.T) {
+	e := New(nil).Executor()
+	_ = e.DefineCtx("a", func(context.Context) int64 { return 1 })
+	_ = e.DefineCtx("b", func(context.Context, int64) int64 { return 1 })
+	tests := []Test{
+		{Script: `a()`, RunOutput: int64(1), Name: ""},
+		{Script: `b(1, 2)`, RunError: fmt.Errorf("function wants 1 arguments but received 2"), Name: ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{Executor: e}) })
+	}
+}

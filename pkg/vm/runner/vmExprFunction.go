@@ -357,7 +357,14 @@ func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 			// for runVMFunction first arg is always IsVmFunc & context
 			return []reflect.Value{reflect.ValueOf(&IsVmFunc{vmp.ctx})}, []reflect.Type{reflect.TypeOf(&IsVmFunc{vmp.ctx})}, false, nil
 		}
-		return []reflect.Value{}, []reflect.Type{}, false, nil
+		args := make([]reflect.Value, 0)
+		types := make([]reflect.Type, 0)
+		if injectCtx {
+			arg := reflect.ValueOf(vmp.ctx)
+			types = append(types, arg.Type())
+			args = append(args, arg)
+		}
+		return args, types, false, nil
 	}
 
 	// number of expressions

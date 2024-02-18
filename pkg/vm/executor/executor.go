@@ -20,8 +20,10 @@ import (
 	"time"
 )
 
+// Sub subscriber type for executor events
 type Sub = pubsub.Sub[string, Evt]
 
+// IExecutor interface that the executor implements
 type IExecutor interface {
 	GetCycles() int64
 	Has(ctx context.Context, input any, targets []any) ([]bool, error)
@@ -39,12 +41,14 @@ type IExecutor interface {
 	GetEnv() envPkg.IEnv
 }
 
+// Compile time checks to ensure type satisfies IExecutor interface
 var _ IExecutor = (*Executor)(nil)
 
 const (
 	executorTopic = "executor"
 )
 
+// Evt events spawned by the executor
 type Evt int
 
 func (e Evt) String() (out string) {
@@ -68,6 +72,7 @@ const (
 	ResumedEvt
 )
 
+// Executor is responsible for executing scripts and managing state
 type Executor struct {
 	env              envPkg.IEnv                          // executor's env
 	pause            *stateCh.StateCh                     // allows pause/resume of scripts
@@ -83,6 +88,7 @@ type Executor struct {
 	pubSubEvts       *pubsub.PubSub[string, Evt]
 }
 
+// Config for the executor
 type Config struct {
 	DoNotProtectMaps bool
 	DoNotDeepCopyEnv bool
@@ -95,6 +101,7 @@ type Config struct {
 	MaxEnvCount      int
 }
 
+// NewExecutor creates a new executor
 func NewExecutor(cfg *Config) *Executor {
 	if cfg == nil {
 		return nil
@@ -127,54 +134,68 @@ func NewExecutor(cfg *Config) *Executor {
 	return e
 }
 
+// Stop the execution of a script. Returns true if we stopped it, false if the executor was not running anything.
 func (e *Executor) Stop() bool {
 	return e.stop()
 }
 
+// Run the input synchronously
 func (e *Executor) Run(ctx context.Context, input any) (any, error) {
 	return e.run(ctx, input)
 }
 
+// RunAsync returns true if the script is being run async, false if we did not start it
 func (e *Executor) RunAsync(ctx context.Context, input any) bool {
 	return e.runAsync(ctx, input)
 }
 
+// Validate the input. It does not actually run the script, only statically analyze the input.
 func (e *Executor) Validate(ctx context.Context, input any) error {
 	return e.validate(ctx, input)
 }
 
+// Has receives targets, and return either or not these targets are being used in the script.
+// It does not actually run the script, it only statically check if the targets are used or not.
 func (e *Executor) Has(ctx context.Context, input any, targets []any) ([]bool, error) {
 	return e.has(ctx, input, targets)
 }
 
+// TogglePause toggle the pause state. Returns NoopToggle if the pause state did not change.
 func (e *Executor) TogglePause() TogglePauseResult {
 	return e.togglePause()
 }
 
+// Pause the execution of the script. Return true if the script got paused, false if it was already paused.
 func (e *Executor) Pause() bool {
 	return e.pauseFn()
 }
 
+// Resume the execution of the script. Return true if the script got resumed, false if it was already running.
 func (e *Executor) Resume() bool {
 	return e.resume()
 }
 
+// Subscribe returns a subscriber to the executor events
 func (e *Executor) Subscribe() *Sub {
 	return e.pubSubEvts.Subscribe(executorTopic)
 }
 
+// IsPaused returns either or not the execution is paused
 func (e *Executor) IsPaused() bool {
 	return !e.pause.IsClosed()
 }
 
+// IsRunning returns either or not the executor is currently running a script
 func (e *Executor) IsRunning() bool {
 	return e.isRunning.Load()
 }
 
+// GetCycles returns how many expr/stmt were processed by the executor
 func (e *Executor) GetCycles() int64 {
 	return atomic.LoadInt64(&e.stats.Cycles)
 }
 
+// GetEnv returns the Env used by the executor
 func (e *Executor) GetEnv() envPkg.IEnv {
 	return e.env
 }

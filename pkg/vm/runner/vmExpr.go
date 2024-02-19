@@ -1,9 +1,11 @@
 package runner
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"math"
 	"reflect"
 	"strconv"
@@ -56,6 +58,8 @@ func invokeExpr(vmp *VmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, e
 		return invokeNilCoalescingOpExpr(vmp, env, e)
 	case *ast.LenExpr:
 		return invokeLenExpr(vmp, env, e)
+	case *ast.DbgExpr:
+		return invokeDbgExpr(vmp, env, e)
 	case *ast.MakeExpr:
 		return invokeMakeExpr(vmp, env, e)
 	case *ast.MakeTypeExpr:
@@ -892,6 +896,82 @@ func invokeLenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LenExpr) (reflect.Valu
 	default:
 		return nilValue, newStringError(e, "type "+rv.Kind().String()+" does not support len operation")
 	}
+}
+
+func invokeDbgExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DbgExpr) (reflect.Value, error) {
+	if e.Expr == nil && e.TypeData == nil {
+		println(env.String())
+		return nilValue, nil
+	} else if e.Expr != nil {
+		val, err := invokeExpr(vmp, env, e.Expr)
+		if err != nil {
+			return nilValue, err
+		}
+		println(val.String())
+		return nilValue, nil
+	} else if e.TypeData != nil {
+		typeEnv, err := env.GetEnvFromPath(e.TypeData.Env)
+		if err != nil {
+			return nilValue, err
+		}
+		if rv, err := typeEnv.GetValue(e.TypeData.Name); err == nil {
+			if e, ok := rv.Interface().(*envPkg.Env); ok {
+				print(e.String())
+				return nilValue, nil
+			}
+			out := vmUtils.FormatValue(rv)
+			if rv.Kind() != reflect.Func {
+				out += fmt.Sprintf(" | %s", vmUtils.ReplaceInterface(reflect.TypeOf(rv.Interface()).String()))
+			}
+			println(out)
+			return nilValue, nil
+		}
+
+		rt, err := typeEnv.Type(e.TypeData.Name)
+		if err != nil {
+			return nilValue, err
+		}
+		if rt.Kind() == reflect.Interface {
+			nb := rt.NumMethod()
+			methodsArr := make([][]string, 0)
+			for i := 0; i < nb; i++ {
+				method := rt.Method(i)
+				methodsArr = append(methodsArr, []string{method.Name, method.Type.String()})
+			}
+			maxSymbolLen := sortAndMax(methodsArr)
+
+			buf := new(bytes.Buffer)
+			buf.WriteString("type " + rt.Name() + " interface {\n")
+			format := "    %-" + strconv.Itoa(maxSymbolLen) + "v %s\n"
+			for _, v := range methodsArr {
+				buf.WriteString(fmt.Sprintf(format, v[0], v[1]))
+			}
+			buf.WriteString("}")
+			println(buf.String())
+			return nilValue, nil
+		} else if rt.Kind() == reflect.Struct {
+			nb := rt.NumField()
+			fieldsArr := make([][]string, 0)
+			for i := 0; i < nb; i++ {
+				field := rt.Field(i)
+				fieldsArr = append(fieldsArr, []string{field.Name, field.Type.String()})
+			}
+			maxSymbolLen := sortAndMax(fieldsArr)
+
+			buf := new(bytes.Buffer)
+			buf.WriteString("type " + rt.Name() + " struct {\n")
+			format := "    %-" + strconv.Itoa(maxSymbolLen) + "v %s\n"
+			for _, v := range fieldsArr {
+				buf.WriteString(fmt.Sprintf(format, v[0], v[1]))
+			}
+			buf.WriteString("}")
+			println(buf.String())
+			return nilValue, nil
+		}
+		println(rt.String())
+		return nilValue, nil
+	}
+	return nilValue, nil
 }
 
 func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Value, error) {

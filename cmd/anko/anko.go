@@ -165,7 +165,6 @@ var base = []readline.PrefixCompleterInterface{
 		readline.PcItem("emacs"),
 	),
 	readline.PcItem("quit()"),
-	readline.PcItem("dump"),
 	readline.PcItem("help"),
 }
 
@@ -229,8 +228,6 @@ func runInteractive(args []string) int {
 			println("current mode: " + utils.Ternary(l.IsVimMode(), "vim", "emacs"))
 		case line == "help":
 			usage(l.Stderr())
-		case line == "dump":
-			println(executorInst.GetEnv().String())
 		case line == "quit()":
 			goto exit
 		case line == "":

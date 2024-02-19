@@ -374,9 +374,11 @@ func (e *Env) string() string {
 	for _, v := range valuesArr {
 		buffer.WriteString(fmt.Sprintf(format, v[0], v[1]))
 	}
-	buffer.WriteString("\n")
-	for _, v := range typesArr {
-		buffer.WriteString(fmt.Sprintf(format, v[0], v[1]))
+	if len(typesArr) > 0 {
+		buffer.WriteString("\n")
+		for _, v := range typesArr {
+			buffer.WriteString(fmt.Sprintf(format, v[0], v[1]))
+		}
 	}
 	return buffer.String()
 }

@@ -68,6 +68,7 @@ var opName = map[string]int{
 	"struct":   STRUCT,
 	"map":      MAP,
 	"make":     MAKE,
+	"dbg":      DBG,
 	"type":     TYPE,
 	"len":      LEN,
 	"delete":   DELETE,

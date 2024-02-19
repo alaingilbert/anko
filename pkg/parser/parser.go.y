@@ -71,7 +71,7 @@ import (
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR IN EQEQ NEQ GE LE OROR ANDAND NEW
             TRUE FALSE NIL NILCOALESCE MODULE TRY CATCH FINALLY PLUSEQ MINUSEQ MULEQ DIVEQ ANDEQ OREQ BREAK
             CONTINUE PLUSPLUS MINUSMINUS POW SHIFTLEFT SHIFTRIGHT SWITCH SELECT CASE DEFAULT GO DEFER CHAN MAKE
-            OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT
+            OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG
 
 %right '='
 %right '?' ':'
@@ -852,6 +852,21 @@ expr :
 	| LEN '(' expr ')'
 	{
 		$$ = &ast.LenExpr{Expr: $3}
+		$$.SetPosition($1.Position())
+	}
+	| DBG '(' ')'
+	{
+		$$ = &ast.DbgExpr{}
+		$$.SetPosition($1.Position())
+	}
+	| DBG '(' expr ')'
+	{
+		$$ = &ast.DbgExpr{Expr: $3}
+		$$.SetPosition($1.Position())
+	}
+	| DBG '(' type_data ')'
+	{
+		$$ = &ast.DbgExpr{TypeData: $3}
 		$$.SetPosition($1.Position())
 	}
 	| NEW '(' type_data ')'

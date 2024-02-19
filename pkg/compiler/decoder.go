@@ -424,6 +424,8 @@ func decodeExpr(r *Decoder) ast.Expr {
 		return decodeNilCoalescingOpExpr(r)
 	case LenExprBytecode:
 		return decodeLenExpr(r)
+	case DbgExprBytecode:
+		return decodeDbgExpr(r)
 	case MakeExprBytecode:
 		return decodeMakeExpr(r)
 	case MakeTypeExprBytecode:
@@ -593,6 +595,14 @@ func decodeLenExpr(r *Decoder) *ast.LenExpr {
 	out := &ast.LenExpr{}
 	out.ExprImpl = decodeExprImpl(r)
 	out.Expr = decodeExpr(r)
+	return out
+}
+
+func decodeDbgExpr(r *Decoder) *ast.DbgExpr {
+	out := &ast.DbgExpr{}
+	out.ExprImpl = decodeExprImpl(r)
+	out.Expr = decodeExpr(r)
+	out.TypeData = decodeTypeStruct(r)
 	return out
 }
 

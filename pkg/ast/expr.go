@@ -197,6 +197,13 @@ type ArrayCount struct {
 	Count int
 }
 
+// DbgExpr provide expression to debug anything
+type DbgExpr struct {
+	ExprImpl
+	Expr     Expr
+	TypeData *TypeStruct
+}
+
 // MakeExpr provide expression to make instance.
 type MakeExpr struct {
 	ExprImpl

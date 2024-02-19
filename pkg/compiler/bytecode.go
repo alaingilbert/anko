@@ -66,6 +66,7 @@ const (
 	IncludeExprBytecode    bytecode = 102
 	BinaryOperatorBytecode bytecode = 103 // "+" "-" "*" "/" "%" "**" "<<" ">>" "==" "!=" ">" ">=" "<" "<=" "|" "||" "&" "&&"
 	ConstExprBytecode      bytecode = 104
+	DbgExprBytecode        bytecode = 108
 )
 
 // String ...

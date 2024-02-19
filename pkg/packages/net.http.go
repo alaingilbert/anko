@@ -4,6 +4,7 @@ package packages
 
 import (
 	"net/http"
+	"reflect"
 )
 
 func init() {
@@ -24,9 +25,11 @@ func init() {
 		"PostForm":          http.PostForm,
 	})
 	PackageTypes.Insert("net/http", PackageMap{
-		"Client":   http.Client{},
-		"Cookie":   http.Cookie{},
-		"Request":  http.Request{},
-		"Response": http.Response{},
+		"Client":       http.Client{},
+		"Cookie":       http.Cookie{},
+		"CookieJar":    reflect.TypeOf((*http.CookieJar)(nil)).Elem(),
+		"Request":      http.Request{},
+		"Response":     http.Response{},
+		"RoundTripper": reflect.TypeOf((*http.RoundTripper)(nil)).Elem(),
 	})
 }

@@ -324,8 +324,12 @@ func runWeb() int {
 	const systemTopic = "system"
 	ps := pubsub.NewPubSub[string](nil)
 
-	_ = v.Define("log", func(msg string) {
-		ps.Pub(scriptTopic, msg)
+	_ = v.Define("log", func(a ...any) {
+		ps.Pub(scriptTopic, fmt.Sprintln(a...))
+	})
+
+	_ = v.Define("logf", func(format string, a ...any) {
+		ps.Pub(scriptTopic, fmt.Sprintf(format, a...))
 	})
 
 	// Custom sleep function that will quit faster if the running context is cancelled
@@ -359,11 +363,12 @@ select {
 `
 
 	typedFuncScript := `// This function is strongly typed for arguments and return values
-func test(a int64, b string) (string, int64) {
+func typedFn(a int64, b string) (string, int64) {
     log("got " + a + " and " + b)
     return "we can only return a string and int64", 123
 }
-test(42, "hello world")
+a, b = typedFn(42, "hello world")
+logf("%s | %d", a, b)
 `
 
 	scripts := [][]string{

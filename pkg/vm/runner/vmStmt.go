@@ -568,12 +568,13 @@ func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 			pos = e.Expr
 			che, ok = e.Expr.(*ast.ChanExpr)
 		}
+		invalidOperationErr := newStringError(pos, "invalid operation")
 		if !ok {
-			return nilValueL, newStringError(pos, "invalid operation")
+			return nilValueL, invalidOperationErr
 		}
 		ident, ok := che.Rhs.(*ast.IdentExpr)
 		if !ok {
-			return nilValueL, newStringError(pos, "invalid operation")
+			return nilValueL, invalidOperationErr
 		}
 		v, err := newenv.GetValue(ident.Lit)
 		if err != nil {

@@ -78,7 +78,7 @@ func Run(config *Config) (reflect.Value, error) {
 	// We use rvCh because the script can start goroutines and crash in one of them.
 	// So we need a way to stop the vm from another thread...
 	rvCh := make(chan Result)
-	
+
 	vmp := NewVmParams(config.Ctx, rvCh, config.Stats, config.DoNotProtectMaps, config.MapMutex,
 		config.Pause, config.RateLimit, validate, config.Has, validateLater)
 
@@ -93,14 +93,25 @@ func Run(config *Config) (reflect.Value, error) {
 	}
 
 	if validate {
-		for _, s := range validateLater {
-			var err error
-			env.WithNewEnv(func(newenv envPkg.IEnv) {
-				_, err = run(vmp, newenv, s)
-			})
-			if err != nil {
-				return nilValue, err
+		// We need to iterate until validateLater is empty.
+		// Otherwise, when we "run" it might append new items in it,
+		// and skip them as map are inconsistent in how they are iterated over,
+		// and cause tests to sometimes fail.
+		for {
+			for k, s := range validateLater {
+				var err error
+				env.WithNewEnv(func(newenv envPkg.IEnv) {
+					_, err = run(vmp, newenv, s)
+				})
+				delete(validateLater, k)
+				if err != nil {
+					return nilValue, err
+				}
 			}
+			if len(validateLater) > 0 {
+				continue
+			}
+			break
 		}
 	}
 

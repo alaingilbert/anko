@@ -408,10 +408,17 @@ logf("%s | %d", a, b)`
 		if req.Method == http.MethodPost {
 			submit := req.PostFormValue("submit")
 			if submit == "run" {
+				ctxTimeout := utils.Clamp(utils.DoParseI64(req.PostFormValue("ctx_timeout")), 0, 3600)
 				script = req.PostFormValue("source")
 				if !e.IsRunning() {
 					go func() {
-						if val, err := e.Run(context.Background(), script); err != nil {
+						ctx := context.Background()
+						if ctxTimeout > 0 {
+							var cancel context.CancelFunc
+							ctx, cancel = context.WithTimeout(ctx, time.Duration(ctxTimeout)*time.Second)
+							defer cancel()
+						}
+						if val, err := e.Run(ctx, script); err != nil {
 							ps.Pub(scriptTopic, err.Error())
 						} else {
 							ps.Pub(scriptTopic, fmt.Sprintf("%#v", val))
@@ -460,6 +467,7 @@ logf("%s | %d", a, b)`
 			function run() {
 				const formData = new FormData();
 				formData.append('source', $('source').value);
+				formData.append('ctx_timeout', $("ctx_timeout").value);
 				formData.append('submit', 'run');
 				fetch("/", {method: 'POST', body: formData});
 			}
@@ -494,6 +502,10 @@ logf("%s | %d", a, b)`
 				<input type="text" min="0" max="100000000" value="{{ .RateLimit }}" id="rate_limit" style="width: 50px;" />
 				<button type="button" onclick="setRateLimit()">Set rate limit</button>
 			</div>
+		</div>
+		<div class="mb-2" style="font-size: 0.8em;">
+			<label for="ctx_timeout">Context timeout in seconds:</label>
+			<input type="text" min="0" max="3600" value="0" id="ctx_timeout" style="width: 50px;" />
 		</div>
 		<div class="mb-2">
 			Running: <span id="is_running">{{ if .IsRunning }}running{{ else }}stopped{{ end }}</span> |

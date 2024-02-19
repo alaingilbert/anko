@@ -397,7 +397,13 @@ select {
 			submit := req.PostFormValue("submit")
 			if submit == "run" {
 				script = req.PostFormValue("source")
-				if e.RunAsync(context.Background(), script) {
+				if !e.IsRunning() {
+					go func() {
+						_, err := e.Run(context.Background(), script)
+						if err != nil {
+							ps.Pub(scriptTopic, err.Error())
+						}
+					}()
 					ps.Pub(systemTopic, "run script")
 				}
 			} else if submit == "stop" {

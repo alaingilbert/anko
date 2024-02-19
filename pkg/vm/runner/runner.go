@@ -97,7 +97,7 @@ func Run(config *Config) (reflect.Value, error) {
 		// Otherwise, when we "run" it might append new items in it,
 		// and skip them as map are inconsistent in how they are iterated over,
 		// and cause tests to sometimes fail.
-		for {
+		for len(validateLater) > 0 {
 			for k, s := range validateLater {
 				var err error
 				env.WithNewEnv(func(newenv envPkg.IEnv) {
@@ -108,10 +108,6 @@ func Run(config *Config) (reflect.Value, error) {
 					return nilValue, err
 				}
 			}
-			if len(validateLater) > 0 {
-				continue
-			}
-			break
 		}
 	}
 

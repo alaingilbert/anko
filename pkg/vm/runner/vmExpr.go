@@ -1088,6 +1088,24 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 					}
 				}
 			} else {
+				kindIsNumeric := func(kind reflect.Kind) bool {
+					return kind == reflect.Int ||
+						kind == reflect.Int8 ||
+						kind == reflect.Int16 ||
+						kind == reflect.Int32 ||
+						kind == reflect.Int64 ||
+						kind == reflect.Uint ||
+						kind == reflect.Uint8 ||
+						kind == reflect.Uint16 ||
+						kind == reflect.Uint32 ||
+						kind == reflect.Uint64 ||
+						kind == reflect.Uintptr ||
+						kind == reflect.Float32 ||
+						kind == reflect.Float64
+				}
+				if !(kindIsNumeric(chanType.Kind()) && kindIsNumeric(rhs.Type().Kind())) {
+					return nilValue, newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
+				}
 				rhs, err = convertReflectValueToType(vmp, rhs, chanType)
 				if err != nil {
 					return nilValue, newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")

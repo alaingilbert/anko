@@ -537,6 +537,8 @@ func TestChan(t *testing.T) {
 		{Script: `a = make(chan float32, 2); a <- 1.1; <- a`, RunOutput: float32(1.1), Name: ""},
 		{Script: `a = make(chan float64, 2); a <- 1.1; <- a`, RunOutput: float64(1.1), Name: ""},
 
+		{Script: `a = make(chan string, 2); a <- 1; <- a`, RunError: fmt.Errorf("cannot use type int64 as type string to send to chan"), Name: ""},
+
 		{Script: `a <- nil; <- a`, Input: map[string]any{"a": make(chan any, 2)}, RunOutput: nil, Name: ""},
 		{Script: `a <- true; <- a`, Input: map[string]any{"a": make(chan bool, 2)}, RunOutput: true, Name: ""},
 		{Script: `a <- 1; <- a`, Input: map[string]any{"a": make(chan int32, 2)}, RunOutput: int32(1), Name: ""},

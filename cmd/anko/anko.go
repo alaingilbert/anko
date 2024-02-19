@@ -325,7 +325,10 @@ func compileAndSave(source, fileName string) error {
 }
 
 func runWeb() int {
-	v := vm.New(&vm.Config{ImportCore: utils.Ptr(true), DefineImport: utils.Ptr(true)})
+	v := vm.New(&vm.Config{
+		ImportCore:   utils.Ptr(true),
+		DefineImport: utils.Ptr(true),
+	})
 
 	const scriptTopic = "script"
 	const systemTopic = "system"

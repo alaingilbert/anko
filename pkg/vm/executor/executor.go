@@ -13,6 +13,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/utils/stateCh"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"github.com/alaingilbert/anko/pkg/vm/runner"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"github.com/alaingilbert/mtx"
 	"os"
 	"reflect"
@@ -444,7 +445,7 @@ func (e *Executor) mainRunWithWatchdog(ctx context.Context, stmt ast.Stmt, valid
 	return e.mainRun(ctx, stmt, validate, targets)
 }
 
-var nilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
+var nilValue = vmUtils.NilValue
 var ErrInvalidInput = errors.New("invalid input")
 var ErrAlreadyRunning = errors.New("executor already running")
 

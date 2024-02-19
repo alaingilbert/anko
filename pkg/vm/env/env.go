@@ -384,7 +384,7 @@ func (e *Env) string() string {
 	return buffer.String()
 }
 
-var nilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
+var nilValue = vmUtils.NilValue
 var nilType = reflect.TypeOf(nil)
 
 func (e *Env) addr(k string) (reflect.Value, error) {

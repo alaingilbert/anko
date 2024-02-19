@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+var NilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
+
 func ReplaceInterface(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
 
 func FormatValue(value reflect.Value) string {

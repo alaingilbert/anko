@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/parser"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"reflect"
 )
 
@@ -30,7 +31,7 @@ var (
 	vmErrorType        = reflect.TypeOf(&Error{})
 	isVmFuncType       = reflect.TypeOf((*IsVmFunc)(nil))
 
-	nilValue                  = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
+	nilValue                  = vmUtils.NilValue
 	trueValue                 = reflect.ValueOf(true)
 	falseValue                = reflect.ValueOf(false)
 	zeroValue                 = reflect.Value{}

@@ -453,6 +453,13 @@ logf("%s | %d", a, b)`
 			.mb-2 { margin-bottom: 10px; }
 			.ml-3 { margin-left: 20px; }
 			.topic { width: 70px; display: inline-block; }
+			input[type=number]::-webkit-inner-spin-button, 
+			input[type=number]::-webkit-outer-spin-button { 
+				-webkit-appearance: none;
+				-moz-appearance: none;
+				appearance: none;
+				margin: 0; 
+			}
 		</style>
 	</head>
 	<body>
@@ -499,13 +506,13 @@ logf("%s | %d", a, b)`
 			<button type="button" onclick="toggle_pause()">pause/resume</button>
 			<button type="button" onclick="clearLogs()">clear logs</button>
 			<div class="ml-3" style="display: inline-block;">
-				<input type="text" min="0" max="100000000" value="{{ .RateLimit }}" id="rate_limit" style="width: 50px;" />
+				<input type="number" min="0" max="100000000" value="{{ .RateLimit }}" id="rate_limit" style="width: 50px;" />
 				<button type="button" onclick="setRateLimit()">Set rate limit</button>
 			</div>
 		</div>
 		<div class="mb-2" style="font-size: 0.8em;">
 			<label for="ctx_timeout">Context timeout in seconds:</label>
-			<input type="text" min="0" max="3600" value="0" id="ctx_timeout" style="width: 50px;" />
+			<input type="number" min="0" max="3600" value="0" id="ctx_timeout" style="width: 50px;" />
 		</div>
 		<div class="mb-2">
 			Running: <span id="is_running">{{ if .IsRunning }}running{{ else }}stopped{{ end }}</span> |

@@ -126,13 +126,13 @@ func runNonInteractive(args []string, appFlags AppFlags) int {
 
 	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 	_ = v.Define("args", args)
-	executor := v.Executor()
+	executorInst := v.Executor()
 	fileExt := filepath.Ext(appFlags.File)
 	var err error
 	if appFlags.FlagExecute != "" || fileExt == ankoFileExt {
-		_, err = executor.Run(nil, source)
+		_, err = executorInst.Run(nil, source)
 	} else {
-		_, err = executor.Run(nil, []byte(source))
+		_, err = executorInst.Run(nil, []byte(source))
 	}
 	if err != nil {
 		handleErr(os.Stdout, err)
@@ -200,8 +200,8 @@ func runInteractive(args []string) int {
 	log.SetOutput(l.Stderr())
 	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
 	_ = v.Define("args", args)
-	executor := v.Executor()
-	rebuildCompleter(executor.GetEnv())
+	executorInst := v.Executor()
+	rebuildCompleter(executorInst.GetEnv())
 	for {
 		line, err := l.Readline()
 		if errors.Is(err, readline.ErrInterrupt) {
@@ -230,7 +230,7 @@ func runInteractive(args []string) int {
 		case line == "help":
 			usage(l.Stderr())
 		case line == "dump":
-			println(executor.GetEnv().String())
+			println(executorInst.GetEnv().String())
 		case line == "quit()":
 			goto exit
 		case line == "":
@@ -258,7 +258,7 @@ func runInteractive(args []string) int {
 			}
 			var v any
 			if err == nil {
-				v, err = executor.Run(nil, stmt)
+				v, err = executorInst.Run(nil, stmt)
 			}
 			if err != nil {
 				handleErr(os.Stderr, err)
@@ -269,7 +269,7 @@ func runInteractive(args []string) int {
 			} else {
 				fmt.Printf("%s\n", vmUtils.FormatValue(reflect.ValueOf(v)))
 			}
-			rebuildCompleter(executor.GetEnv())
+			rebuildCompleter(executorInst.GetEnv())
 		}
 	}
 exit:

@@ -15,6 +15,7 @@ var (
 
 var ErrTypeMismatch = errors.New("type mismatch")
 
+// StronglyTyped is a special type that let the vm know that the value is strongly typed and should keep its type
 type StronglyTyped struct{ V reflect.Value }
 
 func ReplaceInterface(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }

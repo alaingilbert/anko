@@ -358,9 +358,18 @@ select {
 }
 `
 
+	typedFuncScript := `// This function is strongly typed for arguments and return values
+func test(a: int64, b: string) (string, int64) {
+    log("got" + a + " and " + b)
+    return "we can only return a string", 123
+}
+test(42, "hello world")
+`
+
 	scripts := [][]string{
 		{"Default", defaultScript},
 		{"Select", selectScript},
+		{"TypedFunc", typedFuncScript},
 	}
 
 	mux := http.DefaultServeMux

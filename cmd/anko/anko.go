@@ -416,7 +416,14 @@ select {
 		}
 		pageHtml := `<!DOCTYPE html>
 <html>
-	<head><title>Test</title></head>
+	<head>
+		<title>Test</title>
+		<style>
+			html, body { background-color: #333; color: #ccc; font-family: Verdana,Helvetica,Arial,sans-serif; }
+			textarea, button, select { background-color: #444; color: #ccc; padding: 3px 7px; }
+			.mb-2 { margin-bottom: 10px; }
+		</style>
+	</head>
 	<body>
 		<script>
 			const scripts = {{ .Scripts }};
@@ -444,7 +451,7 @@ select {
 				document.getElementById('source').value = scripts[value][1];
 			}
 		</script>
-		<div>
+		<div class="mb-2">
 			<select id="script" onchange="changeScript()">
 				{{ range $i, $v := .Scripts }}<option value="{{ $i }}">{{ index $v 0 }}</option>{{ end }}
 			</select>
@@ -453,11 +460,11 @@ select {
 			<button type="button" onclick="toggle_pause()">pause/resume</button>
 			<button type="button" onclick="clearLogs()">clear logs</button>
 		</div>
-		<div>
+		<div class="mb-2">
 			Running: <span id="is_running">{{ if .IsRunning }}running{{ else }}stopped{{ end }}</span> |
 			Paused: <span id="is_paused">{{ if .IsPaused }}paused{{ else }}not paused{{ end }}</span>
 		</div>
-		<textarea name="source" id="source" rows="15" cols="80">{{ .Script }}</textarea>
+		<textarea name="source" id="source" rows="15" cols="80" class="mb-2">{{ .Script }}</textarea>
 		<div id="logs"></div>
 		<script>
 			const evtSource = new EventSource("/sse");

@@ -433,6 +433,7 @@ select {
 	</head>
 	<body>
 		<script>
+			const $ = function(id) { return document.getElementById(id); };
 			const scripts = {{ .Scripts }};
 			function toggle_pause() {
 				const formData = new FormData();
@@ -441,7 +442,7 @@ select {
 			}
 			function run() {
 				const formData = new FormData();
-				formData.append('source', document.getElementById('source').value);
+				formData.append('source', $('source').value);
 				formData.append('submit', 'run');
 				fetch("/", {method: 'POST', body: formData});
 			}
@@ -451,11 +452,11 @@ select {
 				fetch("/", {method: 'POST', body: formData});
 			}
 			function clearLogs() {
-				document.getElementById("logs").innerHTML = '';
+				$("logs").innerHTML = '';
 			}
 			function changeScript() {
-				const value = document.getElementById("script").value;
-				document.getElementById('source').value = scripts[value][1];
+				const value = $("script").value;
+				$('source').value = scripts[value][1];
 			}
 		</script>
 		<div class="mb-2">
@@ -481,13 +482,13 @@ select {
     			newDiv.textContent = data.Topic + ": " + data.Msg;
 				if (data.Topic === "executor") {
 					switch (data.Msg) {
-						case 1: document.getElementById("is_running").innerHTML = "running"; break;
-						case 2: document.getElementById("is_running").innerHTML = "stopped"; break;
-						case 3: document.getElementById("is_paused").innerHTML = "paused"; break;
-						case 4: document.getElementById("is_paused").innerHTML = "not paused"; break;
+						case 1: $("is_running").innerHTML = "running"; break;
+						case 2: $("is_running").innerHTML = "stopped"; break;
+						case 3: $("is_paused").innerHTML = "paused"; break;
+						case 4: $("is_paused").innerHTML = "not paused"; break;
 					}
 				} else {
-					document.getElementById("logs").appendChild(newDiv);
+					$("logs").appendChild(newDiv);
 				}
 			};
 		</script>

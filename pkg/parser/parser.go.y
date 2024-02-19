@@ -522,9 +522,9 @@ func_expr_idents :
 	{
 		$$ = []*ast.ParamExpr{&ast.ParamExpr{Name: $1.Lit}}
 	}
-	| IDENT ':' type_data
+	| IDENT type_data
 	{
-		$$ = []*ast.ParamExpr{&ast.ParamExpr{Name: $1.Lit, TypeData: $3}}
+		$$ = []*ast.ParamExpr{&ast.ParamExpr{Name: $1.Lit, TypeData: $2}}
 	}
 	| func_expr_idents ',' opt_newlines IDENT
 	{
@@ -533,12 +533,12 @@ func_expr_idents :
 		}
 		$$ = append($1, &ast.ParamExpr{Name: $4.Lit})
 	}
-	| func_expr_idents ',' opt_newlines IDENT ':' type_data
+	| func_expr_idents ',' opt_newlines IDENT type_data
 	{
 		if len($1) == 0 {
 			yylex.Error("syntax error: unexpected ','")
 		}
-		$$ = append($1, &ast.ParamExpr{Name: $4.Lit, TypeData: $6})
+		$$ = append($1, &ast.ParamExpr{Name: $4.Lit, TypeData: $5})
 	}
 
 exprs :

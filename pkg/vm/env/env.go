@@ -400,27 +400,7 @@ func (e *Env) addr(k string) (reflect.Value, error) {
 }
 
 func (e *Env) typ(k string) (reflect.Type, error) {
-	mod := e
-	search := k
-	parts := strings.Split(k, ".")
-	if len(parts) > 1 {
-		for {
-			if len(parts) > 1 {
-				var modName string
-				modName, parts = parts[0], parts[1:]
-				val, err := mod.getValue(modName)
-				if err != nil {
-					search = k
-					break
-				}
-				mod = val.Interface().(*Env)
-			} else {
-				search = parts[0]
-				break
-			}
-		}
-	}
-	if v, ok := mod.types.Get(search); ok {
+	if v, ok := e.types.Get(k); ok {
 		return v, nil
 	}
 	if e.parent == nil {

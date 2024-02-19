@@ -26,7 +26,7 @@ func reflectValueSliceToInterfaceSlice(valueSlice []reflect.Value) reflect.Value
 	return reflect.ValueOf(interfaceSlice)
 }
 
-// convertReflectValueToType trys to covert the reflect.Value to the reflect.Type
+// convertReflectValueToType trys to convert the reflect.Value to the reflect.Type
 // if it can not, it returns the original rv and an error
 func convertReflectValueToType(vmp *VmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	if !rv.IsValid() {

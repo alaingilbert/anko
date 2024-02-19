@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"strconv"
 )
 
 func First[T any](a T, _ ...any) T { return a }
@@ -57,6 +58,11 @@ func Default[T any](v *T, d T) T {
 }
 
 func Bool(v bool) *bool { return &v }
+
+func DoParseI64(v string) int64 {
+	parsed, _ := strconv.ParseInt(v, 10, 64)
+	return parsed
+}
 
 func Clamp[T ~int | ~int64](val, minVal, maxVal T) T {
 	val = min(val, maxVal)

@@ -28,7 +28,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"slices"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -432,8 +431,7 @@ logf("%s | %d", a, b)`
 					ps.Pub(systemTopic, "script resumed")
 				}
 			} else if submit == "set_rate_limit" {
-				val, _ := strconv.ParseInt(req.PostFormValue("limit"), 10, 64)
-				rateLimit := utils.Clamp(val, 0, 100_000_000_000)
+				rateLimit := utils.Clamp(utils.DoParseI64(req.PostFormValue("limit")), 0, 100_000_000_000)
 				e.SetRateLimit(rateLimit, time.Second)
 			}
 			return

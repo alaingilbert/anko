@@ -96,7 +96,7 @@ type Config struct {
 	ImportCore       bool
 	WatchdogEnabled  bool
 	DefineImport     bool
-	DbgEnabled       bool
+	DbgEnabled       *bool
 	RateLimit        int
 	RateLimitPeriod  time.Duration
 	Env              envPkg.IEnv
@@ -127,7 +127,7 @@ func NewExecutor(cfg *Config) *Executor {
 	e.stats = &runner.Stats{}
 	e.doNotProtectMaps = cfg.DoNotProtectMaps
 	e.importCore = cfg.ImportCore
-	e.dbgEnabled = cfg.DbgEnabled
+	e.dbgEnabled = utils.Default(cfg.DbgEnabled, true)
 	e.mapMutex = &runner.MapLocker{}
 	e.maxEnvCount = mtx.NewRWMtxPtr(int64(cfg.MaxEnvCount))
 	if cfg.RateLimit > 0 {

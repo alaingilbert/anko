@@ -350,7 +350,13 @@ func (e *Env) string() string {
 
 	typesArr := make([][]string, 0)
 	e.types.Each(func(symbol string, aType reflect.Type) {
-		typesArr = append(typesArr, []string{symbol, fmt.Sprintf("%s", replaceInterface(aType.String()))})
+		aTypeStr := replaceInterface(aType.String())
+		aTypeKindStr := aType.Kind().String()
+		str := aTypeStr
+		if aTypeKindStr != aTypeStr {
+			str += " " + aTypeKindStr
+		}
+		typesArr = append(typesArr, []string{symbol, str})
 	})
 
 	sort.Slice(valuesArr, func(i, j int) bool { return valuesArr[i][0] < valuesArr[j][0] })

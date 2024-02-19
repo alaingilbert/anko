@@ -313,7 +313,7 @@ func invokeDeferExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DerefExpr,
 		if vme, ok := v.Interface().(envPkg.IEnv); ok {
 			m, err := vme.GetValue(ee.Name)
 			if !m.IsValid() || err != nil {
-				return nilValue, newStringError(e, fmt.Sprintf("invalid operation '%s'", ee.Name))
+				return nilValue, newStringError(e, buildInvalidOperationStr(ee.Name))
 			}
 			return m, nil
 		}
@@ -335,7 +335,7 @@ func invokeDeferExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DerefExpr,
 			// It returns the zero Value if key is not found in the map or if v represents a nil map.
 			m = readMapIndex(v, reflect.ValueOf(ee.Name), vmp)
 		} else {
-			return nilValue, newStringError(e, fmt.Sprintf("invalid operation '%s'", ee.Name))
+			return nilValue, newStringError(e, buildInvalidOperationStr(ee.Name))
 		}
 		v = m
 	} else {
@@ -386,7 +386,7 @@ func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr, e
 		if vme, ok := v.Interface().(envPkg.IEnv); ok {
 			m, err := vme.GetValue(ee.Name)
 			if !m.IsValid() || err != nil {
-				return nilValue, newStringError(e, fmt.Sprintf("invalid operation '%s'", ee.Name))
+				return nilValue, newStringError(e, buildInvalidOperationStr(ee.Name))
 			}
 			return m, nil
 		}
@@ -400,14 +400,14 @@ func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr, e
 		if v.Kind() == reflect.Struct {
 			m = v.FieldByName(ee.Name)
 			if !m.IsValid() {
-				return nilValue, newStringError(e, fmt.Sprintf("invalid operation '%s'", ee.Name))
+				return nilValue, newStringError(e, buildInvalidOperationStr(ee.Name))
 			}
 		} else if v.Kind() == reflect.Map {
 			// From reflect MapIndex:
 			// It returns the zero Value if key is not found in the map or if v represents a nil map.
 			m = readMapIndex(v, reflect.ValueOf(ee.Name), vmp)
 		} else {
-			return nilValue, newStringError(e, fmt.Sprintf("invalid operation '%s'", ee.Name))
+			return nilValue, newStringError(e, buildInvalidOperationStr(ee.Name))
 		}
 		v = m
 	} else {
@@ -450,6 +450,10 @@ func invokeParenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ParenExpr) (reflect.
 	return v, nil
 }
 
+func buildInvalidOperationStr(name string) string {
+	return fmt.Sprintf("invalid operation '%s'", name)
+}
+
 func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, e.Expr)
@@ -466,7 +470,7 @@ func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 		if vme, ok := v.Interface().(envPkg.IEnv); ok {
 			m, err := vme.GetValue(e.Name)
 			if !m.IsValid() || err != nil {
-				return nilValueL, newStringError(e, fmt.Sprintf("invalid operation '%s'", e.Name))
+				return nilValueL, newStringError(e, buildInvalidOperationStr(e.Name))
 			}
 			return m, nil
 		}

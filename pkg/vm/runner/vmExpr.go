@@ -899,6 +899,9 @@ func invokeLenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LenExpr) (reflect.Valu
 }
 
 func invokeDbgExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DbgExpr) (reflect.Value, error) {
+	if !vmp.DbgEnabled {
+		return nilValue, nil
+	}
 	if e.Expr == nil && e.TypeData == nil {
 		println(env.String())
 		return nilValue, nil

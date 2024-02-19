@@ -84,8 +84,9 @@ type Executor struct {
 	importCore       bool                                 // either or not to import core functions in executor's env
 	watchdogEnabled  bool                                 // either or not to run the watchdog
 	maxEnvCount      *mtx.Mtx[int64]                      // maximum sub-env allowed before the watchdog kills the script
-	isRunning        atomic.Bool                          // Either or not the executor is running a script
+	isRunning        atomic.Bool                          // either or not the executor is running a script
 	pubSubEvts       *pubsub.PubSub[string, Evt]          // pubsub for executor's events
+	dbgEnabled       bool                                 // either or not to enable dbg()
 }
 
 // Config for the executor
@@ -95,6 +96,7 @@ type Config struct {
 	ImportCore       bool
 	WatchdogEnabled  bool
 	DefineImport     bool
+	DbgEnabled       bool
 	RateLimit        int
 	RateLimitPeriod  time.Duration
 	Env              envPkg.IEnv
@@ -125,6 +127,7 @@ func NewExecutor(cfg *Config) *Executor {
 	e.stats = &runner.Stats{}
 	e.doNotProtectMaps = cfg.DoNotProtectMaps
 	e.importCore = cfg.ImportCore
+	e.dbgEnabled = cfg.DbgEnabled
 	e.mapMutex = &runner.MapLocker{}
 	e.maxEnvCount = mtx.NewRWMtxPtr(int64(cfg.MaxEnvCount))
 	if cfg.RateLimit > 0 {
@@ -471,6 +474,7 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 		MapMutex:         e.mapMutex,
 		Pause:            e.pause,
 		RateLimit:        e.rateLimit,
+		DbgEnabled:       e.dbgEnabled,
 		Validate:         validate,
 		Has:              has,
 	})

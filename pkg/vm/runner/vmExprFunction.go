@@ -96,7 +96,7 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 
 		ctx := in[0].Interface().(*IsVmFunc)
 		// run function statements
-		newVmp := NewVmParams(ctx, vmp.rvCh, vmp.stats, vmp.doNotProtectMaps, vmp.mapMutex, vmp.pause, vmp.rateLimit, vmp.Validate, vmp.has, vmp.ValidateLater)
+		newVmp := NewVmParams(ctx, vmp.rvCh, vmp.stats, vmp.doNotProtectMaps, vmp.mapMutex, vmp.pause, vmp.rateLimit, vmp.DbgEnabled, vmp.Validate, vmp.has, vmp.ValidateLater)
 		rv, err = runSingleStmt(newVmp, newEnv, funcExpr.Stmt)
 
 		for i := newEnv.Defers().Len() - 1; i >= 0; i-- {

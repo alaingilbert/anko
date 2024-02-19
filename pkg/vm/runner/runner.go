@@ -26,6 +26,7 @@ type VmParams struct {
 	mapMutex         *MapLocker
 	pause            *stateCh.StateCh
 	rateLimit        *ratelimitanything.RateLimitAnything
+	DbgEnabled       bool
 	Validate         bool
 	has              map[any]bool
 	ValidateLater    map[string]ast.Stmt
@@ -38,7 +39,7 @@ func NewVmParams(ctx context.Context,
 	mapMutex *MapLocker,
 	pause *stateCh.StateCh,
 	rateLimit *ratelimitanything.RateLimitAnything,
-	validate bool,
+	dbgEnabled, validate bool,
 	has map[any]bool,
 	validateLater map[string]ast.Stmt,
 ) *VmParams {
@@ -51,6 +52,7 @@ func NewVmParams(ctx context.Context,
 		pause:            pause,
 		rateLimit:        rateLimit,
 		Validate:         validate,
+		DbgEnabled:       dbgEnabled,
 		has:              has,
 		ValidateLater:    validateLater,
 	}
@@ -66,6 +68,7 @@ type Config struct {
 	RateLimit        *ratelimitanything.RateLimitAnything
 	DoNotProtectMaps bool
 	Validate         bool
+	DbgEnabled       bool
 	Has              map[any]bool
 }
 
@@ -73,6 +76,7 @@ func Run(config *Config) (reflect.Value, error) {
 	stmt := config.Stmt
 	env := config.Env
 	validate := config.Validate
+	dbgEnabled := config.DbgEnabled
 	validateLater := make(map[string]ast.Stmt)
 
 	// We use rvCh because the script can start goroutines and crash in one of them.
@@ -80,7 +84,7 @@ func Run(config *Config) (reflect.Value, error) {
 	rvCh := make(chan Result)
 
 	vmp := NewVmParams(config.Ctx, rvCh, config.Stats, config.DoNotProtectMaps, config.MapMutex,
-		config.Pause, config.RateLimit, validate, config.Has, validateLater)
+		config.Pause, config.RateLimit, dbgEnabled, validate, config.Has, validateLater)
 
 	go func() {
 		rv, err := run(vmp, env, stmt)

@@ -128,6 +128,7 @@ func (v *VM) executor() *executor.Executor {
 		RateLimit:        v.rateLimit,
 		RateLimitPeriod:  v.rateLimitPeriod,
 		Env:              v.env,
+		DbgEnabled:       true,
 		WatchdogEnabled:  true,
 		MaxEnvCount:      1000,
 	})

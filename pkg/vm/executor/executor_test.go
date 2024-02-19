@@ -100,3 +100,43 @@ func TestExecutor_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestExecutor_Has(t *testing.T) {
+	env := envPkg.NewEnv()
+	myFn1 := func() {}
+	myFn2 := func() {}
+	_ = env.Define("myFn1", myFn1)
+	_ = env.Define("myFn2", myFn2)
+	e := NewExecutor(&Config{Env: env})
+
+	ctx := context.Background()
+	tests := []struct {
+		name    string
+		input   any
+		wantErr error
+		targets []any
+		wantOks []bool
+	}{
+		{input: "myFn1()", targets: []any{myFn1}, wantOks: []bool{true}, wantErr: nil, name: ""},
+		{input: "myFn1()", targets: []any{myFn2}, wantOks: []bool{false}, wantErr: nil, name: ""},
+		{input: "myFn1()", targets: []any{myFn1, myFn2}, wantOks: []bool{true, false}, wantErr: nil, name: ""},
+		{input: "myFn2()", targets: []any{myFn1, myFn2}, wantOks: []bool{false, true}, wantErr: nil, name: ""},
+		{input: "myFn1(); myFn2()", targets: []any{myFn1, myFn2}, wantOks: []bool{true, true}, wantErr: nil, name: ""},
+		{input: "a = myFn1; b = myFn2", targets: []any{myFn1, myFn2}, wantOks: []bool{false, false}, wantErr: nil, name: ""},
+		{input: "a = myFn1; b = myFn2; a()", targets: []any{myFn1, myFn2}, wantOks: []bool{true, false}, wantErr: nil, name: ""},
+		{input: "a = myFn1; b = myFn2; a(); b()", targets: []any{myFn1, myFn2}, wantOks: []bool{true, true}, wantErr: nil, name: ""},
+		{input: "a = func() { myFn1(); }", targets: []any{myFn1, myFn2}, wantOks: []bool{true, false}, wantErr: nil, name: ""},
+		{input: "a = func() { defer func() { myFn1(); }() }", targets: []any{myFn1, myFn2}, wantOks: []bool{true, false}, wantErr: nil, name: ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			oks, err := e.Has(ctx, tt.input, tt.targets)
+			if tt.wantErr == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorContains(t, err, tt.wantErr.Error())
+			}
+			assert.Equal(t, tt.wantOks, oks)
+		})
+	}
+}

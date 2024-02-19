@@ -300,6 +300,12 @@ func rebuildCompleter(env envPkg.IEnv) {
 	completer.SetChildren(newArr)
 }
 
+func handleErrStr(err error) string {
+	buf := new(bytes.Buffer)
+	handleErr(buf, err)
+	return buf.String()
+}
+
 func handleErr(w io.Writer, err error) {
 	var vmErr *runner.Error
 	var parserErr *parser.Error
@@ -430,9 +436,7 @@ logf("%s | %d", a, b)`
 							defer cancel()
 						}
 						if val, err := e.Run(ctx, script); err != nil {
-							buf := new(bytes.Buffer)
-							handleErr(buf, err)
-							ps.Pub(scriptTopic, buf.String())
+							ps.Pub(scriptTopic, handleErrStr(err))
 						} else {
 							ps.Pub(scriptTopic, fmt.Sprintf("%#v", val))
 						}

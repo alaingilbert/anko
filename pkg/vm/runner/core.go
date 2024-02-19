@@ -47,6 +47,14 @@ func dbgFn(v any) {
 	println(out)
 }
 
+func sortAndMax(arr [][]string) (maxLen int) {
+	sort.Slice(arr, func(i, j int) bool { return arr[i][0] < arr[j][0] })
+	for _, v := range arr {
+		maxLen = max(maxLen, len(v[0]))
+	}
+	return maxLen
+}
+
 func typFn(env env.IEnv) func(s string) {
 	return func(s string) {
 		rt, err := env.Type(s)
@@ -60,11 +68,7 @@ func typFn(env env.IEnv) func(s string) {
 				method := rt.Method(i)
 				methodsArr = append(methodsArr, []string{method.Name, method.Type.String()})
 			}
-			sort.Slice(methodsArr, func(i, j int) bool { return methodsArr[i][0] < methodsArr[j][0] })
-			maxSymbolLen := 0
-			for _, v := range methodsArr {
-				maxSymbolLen = max(maxSymbolLen, len(v[0]))
-			}
+			maxSymbolLen := sortAndMax(methodsArr)
 
 			buf := new(bytes.Buffer)
 			buf.WriteString("type " + rt.Name() + " interface {\n")
@@ -83,11 +87,7 @@ func typFn(env env.IEnv) func(s string) {
 				field := rt.Field(i)
 				fieldsArr = append(fieldsArr, []string{field.Name, field.Type.String()})
 			}
-			sort.Slice(fieldsArr, func(i, j int) bool { return fieldsArr[i][0] < fieldsArr[j][0] })
-			maxSymbolLen := 0
-			for _, v := range fieldsArr {
-				maxSymbolLen = max(maxSymbolLen, len(v[0]))
-			}
+			maxSymbolLen := sortAndMax(fieldsArr)
 
 			buf := new(bytes.Buffer)
 			buf.WriteString("type " + rt.Name() + " struct {\n")

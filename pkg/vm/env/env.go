@@ -302,7 +302,8 @@ func (e *Env) addPackage(name string, methods packages.PackageMap, types package
 func (e *Env) addPackageHelper(name string, methods packages.PackageMap, types packages.PackageMap) (*Env, error) {
 	module := e.newEnv()
 	destroyFn := module.destroy
-	if err := e.define(name, module); err != nil {
+	externalName := strings.ReplaceAll(name, "/", "_")
+	if err := e.define(externalName, module); err != nil {
 		destroyFn()
 		return nil, err
 	}

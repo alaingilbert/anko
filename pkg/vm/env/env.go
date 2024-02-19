@@ -426,8 +426,13 @@ func (e *Env) get(k string) (any, error) {
 }
 
 func (e *Env) getValue(k string) (reflect.Value, error) {
-	if v, ok := e.values.Get(k); ok {
-		return v, nil
+	if envValue, ok := e.values.Get(k); ok {
+		if envValue.IsValid() {
+			if typedValue, ok := envValue.Interface().(*vmUtils.StronglyTyped); ok {
+				envValue = typedValue.V
+			}
+		}
+		return envValue, nil
 	}
 	if e.parent == nil {
 		return nilValue, fmt.Errorf("undefined symbol '%s'", k)
@@ -454,7 +459,14 @@ func (e *Env) set(k string, v any) error {
 }
 
 func (e *Env) setValue(k string, v reflect.Value) error {
-	if e.values.ContainsKey(k) {
+	if envValue, ok := e.values.Get(k); ok {
+		if envValue.IsValid() {
+			if typedValue, ok := envValue.Interface().(*vmUtils.StronglyTyped); ok {
+				if v.Kind().String() != typedValue.V.Kind().String() {
+					return vmUtils.ErrTypeMismatch
+				}
+			}
+		}
 		e.values.Insert(k, v)
 		return nil
 	}

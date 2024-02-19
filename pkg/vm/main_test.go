@@ -112,6 +112,7 @@ type Test struct {
 type Options struct {
 	DefineImport bool
 	ImportCore   bool
+	ResetEnv     bool
 	Executor     executor.IExecutor
 }
 
@@ -167,6 +168,9 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 	}
 	if testingOptions != nil && testingOptions.ImportCore {
 		configs.ImportCore = utils.Ptr(true)
+	}
+	if testingOptions != nil && testingOptions.ResetEnv {
+		configs.ResetEnv = utils.Ptr(true)
 	}
 	v := New(configs)
 

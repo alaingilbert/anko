@@ -13,6 +13,7 @@ import (
 %type<stmt_var_or_lets> stmt_var_or_lets
 %type<stmt_var> stmt_var
 %type<stmt_lets> stmt_lets
+%type<stmt_typed_lets> stmt_typed_lets
 %type<stmt_if> stmt_if
 %type<stmt_for> stmt_for
 %type<stmt_switch> stmt_switch
@@ -42,6 +43,7 @@ import (
 	stmt_var_or_lets       ast.Stmt
 	stmt_var               ast.Stmt
 	stmt_lets              ast.Stmt
+	stmt_typed_lets        ast.Stmt
 	stmt_if                ast.Stmt
 	stmt_for               ast.Stmt
 	stmt_switch            ast.Stmt
@@ -71,7 +73,7 @@ import (
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR IN EQEQ NEQ GE LE OROR ANDAND NEW
             TRUE FALSE NIL NILCOALESCE MODULE TRY CATCH FINALLY PLUSEQ MINUSEQ MULEQ DIVEQ ANDEQ OREQ BREAK
             CONTINUE PLUSPLUS MINUSMINUS POW SHIFTLEFT SHIFTRIGHT SWITCH SELECT CASE DEFAULT GO DEFER CHAN MAKE
-            OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG
+            OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG WALRUS
 
 %right '='
 %right '?' ':'
@@ -245,6 +247,10 @@ stmt_var_or_lets :
 	{
 		$$ = $1
 	}
+	| stmt_typed_lets
+	{
+		$$ = $1
+	}
 	| stmt_lets
 	{
 		$$ = $1
@@ -255,6 +261,27 @@ stmt_var :
 	{
 		$$ = &ast.VarStmt{Names: $2, Exprs: $4}
 		$$.SetPosition($1.Position())
+	}
+
+stmt_typed_lets :
+	expr WALRUS expr
+	{
+		$$ = &ast.LetsStmt{Lhss: []ast.Expr{$1}, Operator: "=", Rhss: []ast.Expr{$3}, Typed: true}
+	}
+	| exprs WALRUS exprs
+	{
+		if len($1) == 2 && len($3) == 1 {
+			if _, ok := $3[0].(*ast.ItemExpr); ok {
+				$$ = &ast.LetMapItemStmt{Lhss: $1, Rhs: $3[0]}
+			} else {
+				$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
+			}
+		} else {
+			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
+		}
+		if len($1) > 0 {
+			$$.SetPosition($1[0].Position())
+		}
 	}
 
 stmt_lets :

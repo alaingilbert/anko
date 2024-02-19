@@ -241,6 +241,7 @@ func encodeLetsStmt(w *Encoder, stmt *ast.LetsStmt) {
 	encodeExprArray(w, stmt.Lhss)
 	encodeString(w, stmt.Operator)
 	encodeExprArray(w, stmt.Rhss)
+	encodeBool(w, stmt.Typed)
 }
 
 func encodeLetMapItemStmt(w *Encoder, stmt *ast.LetMapItemStmt) {

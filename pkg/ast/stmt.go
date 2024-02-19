@@ -145,6 +145,7 @@ type LetsStmt struct {
 	Lhss     []Expr
 	Operator string
 	Rhss     []Expr
+	Typed    bool
 }
 
 // LetMapItemStmt provide statement of let for map item.

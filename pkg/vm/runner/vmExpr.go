@@ -704,7 +704,7 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
 	}
-	return invokeLetExpr(vmp, env, e.Lhs, v)
+	return invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, e.Lhs, v)
 }
 
 func invokeLetsExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Value, error) {
@@ -724,7 +724,7 @@ func invokeLetsExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Va
 		if v.Kind() == reflect.Interface && !v.IsNil() {
 			v = v.Elem()
 		}
-		_, err = invokeLetExpr(vmp, env, lhs, v)
+		_, err = invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, lhs, v)
 		if err != nil {
 			return nilValue, newError(lhs, err)
 		}
@@ -1139,7 +1139,7 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 					return nilValue, newErrorf(expr, "failed to send to channel")
 				}
 			}
-			return invokeLetExpr(vmp, env, e.Lhs, rv)
+			return invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, e.Lhs, rv)
 		}
 	}
 

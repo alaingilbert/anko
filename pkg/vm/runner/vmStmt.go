@@ -148,7 +148,7 @@ func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 		if (value.Kind() == reflect.Slice || value.Kind() == reflect.Array) && value.Len() > 0 {
 			// value is slice/array, add each value to left side expression
 			for i := 0; i < value.Len() && i < len(stmt.Lhss); i++ {
-				_, err = invokeLetExpr(vmp, env, stmt.Lhss[i], value.Index(i))
+				_, err = invokeLetExpr(vmp, env, stmt, stmt.Lhss[i], value.Index(i))
 				if err != nil {
 					return nilValueL, newError(stmt.Lhss[i], err)
 				}
@@ -164,7 +164,7 @@ func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 		if value.Kind() == reflect.Interface && !value.IsNil() {
 			value = value.Elem()
 		}
-		_, err = invokeLetExpr(vmp, env, stmt.Lhss[i], value)
+		_, err = invokeLetExpr(vmp, env, stmt, stmt.Lhss[i], value)
 		if err != nil {
 			return nilValueL, newError(stmt.Lhss[i], err)
 		}
@@ -195,7 +195,7 @@ func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt)
 		if v.Kind() == reflect.Interface && !v.IsNil() {
 			v = v.Elem()
 		}
-		_, err = invokeLetExpr(vmp, env, lhs, v)
+		_, err = invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, lhs, v)
 		if err != nil {
 			return nilValueL, newError(lhs, err)
 		}
@@ -604,7 +604,7 @@ func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 	tmp := func(chosen int, rv reflect.Value) (reflect.Value, error) {
 		var err error
 		if letStmt := letsStmts[chosen]; letStmt != nil {
-			rv, err = invokeLetExpr(vmp, newenv, letStmt.Lhss[0], rv)
+			rv, err = invokeLetExpr(vmp, newenv, letStmt, letStmt.Lhss[0], rv)
 			if err != nil {
 				return nilValueL, newError(letStmt.Lhss[0], err)
 			}

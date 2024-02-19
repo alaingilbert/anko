@@ -73,6 +73,7 @@ var opName = map[string]int{
 	"len":      LEN,
 	"delete":   DELETE,
 	"close":    CLOSE,
+	":=":       WALRUS,
 }
 
 // Init resets code to scan.
@@ -135,6 +136,17 @@ retry:
 			case '=':
 				tok = NEQ
 				lit = "!="
+			default:
+				s.back()
+				tok = int(ch)
+				lit = string(ch)
+			}
+		case ':':
+			s.next()
+			switch s.peek() {
+			case '=':
+				tok = WALRUS
+				lit = ":="
 			default:
 				s.back()
 				tok = int(ch)
@@ -308,7 +320,7 @@ retry:
 				tok = int(ch)
 				lit = string(ch)
 			}
-		case '\n', '(', ')', ':', ';', '%', '{', '}', '[', ']', ',', '^':
+		case '\n', '(', ')', ';', '%', '{', '}', '[', ']', ',', '^':
 			tok = int(ch)
 			lit = string(ch)
 		default:

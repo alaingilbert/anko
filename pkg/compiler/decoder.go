@@ -227,6 +227,7 @@ func decodeLetsStmt(r *Decoder) *ast.LetsStmt {
 	out.Lhss = r.readExprArray()
 	out.Operator = r.readString()
 	out.Rhss = r.readExprArray()
+	out.Typed = r.readBool()
 	return out
 }
 

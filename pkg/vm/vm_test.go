@@ -8,6 +8,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/utils"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"github.com/alaingilbert/anko/pkg/vm/runner"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"os"
@@ -235,10 +236,10 @@ func TestVar(t *testing.T) {
 		{Script: `var 1 = 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `a = 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 		{Script: `var a = 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
-		{Script: `a := 1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `var a := 1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `y = z`, RunError: fmt.Errorf("undefined symbol 'z'"), Name: ""},
 
+		{Script: `a := 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
 		{Script: `a = nil`, RunOutput: nil, Output: map[string]any{"a": nil}, Name: ""},
 		{Script: `a = true`, RunOutput: true, Output: map[string]any{"a": true}, Name: ""},
 		{Script: `a = 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
@@ -1738,6 +1739,19 @@ func TestFuncTypedReturns(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
+}
+
+func TestTypedValues(t *testing.T) {
+	_ = os.Setenv("ANKO_DEBUG", "1")
+	tests := []Test{
+		{Script: `a := 1; a = 2`, RunOutput: int64(2)},
+		{Script: `a = 1; a = "1"`, RunOutput: "1"},
+		{Script: `a := 1; a = "1"`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
+		{Script: `a := 1; delete("a"); a = "1"`, RunOutput: "1"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true, ResetEnv: true}) })
 	}
 }
 

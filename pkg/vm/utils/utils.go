@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/utils"
 	"reflect"
@@ -11,6 +12,10 @@ var (
 	NilType  = reflect.TypeOf(nil)
 	NilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
 )
+
+var ErrTypeMismatch = errors.New("type mismatch")
+
+type StronglyTyped struct{ V reflect.Value }
 
 func ReplaceInterface(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
 

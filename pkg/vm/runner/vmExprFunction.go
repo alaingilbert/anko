@@ -314,7 +314,7 @@ func callExpr(vmp *VmParams, envArg env.IEnv, callExpr *ast.CallExpr) (rv reflec
 		for i, expr := range callExpr.SubExprs {
 			if addrExpr, ok := expr.(*ast.AddrExpr); ok {
 				if identExpr, ok := addrExpr.Expr.(*ast.IdentExpr); ok {
-					_, _ = invokeLetExpr(vmp, envArg, identExpr, args[i].Elem())
+					_, _ = invokeLetExpr(vmp, envArg, &ast.LetsStmt{Typed: false}, identExpr, args[i].Elem())
 				}
 			}
 		}

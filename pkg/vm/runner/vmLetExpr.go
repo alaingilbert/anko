@@ -1,32 +1,43 @@
 package runner
 
 import (
+	"errors"
 	"fmt"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"reflect"
 	"strings"
 
 	"github.com/alaingilbert/anko/pkg/ast"
 )
 
-func invokeLetExpr(vmp *VmParams, env envPkg.IEnv, expr ast.Expr, rv reflect.Value) (reflect.Value, error) {
+func invokeLetExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, expr ast.Expr, rv reflect.Value) (reflect.Value, error) {
 	switch lhs := expr.(type) {
 	case *ast.IdentExpr:
-		return invokeLetIdentExpr(env, rv, lhs)
+		return invokeLetIdentExpr(env, rv, stmt, lhs)
 	case *ast.MemberExpr:
-		return invokeLetMemberExpr(vmp, env, rv, lhs)
+		return invokeLetMemberExpr(vmp, env, rv, stmt, lhs)
 	case *ast.ItemExpr:
-		return invokeLetItemExpr(vmp, rv, env, lhs)
+		return invokeLetItemExpr(vmp, rv, env, stmt, lhs)
 	case *ast.SliceExpr:
 		return invokeLetSliceExpr(vmp, env, rv, lhs)
 	case *ast.DerefExpr:
-		return invokeLetDerefExpr(vmp, env, rv, lhs)
+		return invokeLetDerefExpr(vmp, env, rv, stmt, lhs)
 	}
 	return nilValue, newError(expr, ErrInvalidOperation)
 }
 
-func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, lhs *ast.IdentExpr) (vv reflect.Value, err error) {
-	if env.SetValue(lhs.Lit, rv) != nil {
+func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, lhs *ast.IdentExpr) (vv reflect.Value, err error) {
+	if env.HasValue(lhs.Lit) && stmt.Typed {
+		return nilValue, newErrorf(lhs, "already defined symbol '%s'", lhs.Lit)
+	}
+	if stmt.Typed {
+		rv = reflect.ValueOf(&vmUtils.StronglyTyped{V: rv})
+	}
+	if err := env.SetValue(lhs.Lit, rv); err != nil {
+		if errors.Is(err, vmUtils.ErrTypeMismatch) {
+			return nilValue, err
+		}
 		if strings.Contains(lhs.Lit, ".") {
 			return nilValue, newErrorf(lhs, "undefined symbol '%s'", lhs.Lit)
 		}
@@ -35,7 +46,7 @@ func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, lhs *ast.IdentExpr) (
 	return rv, nil
 }
 
-func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
+func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Expr)
 	if err != nil {
@@ -59,7 +70,7 @@ func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *
 	case reflect.Struct:
 		return invokeLetMemberStructExpr(vmp, v, rv, lhs)
 	case reflect.Map:
-		return invokeLetMemberMapExpr(vmp, env, v, rv, lhs)
+		return invokeLetMemberMapExpr(vmp, env, stmt, v, rv, lhs)
 	default:
 		return nilValueL, newStringError(lhs, "type "+v.Kind().String()+" does not support member operation")
 	}
@@ -88,7 +99,7 @@ func invokeLetMemberStructExpr(vmp *VmParams, v, rv reflect.Value, lhs *ast.Memb
 	return v, nil
 }
 
-func invokeLetMemberMapExpr(vmp *VmParams, env envPkg.IEnv, v, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
+func invokeLetMemberMapExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, v, rv reflect.Value, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	if v.Type().Elem() != interfaceType && v.Type().Elem() != rv.Type() {
 		rv, err = convertReflectValueToType(vmp, rv, v.Type().Elem())
@@ -99,13 +110,13 @@ func invokeLetMemberMapExpr(vmp *VmParams, env envPkg.IEnv, v, rv reflect.Value,
 	if v.IsNil() {
 		v = reflect.MakeMap(v.Type())
 		setMapIndex(v, reflect.ValueOf(lhs.Name), rv, vmp)
-		return invokeLetExpr(vmp, env, lhs.Expr, v)
+		return invokeLetExpr(vmp, env, stmt, lhs.Expr, v)
 	}
 	setMapIndex(v, reflect.ValueOf(lhs.Name), rv, vmp)
 	return v, nil
 }
 
-func invokeLetItemExpr(vmp *VmParams, rv reflect.Value, env envPkg.IEnv, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
+func invokeLetItemExpr(vmp *VmParams, rv reflect.Value, env envPkg.IEnv, stmt *ast.LetsStmt, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Value)
 	if err != nil {
@@ -121,17 +132,17 @@ func invokeLetItemExpr(vmp *VmParams, rv reflect.Value, env envPkg.IEnv, lhs *as
 
 	switch v.Kind() {
 	case reflect.Slice, reflect.Array:
-		return invokeLetItemSliceExpr(vmp, env, rv, v, index, lhs)
+		return invokeLetItemSliceExpr(vmp, env, stmt, rv, v, index, lhs)
 	case reflect.Map:
-		return invokeLetItemMapExpr(vmp, env, rv, v, index, lhs)
+		return invokeLetItemMapExpr(vmp, env, stmt, rv, v, index, lhs)
 	case reflect.String:
-		return invokeLetItemStringExpr(vmp, env, rv, v, index, lhs)
+		return invokeLetItemStringExpr(vmp, env, stmt, rv, v, index, lhs)
 	default:
 		return nilValueL, newStringError(lhs, "type "+v.Kind().String()+" does not support index operation")
 	}
 }
 
-func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
+func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	indexInt, err := tryToInt(index)
 	if err != nil {
@@ -142,11 +153,11 @@ func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflect
 		// try to do automatic append
 		if v.Type().Elem() == rv.Type() {
 			v = reflect.Append(v, rv)
-			return invokeLetExpr(vmp, env, lhs.Value, v)
+			return invokeLetExpr(vmp, env, stmt, lhs.Value, v)
 		}
 		if rv.Type().ConvertibleTo(v.Type().Elem()) {
 			v = reflect.Append(v, rv.Convert(v.Type().Elem()))
-			return invokeLetExpr(vmp, env, lhs.Value, v)
+			return invokeLetExpr(vmp, env, stmt, lhs.Value, v)
 		}
 		if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
 			return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for array index")
@@ -158,7 +169,7 @@ func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflect
 			return nilValueL, err
 		}
 		v = reflect.Append(v, newSlice)
-		return invokeLetExpr(vmp, env, lhs.Value, v)
+		return invokeLetExpr(vmp, env, stmt, lhs.Value, v)
 	}
 
 	if indexInt < 0 || indexInt >= v.Len() {
@@ -191,7 +202,7 @@ func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflect
 	return v, nil
 }
 
-func invokeLetItemMapExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
+func invokeLetItemMapExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = newStringError(lhs, fmt.Sprintf("%v", r))
@@ -218,7 +229,7 @@ func invokeLetItemMapExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflect.V
 	if v.IsNil() {
 		v = reflect.MakeMap(v.Type())
 		setMapIndex(v, index, rv, vmp)
-		vv, err = invokeLetExpr(vmp, env, lhs.Value, v)
+		vv, err = invokeLetExpr(vmp, env, stmt, lhs.Value, v)
 		return
 	}
 	setMapIndex(v, index, rv, vmp)
@@ -226,7 +237,7 @@ func invokeLetItemMapExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflect.V
 	return
 }
 
-func invokeLetItemStringExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
+func invokeLetItemStringExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, rv, v, index reflect.Value, lhs *ast.ItemExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	rv, err = convertReflectValueToType(vmp, rv, v.Type())
 	if err != nil {
@@ -246,7 +257,7 @@ func invokeLetItemStringExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflec
 			return v, nil
 		}
 
-		return invokeLetExpr(vmp, env, lhs.Value, reflect.ValueOf(v.String()+rv.String()))
+		return invokeLetExpr(vmp, env, stmt, lhs.Value, reflect.ValueOf(v.String()+rv.String()))
 	}
 
 	if indexInt < 0 || indexInt >= v.Len() {
@@ -258,7 +269,7 @@ func invokeLetItemStringExpr(vmp *VmParams, env envPkg.IEnv, rv, v, index reflec
 		return v, nil
 	}
 
-	return invokeLetExpr(vmp, env, lhs.Value, reflect.ValueOf(v.Slice(0, indexInt).String()+rv.String()+v.Slice(indexInt+1, v.Len()).String()))
+	return invokeLetExpr(vmp, env, stmt, lhs.Value, reflect.ValueOf(v.Slice(0, indexInt).String()+rv.String()+v.Slice(indexInt+1, v.Len()).String()))
 }
 
 func invokeLetSliceExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *ast.SliceExpr) (vv reflect.Value, err error) {
@@ -324,7 +335,7 @@ func invokeLetSliceExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *a
 	return v, nil
 }
 
-func invokeLetDerefExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *ast.DerefExpr) (vv reflect.Value, err error) {
+func invokeLetDerefExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, lhs *ast.DerefExpr) (vv reflect.Value, err error) {
 	v, err := invokeExpr(vmp, env, lhs.Expr)
 	if err != nil {
 		return nilValue, newError(lhs, err)

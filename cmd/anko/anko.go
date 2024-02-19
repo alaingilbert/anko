@@ -28,6 +28,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -430,6 +431,10 @@ logf("%s | %d", a, b)`
 				} else if res == executor.ResumedToggle {
 					ps.Pub(systemTopic, "script resumed")
 				}
+			} else if submit == "set_rate_limit" {
+				val, _ := strconv.ParseInt(req.PostFormValue("limit"), 10, 64)
+				rateLimit := utils.Clamp(val, 0, 100_000_000_000)
+				e.SetRateLimit(rateLimit, time.Second)
 			}
 			return
 		}
@@ -439,8 +444,9 @@ logf("%s | %d", a, b)`
 		<title>Test</title>
 		<style>
 			html, body { background-color: #333; color: #ccc; font-family: Verdana,Helvetica,Arial,sans-serif; }
-			textarea, button, select { background-color: #444; color: #ccc; padding: 3px 7px; }
+			textarea, button, select, input { background-color: #444; color: #ccc; padding: 3px 7px; }
 			.mb-2 { margin-bottom: 10px; }
+			.ml-3 { margin-left: 20px; }
 			.topic { width: 70px; display: inline-block; }
 		</style>
 	</head>
@@ -471,6 +477,12 @@ logf("%s | %d", a, b)`
 				const value = $("script").value;
 				$('source').value = scripts[value][1];
 			}
+			function setRateLimit() {
+				const formData = new FormData();
+				formData.append('limit', $("rate_limit").value);
+				formData.append('submit', 'set_rate_limit');
+				fetch("/", {method: 'POST', body: formData});
+			}
 		</script>
 		<div class="mb-2">
 			<select id="script" onchange="changeScript()">
@@ -480,6 +492,10 @@ logf("%s | %d", a, b)`
 			<button type="button" onclick="stop()">stop</button>
 			<button type="button" onclick="toggle_pause()">pause/resume</button>
 			<button type="button" onclick="clearLogs()">clear logs</button>
+			<div class="ml-3" style="display: inline-block;">
+				<input type="text" min="0" max="100000000" value="{{ .RateLimit }}" id="rate_limit" style="width: 50px;" />
+				<button type="button" onclick="setRateLimit()">Set rate limit</button>
+			</div>
 		</div>
 		<div class="mb-2">
 			Running: <span id="is_running">{{ if .IsRunning }}running{{ else }}stopped{{ end }}</span> |
@@ -524,6 +540,7 @@ logf("%s | %d", a, b)`
 			"IsPaused":  e.IsPaused(),
 			"Script":    script,
 			"Scripts":   scripts,
+			"RateLimit": utils.First(e.GetRateLimit()),
 		}
 		buf := new(bytes.Buffer)
 		_ = utils.First(template.New("").Parse(pageHtml)).Execute(buf, data)

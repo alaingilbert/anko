@@ -26,6 +26,7 @@ type Sub = pubsub.Sub[string, Evt]
 
 // IExecutor interface that the executor implements
 type IExecutor interface {
+	GetRateLimit() (int64, time.Duration)
 	Has(ctx context.Context, input any, targets []any) ([]bool, error)
 	IsPaused() bool
 	IsRunning() bool
@@ -33,9 +34,10 @@ type IExecutor interface {
 	Resume() bool
 	Run(ctx context.Context, input any) (any, error)
 	RunAsync(ctx context.Context, input any) bool
+	SetRateLimit(int64, time.Duration)
 	Stop() bool
-	TogglePause() TogglePauseResult
 	Subscribe() *Sub
+	TogglePause() TogglePauseResult
 	Validate(ctx context.Context, input any) error
 
 	GetEnv() envPkg.IEnv
@@ -131,9 +133,7 @@ func NewExecutor(cfg *Config) *Executor {
 	e.mapMutex = &runner.MapLocker{}
 	e.watchdogEnabled = utils.Default(cfg.Watchdog, true)
 	e.maxEnvCount = mtx.NewRWMtxPtr(int64(utils.Default(cfg.MaxEnvCount, 1000)))
-	if cfg.RateLimit > 0 {
-		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
-	}
+	e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
 	e.pubSubEvts = pubsub.NewPubSub[Evt](nil)
 	return e
 }
@@ -172,6 +172,16 @@ func (e *Executor) TogglePause() TogglePauseResult {
 // Pause the execution of the script. Return true if the script got paused, false if it was already paused.
 func (e *Executor) Pause() bool {
 	return e.pauseFn()
+}
+
+// GetRateLimit returns the current set rate limit
+func (e *Executor) GetRateLimit() (int64, time.Duration) {
+	return e.getRateLimit()
+}
+
+// SetRateLimit set rate limit
+func (e *Executor) SetRateLimit(limit int64, period time.Duration) {
+	e.setRateLimit(limit, period)
 }
 
 // Resume the execution of the script. Return true if the script got resumed, false if it was already running.
@@ -293,6 +303,14 @@ func (e *Executor) pauseFn() (changed bool) {
 		}
 	}
 	return changed
+}
+
+func (e *Executor) getRateLimit() (int64, time.Duration) {
+	return e.rateLimit.GetLimit()
+}
+
+func (e *Executor) setRateLimit(limit int64, period time.Duration) {
+	e.rateLimit.Set(limit, period)
 }
 
 func (e *Executor) resume() (changed bool) {

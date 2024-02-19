@@ -57,3 +57,9 @@ func Default[T any](v *T, d T) T {
 }
 
 func Bool(v bool) *bool { return &v }
+
+func Clamp[T ~int | ~int64](val, minVal, maxVal T) T {
+	val = min(val, maxVal)
+	val = max(val, minVal)
+	return val
+}

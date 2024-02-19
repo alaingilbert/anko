@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/alaingilbert/anko/pkg/vm/utils"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"
@@ -1283,13 +1284,15 @@ func TestGetParentValue(t *testing.T) {
 }
 
 func TestEnv_String(t *testing.T) {
+	type MyInterface interface{}
 	env := NewEnv()
 	_ = env.Define("a", 1)
 	_ = env.Define("b", func() {})
 	_, _ = env.NewModule("c")
 	_ = env.DefineType("t", "bool")
 	_ = env.DefineType("u", "bool")
-	assert.Equal(t, "No parent\na = 1\nb = func()\nc = module<c>\n\nt = string\nu = string\n", env.String())
+	_ = env.DefineType("i", reflect.TypeOf((*MyInterface)(nil)).Elem())
+	assert.Equal(t, "No parent\na = 1\nb = func()\nc = module<c>\n\ni = env.MyInterface interface\nt = string\nu = string\n", env.String())
 }
 
 func TestEnv_AddPackage(t *testing.T) {
@@ -1374,6 +1377,9 @@ func TestEnv_SetValue(t *testing.T) {
 	err = env.SetValue("a", reflect.ValueOf("a"))
 	assert.NoError(t, err)
 	assert.Equal(t, 1, env.Values().Len())
+
+	_ = env.DefineValue("b", reflect.ValueOf(&utils.StronglyTyped{V: reflect.ValueOf(123)}))
+	assert.Error(t, env.SetValue("b", reflect.ValueOf("123")))
 }
 
 func TestEnv_Name(t *testing.T) {
@@ -1405,4 +1411,21 @@ func TestDestroy(t *testing.T) {
 	assert.Equal(t, int64(1), env.ChildCount())
 	newenv.Destroy()
 	assert.Equal(t, int64(0), env.ChildCount())
+}
+
+func TestHasValue(t *testing.T) {
+	env := NewEnv()
+	_ = env.Define("a", 123)
+	assert.True(t, env.HasValue("a"))
+	newenv := env.newEnv()
+	assert.False(t, newenv.HasValue("a"))
+	_ = newenv.Define("a", 456)
+	assert.True(t, newenv.HasValue("a"))
+}
+
+func TestGetValue(t *testing.T) {
+	env := NewEnv()
+	_ = env.DefineValue("a", reflect.ValueOf(&utils.StronglyTyped{V: reflect.ValueOf(123)}))
+	val, _ := env.GetValue("a")
+	assert.Equal(t, "int", val.Type().String())
 }

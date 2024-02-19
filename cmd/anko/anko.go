@@ -386,10 +386,29 @@ func typedFn(a int64, b string) (string, int64) {
 a, b = typedFn(42, "hello world")
 logf("%s | %d", a, b)`
 
+	typedValues := `try {
+    a := 123
+    a = "123" // type mismatch
+} catch err {
+    log("got err: ", err)
+}
+
+try {
+    a := 123
+    a := "123" // already defined symbol 'a'
+} catch err {
+    log("got err: ", err)
+}
+
+a := 123
+delete("a") // delete a from env
+a = "123"   // no error`
+
 	scripts := [][]string{
 		{"Default", defaultScript},
 		{"Select", selectScript},
 		{"Typed func", typedFuncScript},
+		{"Typed variables", typedValues},
 	}
 
 	mux := http.DefaultServeMux

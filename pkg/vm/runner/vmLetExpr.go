@@ -36,7 +36,7 @@ func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, l
 	}
 	if err := env.SetValue(lhs.Lit, rv); err != nil {
 		if errors.Is(err, vmUtils.ErrTypeMismatch) {
-			return nilValue, err
+			return nilValue, newError(lhs, err)
 		}
 		if strings.Contains(lhs.Lit, ".") {
 			return nilValue, newErrorf(lhs, "undefined symbol '%s'", lhs.Lit)

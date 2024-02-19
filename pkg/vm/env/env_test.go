@@ -1289,7 +1289,7 @@ func TestEnv_String(t *testing.T) {
 	_, _ = env.NewModule("c")
 	_ = env.DefineType("t", "bool")
 	_ = env.DefineType("u", "bool")
-	assert.Equal(t, "No parent\na = 1\nb = func()\nc = module<c>\nt = string\nu = string\n", env.String())
+	assert.Equal(t, "No parent\na = 1\nb = func()\nc = module<c>\n\nt = string\nu = string\n", env.String())
 }
 
 func TestEnv_AddPackage(t *testing.T) {

@@ -365,7 +365,11 @@ func (e *Env) string() string {
 	parentStr := utils.Ternary(e.parent == nil, "No parent\n", "Has parent\n")
 	buffer.WriteString(parentStr)
 	format := "%-" + strconv.Itoa(maxSymbolLen) + "v = %s\n"
-	for _, v := range allValsTypes {
+	for _, v := range valuesArr {
+		buffer.WriteString(fmt.Sprintf(format, v[0], v[1]))
+	}
+	buffer.WriteString("\n")
+	for _, v := range typesArr {
 		buffer.WriteString(fmt.Sprintf(format, v[0], v[1]))
 	}
 	return buffer.String()
@@ -388,7 +392,27 @@ func (e *Env) addr(k string) (reflect.Value, error) {
 }
 
 func (e *Env) typ(k string) (reflect.Type, error) {
-	if v, ok := e.types.Get(k); ok {
+	mod := e
+	search := k
+	parts := strings.Split(k, ".")
+	if len(parts) > 1 {
+		for {
+			if len(parts) > 1 {
+				var modName string
+				modName, parts = parts[0], parts[1:]
+				val, err := mod.getValue(modName)
+				if err != nil {
+					search = k
+					break
+				}
+				mod = val.Interface().(*Env)
+			} else {
+				search = parts[0]
+				break
+			}
+		}
+	}
+	if v, ok := mod.types.Get(search); ok {
 		return v, nil
 	}
 	if e.parent == nil {

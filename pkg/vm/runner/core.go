@@ -3,11 +3,14 @@
 package runner
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/vm/env"
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"os"
 	"reflect"
+	"sort"
+	"strconv"
 )
 
 // Import defines core language builtins - keys, range, println,  etc.
@@ -24,6 +27,7 @@ func Import(env env.IEnv) env.IEnv {
 	_ = env.Define("printf", fmt.Printf)
 	_ = env.Define("close", closeFn)
 	_ = env.Define("dbg", dbgFn)
+	_ = env.Define("typ", typFn(env))
 
 	ImportToX(env)
 
@@ -41,6 +45,62 @@ func dbgFn(v any) {
 		out += fmt.Sprintf(" | %s", vmUtils.ReplaceInterface(reflect.TypeOf(v).String()))
 	}
 	println(out)
+}
+
+func typFn(env env.IEnv) func(s string) {
+	return func(s string) {
+		rt, err := env.Type(s)
+		if err != nil {
+			panic(err)
+		}
+		if rt.Kind() == reflect.Interface {
+			nb := rt.NumMethod()
+			methodsArr := make([][]string, 0)
+			for i := 0; i < nb; i++ {
+				method := rt.Method(i)
+				methodsArr = append(methodsArr, []string{method.Name, method.Type.String()})
+			}
+			sort.Slice(methodsArr, func(i, j int) bool { return methodsArr[i][0] < methodsArr[j][0] })
+			maxSymbolLen := 0
+			for _, v := range methodsArr {
+				maxSymbolLen = max(maxSymbolLen, len(v[0]))
+			}
+
+			buf := new(bytes.Buffer)
+			buf.WriteString("type " + rt.Name() + " interface {\n")
+			format := "    %-" + strconv.Itoa(maxSymbolLen) + "v %s\n"
+			for _, v := range methodsArr {
+				buf.WriteString(fmt.Sprintf(format, v[0], v[1]))
+			}
+			buf.WriteString("}")
+			println(buf.String())
+			return
+		}
+		if rt.Kind() == reflect.Struct {
+			nb := rt.NumField()
+			fieldsArr := make([][]string, 0)
+			for i := 0; i < nb; i++ {
+				field := rt.Field(i)
+				fieldsArr = append(fieldsArr, []string{field.Name, field.Type.String()})
+			}
+			sort.Slice(fieldsArr, func(i, j int) bool { return fieldsArr[i][0] < fieldsArr[j][0] })
+			maxSymbolLen := 0
+			for _, v := range fieldsArr {
+				maxSymbolLen = max(maxSymbolLen, len(v[0]))
+			}
+
+			buf := new(bytes.Buffer)
+			buf.WriteString("type " + rt.Name() + " struct {\n")
+			format := "    %-" + strconv.Itoa(maxSymbolLen) + "v %s\n"
+			for _, v := range fieldsArr {
+				buf.WriteString(fmt.Sprintf(format, v[0], v[1]))
+			}
+			buf.WriteString("}")
+			println(buf.String())
+			return
+		}
+		println(rt.String())
+	}
 }
 
 // Given a map, returns its keys

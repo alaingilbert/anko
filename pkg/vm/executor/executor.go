@@ -131,7 +131,7 @@ func NewExecutor(cfg *Config) *Executor {
 	e.stats = &runner.Stats{}
 	e.importCore = utils.Default(cfg.ImportCore, false)
 	e.dbgEnabled = utils.Default(cfg.DbgEnabled, true)
-	e.resetEnv = utils.Default(cfg.ResetEnv, true)
+	e.resetEnv = utils.Default(cfg.ResetEnv, false)
 	e.doNotProtectMaps = utils.Default(cfg.ProtectMaps, true)
 	e.mapMutex = &runner.MapLocker{}
 	e.watchdogEnabled = utils.Default(cfg.Watchdog, true)

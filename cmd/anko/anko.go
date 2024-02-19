@@ -328,6 +328,7 @@ func runWeb() int {
 	v := vm.New(&vm.Config{
 		ImportCore:   utils.Ptr(true),
 		DefineImport: utils.Ptr(true),
+		ResetEnv:     utils.Ptr(true),
 	})
 
 	const scriptTopic = "script"

@@ -351,16 +351,16 @@ func invokeAddrExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr) (reflect.Va
 	nilValueL := nilValue
 	switch ee := e.Expr.(type) {
 	case *ast.IdentExpr:
-		return invokeAddrExprIdentExpr(env, e, ee)
+		return invokeAddrExprIdentExpr(env, ee)
 	case *ast.MemberExpr:
-		return invokeAddrExprMemberExpr(vmp, env, e, ee)
+		return invokeAddrExprMemberExpr(vmp, env, ee)
 	default:
 		return nilValueL, newStringError(e, "invalid operation for the value")
 	}
 }
 
-func invokeAddrExprIdentExpr(env envPkg.IEnv, e *ast.AddrExpr, ee *ast.IdentExpr) (reflect.Value, error) {
-	v, err := env.GetValue(ee.Lit)
+func invokeAddrExprIdentExpr(env envPkg.IEnv, e *ast.IdentExpr) (reflect.Value, error) {
+	v, err := env.GetValue(e.Lit)
 	if err != nil {
 		return nilValue, newError(e, err)
 	}
@@ -371,10 +371,12 @@ func invokeAddrExprIdentExpr(env envPkg.IEnv, e *ast.AddrExpr, ee *ast.IdentExpr
 	return v.Addr(), nil
 }
 
-func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr, ee *ast.MemberExpr) (reflect.Value, error) {
-	v, err := invokeExpr(vmp, env, ee.Expr)
+func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflect.Value, error) {
+	memberExprName := e.Name
+	invalidOperationStr := buildInvalidOperationStr(memberExprName)
+	v, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
-		return nilValue, newError(ee.Expr, err)
+		return nilValue, newError(e.Expr, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -384,30 +386,30 @@ func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr, e
 	}
 	if v.IsValid() && v.CanInterface() {
 		if vme, ok := v.Interface().(envPkg.IEnv); ok {
-			m, err := vme.GetValue(ee.Name)
+			m, err := vme.GetValue(memberExprName)
 			if !m.IsValid() || err != nil {
-				return nilValue, newStringError(e, buildInvalidOperationStr(ee.Name))
+				return nilValue, newStringError(e, invalidOperationStr)
 			}
 			return m, nil
 		}
 	}
 
-	m := v.MethodByName(ee.Name)
+	m := v.MethodByName(memberExprName)
 	if !m.IsValid() {
 		if v.Kind() == reflect.Pointer {
 			v = v.Elem()
 		}
 		if v.Kind() == reflect.Struct {
-			m = v.FieldByName(ee.Name)
+			m = v.FieldByName(memberExprName)
 			if !m.IsValid() {
-				return nilValue, newStringError(e, buildInvalidOperationStr(ee.Name))
+				return nilValue, newStringError(e, invalidOperationStr)
 			}
 		} else if v.Kind() == reflect.Map {
 			// From reflect MapIndex:
 			// It returns the zero Value if key is not found in the map or if v represents a nil map.
-			m = readMapIndex(v, reflect.ValueOf(ee.Name), vmp)
+			m = readMapIndex(v, reflect.ValueOf(memberExprName), vmp)
 		} else {
-			return nilValue, newStringError(e, buildInvalidOperationStr(ee.Name))
+			return nilValue, newStringError(e, invalidOperationStr)
 		}
 		v = m
 	} else {

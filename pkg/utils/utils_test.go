@@ -33,3 +33,10 @@ func TestTernaryZ(t *testing.T) {
 func TestMD5(t *testing.T) {
 	assert.Equal(t, "acbd18db4cc2f85cedef654fccc4a4d8", MD5([]byte("foo")))
 }
+
+func TestDefault(t *testing.T) {
+	assert.Equal(t, true, Default((*bool)(nil), true))
+	assert.Equal(t, false, Default((*bool)(nil), false))
+	assert.Equal(t, true, Default(Bool(true), false))
+	assert.Equal(t, false, Default(Bool(false), true))
+}

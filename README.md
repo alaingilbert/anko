@@ -10,6 +10,7 @@ This fork can:
 - Know if a function is being used in a script (works with bytecode too)
 - Optional typed function parameters and return values
 - pause/resume execution of a script
+- Automatically kill scripts which "stack overflow" (infinite recursion)
 - Stop a script at any time
 - Much better CLI with auto-completion
 - Get stats, how many statements/expressions were processed

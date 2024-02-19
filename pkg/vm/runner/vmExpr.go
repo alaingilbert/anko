@@ -1088,7 +1088,7 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 					}
 				}
 			} else {
-				if !(vmUtils.KindIsNumeric(chanType.Kind()) && vmUtils.KindIsNumeric(rhs.Type().Kind())) {
+				if !vmUtils.KindIsNumeric(chanType.Kind()) || !vmUtils.KindIsNumeric(rhs.Type().Kind()) {
 					return nilValue, newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
 				}
 				rhs, err = convertReflectValueToType(vmp, rhs, chanType)

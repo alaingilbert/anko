@@ -89,6 +89,7 @@ type Executor struct {
 	isRunning        atomic.Bool                          // either or not the executor is running a script
 	pubSubEvts       *pubsub.PubSub[string, Evt]          // pubsub for executor's events
 	dbgEnabled       bool                                 // either or not to enable dbg()
+	resetEnv         bool                                 // either or not to reset the env before each run
 }
 
 // Config for the executor
@@ -99,6 +100,7 @@ type Config struct {
 	Watchdog        *bool
 	DefineImport    *bool
 	DbgEnabled      *bool
+	ResetEnv        *bool
 	RateLimit       int
 	RateLimitPeriod time.Duration
 	Env             envPkg.IEnv
@@ -129,6 +131,7 @@ func NewExecutor(cfg *Config) *Executor {
 	e.stats = &runner.Stats{}
 	e.importCore = utils.Default(cfg.ImportCore, false)
 	e.dbgEnabled = utils.Default(cfg.DbgEnabled, true)
+	e.resetEnv = utils.Default(cfg.ResetEnv, true)
 	e.doNotProtectMaps = utils.Default(cfg.ProtectMaps, true)
 	e.mapMutex = &runner.MapLocker{}
 	e.watchdogEnabled = utils.Default(cfg.Watchdog, true)
@@ -478,6 +481,9 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 	}
 
 	envCopy := e.env
+	if e.resetEnv {
+		envCopy = envCopy.DeepCopy()
+	}
 
 	has := make(map[any]bool)
 	for _, vv := range targets {

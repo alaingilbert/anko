@@ -36,6 +36,7 @@ type Config struct {
 	DbgEnabled      *bool
 	Watchdog        *bool
 	MaxEnvCount     *int
+	ResetEnv        *bool
 }
 
 // VM base vm
@@ -50,6 +51,7 @@ type VM struct {
 	dbgEnabled      *bool
 	watchdog        *bool
 	maxEnvCount     *int
+	resetEnv        *bool
 }
 
 // New creates a new vm
@@ -62,6 +64,7 @@ func New(config *Config) *VM {
 	var deepCopyEnv *bool
 	var protectMaps *bool
 	var dbgEnabled *bool
+	var resetEnv *bool
 	var watchdog *bool
 	var maxEnvCount *int
 	if config == nil || config.Env == nil {
@@ -83,6 +86,7 @@ func New(config *Config) *VM {
 		dbgEnabled = config.DbgEnabled
 		watchdog = config.Watchdog
 		maxEnvCount = config.MaxEnvCount
+		resetEnv = config.ResetEnv
 	}
 	return &VM{
 		env:             env,
@@ -95,6 +99,7 @@ func New(config *Config) *VM {
 		dbgEnabled:      dbgEnabled,
 		watchdog:        watchdog,
 		maxEnvCount:     maxEnvCount,
+		resetEnv:        resetEnv,
 	}
 }
 
@@ -146,6 +151,7 @@ func (v *VM) executor() *executor.Executor {
 		DbgEnabled:      v.dbgEnabled,
 		Watchdog:        v.watchdog,
 		MaxEnvCount:     v.maxEnvCount,
+		ResetEnv:        v.resetEnv,
 	})
 }
 

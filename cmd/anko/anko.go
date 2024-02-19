@@ -124,7 +124,10 @@ func runNonInteractive(args []string, appFlags AppFlags) int {
 		}
 	}
 
-	v := vm.New(&vm.Config{ImportCore: utils.Ptr(true), DefineImport: utils.Ptr(true)})
+	v := vm.New(&vm.Config{
+		ImportCore:   utils.Ptr(true),
+		DefineImport: utils.Ptr(true),
+	})
 	_ = v.Define("args", args)
 	executorInst := v.Executor()
 	fileExt := filepath.Ext(appFlags.File)
@@ -197,7 +200,11 @@ func runInteractive(args []string) int {
 	//l.CaptureExitSignal()
 
 	log.SetOutput(l.Stderr())
-	v := vm.New(&vm.Config{ImportCore: utils.Ptr(true), DefineImport: utils.Ptr(true)})
+	v := vm.New(&vm.Config{
+		ImportCore:   utils.Ptr(true),
+		DefineImport: utils.Ptr(true),
+		ResetEnv:     utils.Ptr(false),
+	})
 	_ = v.Define("args", args)
 	executorInst := v.Executor()
 	rebuildCompleter(executorInst.GetEnv())

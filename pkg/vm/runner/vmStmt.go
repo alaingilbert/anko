@@ -540,6 +540,9 @@ func runModuleStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ModuleStmt) (reflec
 	return rv, nil
 }
 
+var ErrInvalidOperation = errors.New("invalid operation")
+var ErrInvalidOperationForTheValue = errors.New("invalid operation for the value")
+
 func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflect.Value, error) {
 	nilValueL := nilValue
 	var err error
@@ -568,7 +571,7 @@ func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 			pos = e.Expr
 			che, ok = e.Expr.(*ast.ChanExpr)
 		}
-		invalidOperationErr := newStringError(pos, "invalid operation")
+		invalidOperationErr := newError(pos, ErrInvalidOperation)
 		if !ok {
 			return nilValueL, invalidOperationErr
 		}

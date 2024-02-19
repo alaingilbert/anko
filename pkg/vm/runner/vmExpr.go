@@ -282,7 +282,7 @@ func invokeDerefExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DerefExpr) (reflect.
 	case *ast.MemberExpr:
 		return invokeDeferExprMemberExpr(vmp, env, ee)
 	default:
-		return nilValue, newStringError(e, "invalid operation for the value")
+		return nilValue, newError(e, ErrInvalidOperationForTheValue)
 	}
 }
 
@@ -356,7 +356,7 @@ func invokeAddrExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr) (reflect.Va
 	case *ast.MemberExpr:
 		return invokeAddrExprMemberExpr(vmp, env, ee)
 	default:
-		return nilValueL, newStringError(e, "invalid operation for the value")
+		return nilValueL, newError(e, ErrInvalidOperationForTheValue)
 	}
 }
 

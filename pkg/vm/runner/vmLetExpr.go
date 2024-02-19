@@ -22,7 +22,7 @@ func invokeLetExpr(vmp *VmParams, env envPkg.IEnv, expr ast.Expr, rv reflect.Val
 	case *ast.DerefExpr:
 		return invokeLetDerefExpr(vmp, env, rv, lhs)
 	}
-	return nilValue, newStringError(expr, "invalid operation")
+	return nilValue, newError(expr, ErrInvalidOperation)
 }
 
 func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, lhs *ast.IdentExpr) (vv reflect.Value, err error) {

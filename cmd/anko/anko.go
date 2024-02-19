@@ -399,9 +399,10 @@ select {
 				script = req.PostFormValue("source")
 				if !e.IsRunning() {
 					go func() {
-						_, err := e.Run(context.Background(), script)
-						if err != nil {
+						if val, err := e.Run(context.Background(), script); err != nil {
 							ps.Pub(scriptTopic, err.Error())
+						} else {
+							ps.Pub(scriptTopic, fmt.Sprintf("%#v", val))
 						}
 					}()
 					ps.Pub(systemTopic, "run script")

@@ -1088,12 +1088,15 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 					}
 				}
 			} else {
+				buildErr := func(rhs reflect.Value, chanType reflect.Type) error {
+					return newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
+				}
 				if !vmUtils.KindIsNumeric(chanType.Kind()) || !vmUtils.KindIsNumeric(rhs.Type().Kind()) {
-					return nilValue, newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
+					return nilValue, buildErr(rhs, chanType)
 				}
 				rhs, err = convertReflectValueToType(vmp, rhs, chanType)
 				if err != nil {
-					return nilValue, newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
+					return nilValue, buildErr(rhs, chanType)
 				}
 				cases := []reflect.SelectCase{{
 					Dir:  reflect.SelectRecv,

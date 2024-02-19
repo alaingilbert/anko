@@ -62,6 +62,7 @@ type IEnv interface {
 	Get(k string) (any, error)
 	GetEnvFromPath(path []string) (IEnv, error)
 	GetValue(k string) (reflect.Value, error)
+	HasValue(k string) bool
 	Name() string
 	NewEnv() IEnv
 	WithNewEnv(func(IEnv))
@@ -134,6 +135,9 @@ func (e *Env) Type(k string) (reflect.Type, error) { return e.typ(k) }
 func (e *Env) Get(k string) (any, error) { return e.get(k) }
 
 func (e *Env) GetValue(k string) (reflect.Value, error) { return e.getValue(k) }
+
+// HasValue returns either or not the key is present in our env values
+func (e *Env) HasValue(k string) bool { return e.hasValue(k) }
 
 //func (e *Env) Set(k string, v any) error { return e.set(k, v) }
 
@@ -429,6 +433,10 @@ func (e *Env) getValue(k string) (reflect.Value, error) {
 		return nilValue, fmt.Errorf("undefined symbol '%s'", k)
 	}
 	return e.parent.getValue(k)
+}
+
+func (e *Env) hasValue(k string) bool {
+	return e.values.ContainsKey(k)
 }
 
 // Set modifies value which specified as symbol. It goes to upper scope until

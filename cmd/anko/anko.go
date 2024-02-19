@@ -341,9 +341,27 @@ func runWeb() int {
 
 	defaultScript := `time = import("time")
 for i=0; i<10; i++ {
-  sleep(time.Second)
-  log("test " + i)
+    sleep(time.Second)
+    log("test " + i)
 }`
+
+	selectScript := `time = import("time")
+ch1 = make(chan int)
+ch2 = make(chan string)
+go func() {
+    sleep(time.Second)
+    ch2 <- "test"
+}()
+select {
+    case v = <-ch1: log("received on ch1: " + v)
+    case v = <-ch2: log("received on ch2: " + v)
+}
+`
+
+	scripts := [][]string{
+		{"Default", defaultScript},
+		{"Select", selectScript},
+	}
 
 	mux := http.DefaultServeMux
 	mux.HandleFunc("/favicon.ico", func(resp http.ResponseWriter, req *http.Request) {})
@@ -374,7 +392,7 @@ for i=0; i<10; i++ {
 	})
 	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		resp.WriteHeader(http.StatusOK)
-		script := defaultScript
+		script := scripts[0][1]
 		if req.Method == http.MethodPost {
 			submit := req.PostFormValue("submit")
 			if submit == "run" {
@@ -401,6 +419,7 @@ for i=0; i<10; i++ {
 	<head><title>Test</title></head>
 	<body>
 		<script>
+			const scripts = {{ .Scripts }};
 			function toggle_pause() {
 				const formData = new FormData();
 				formData.append('submit', 'toggle_pause');
@@ -420,8 +439,15 @@ for i=0; i<10; i++ {
 			function clearLogs() {
 				document.getElementById("logs").innerHTML = '';
 			}
+			function changeScript() {
+				const value = document.getElementById("script").value;
+				document.getElementById('source').value = scripts[value][1];
+			}
 		</script>
 		<div>
+			<select id="script" onchange="changeScript()">
+				{{ range $i, $v := .Scripts }}<option value="{{ $i }}">{{ index $v 0 }}</option>{{ end }}
+			</select>
 			<button type="button" onclick="run()">run</button>
 			<button type="button" onclick="stop()">stop</button>
 			<button type="button" onclick="toggle_pause()">pause/resume</button>
@@ -431,7 +457,7 @@ for i=0; i<10; i++ {
 			Running: <span id="is_running">{{ if .IsRunning }}running{{ else }}stopped{{ end }}</span> |
 			Paused: <span id="is_paused">{{ if .IsPaused }}paused{{ else }}not paused{{ end }}</span>
 		</div>
-		<textarea name="source" id="source" rows="10" cols="80">{{ .Script }}</textarea>
+		<textarea name="source" id="source" rows="15" cols="80">{{ .Script }}</textarea>
 		<div id="logs"></div>
 		<script>
 			const evtSource = new EventSource("/sse");
@@ -457,6 +483,7 @@ for i=0; i<10; i++ {
 			"IsRunning": e.IsRunning(),
 			"IsPaused":  e.IsPaused(),
 			"Script":    script,
+			"Scripts":   scripts,
 		}
 		buf := new(bytes.Buffer)
 		_ = utils.First(template.New("").Parse(pageHtml)).Execute(buf, data)

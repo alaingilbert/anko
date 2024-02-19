@@ -385,7 +385,7 @@ func (e *Env) string() string {
 }
 
 var nilValue = vmUtils.NilValue
-var nilType = reflect.TypeOf(nil)
+var nilType = vmUtils.NilType
 
 func (e *Env) addr(k string) (reflect.Value, error) {
 	if v, ok := e.values.Get(k); ok {

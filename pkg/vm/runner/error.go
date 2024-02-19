@@ -22,7 +22,6 @@ type (
 type IsVmFunc struct{ context.Context }
 
 var (
-	nilType            = reflect.TypeOf(nil)
 	StringType         = reflect.TypeOf("a")
 	interfaceType      = reflect.ValueOf([]any{int64(1)}).Index(0).Type()
 	InterfaceSliceType = reflect.TypeOf([]any{})

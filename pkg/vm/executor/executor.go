@@ -91,16 +91,16 @@ type Executor struct {
 
 // Config for the executor
 type Config struct {
-	DoNotProtectMaps bool
-	DoNotDeepCopyEnv bool
-	ImportCore       bool
-	WatchdogEnabled  bool
-	DefineImport     bool
-	DbgEnabled       *bool
-	RateLimit        int
-	RateLimitPeriod  time.Duration
-	Env              envPkg.IEnv
-	MaxEnvCount      int
+	ProtectMaps     *bool
+	DeepCopyEnv     *bool
+	ImportCore      *bool
+	Watchdog        *bool
+	DefineImport    *bool
+	DbgEnabled      *bool
+	RateLimit       int
+	RateLimitPeriod time.Duration
+	Env             envPkg.IEnv
+	MaxEnvCount     *int
 }
 
 // NewExecutor creates a new executor
@@ -109,27 +109,26 @@ func NewExecutor(cfg *Config) *Executor {
 		return nil
 	}
 	e := &Executor{}
-	if cfg.DoNotDeepCopyEnv {
-		e.env = cfg.Env
-	} else {
+	deepCopyEnv := utils.Default(cfg.DeepCopyEnv, true)
+	if deepCopyEnv {
 		e.env = cfg.Env.DeepCopy()
+	} else {
+		e.env = cfg.Env
 	}
-	if cfg.ImportCore {
+	if cfg.ImportCore != nil && *cfg.ImportCore {
 		runner.Import(e.env)
 	}
-	if cfg.DefineImport {
+	if cfg.DefineImport != nil && *cfg.DefineImport {
 		runner.DefineImport(e.env)
-	}
-	if cfg.WatchdogEnabled {
-		e.watchdogEnabled = cfg.WatchdogEnabled
 	}
 	e.pause = stateCh.NewStateCh(true)
 	e.stats = &runner.Stats{}
-	e.doNotProtectMaps = cfg.DoNotProtectMaps
-	e.importCore = cfg.ImportCore
+	e.importCore = utils.Default(cfg.ImportCore, false)
 	e.dbgEnabled = utils.Default(cfg.DbgEnabled, true)
+	e.doNotProtectMaps = utils.Default(cfg.ProtectMaps, true)
 	e.mapMutex = &runner.MapLocker{}
-	e.maxEnvCount = mtx.NewRWMtxPtr(int64(cfg.MaxEnvCount))
+	e.watchdogEnabled = utils.Default(cfg.Watchdog, true)
+	e.maxEnvCount = mtx.NewRWMtxPtr(int64(utils.Default(cfg.MaxEnvCount, 1000)))
 	if cfg.RateLimit > 0 {
 		e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
 	}
@@ -466,17 +465,17 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 	}
 
 	rv, err := runner.Run(&runner.Config{
-		Ctx:              ctx,
-		Env:              envCopy,
-		Stmt:             stmt1,
-		Stats:            e.stats,
-		DoNotProtectMaps: e.doNotProtectMaps,
-		MapMutex:         e.mapMutex,
-		Pause:            e.pause,
-		RateLimit:        e.rateLimit,
-		DbgEnabled:       e.dbgEnabled,
-		Validate:         validate,
-		Has:              has,
+		Ctx:         ctx,
+		Env:         envCopy,
+		Stmt:        stmt1,
+		Stats:       e.stats,
+		ProtectMaps: e.doNotProtectMaps,
+		MapMutex:    e.mapMutex,
+		Pause:       e.pause,
+		RateLimit:   e.rateLimit,
+		DbgEnabled:  e.dbgEnabled,
+		Validate:    validate,
+		Has:         has,
 	})
 	if errors.Is(err, runner.ErrReturn) {
 		err = nil

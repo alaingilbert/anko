@@ -19,23 +19,23 @@ func (m *MapLocker) Lock()   { m.Mutex.Lock() }
 func (m *MapLocker) Unlock() { m.Mutex.Unlock() }
 
 type VmParams struct {
-	ctx              context.Context
-	rvCh             chan Result
-	stats            *Stats
-	doNotProtectMaps bool
-	mapMutex         *MapLocker
-	pause            *stateCh.StateCh
-	rateLimit        *ratelimitanything.RateLimitAnything
-	DbgEnabled       bool
-	Validate         bool
-	has              map[any]bool
-	ValidateLater    map[string]ast.Stmt
+	ctx           context.Context
+	rvCh          chan Result
+	stats         *Stats
+	protectMaps   bool
+	mapMutex      *MapLocker
+	pause         *stateCh.StateCh
+	rateLimit     *ratelimitanything.RateLimitAnything
+	DbgEnabled    bool
+	Validate      bool
+	has           map[any]bool
+	ValidateLater map[string]ast.Stmt
 }
 
 func NewVmParams(ctx context.Context,
 	rvCh chan Result,
 	stats *Stats,
-	doNotProtectMaps bool,
+	protectMaps bool,
 	mapMutex *MapLocker,
 	pause *stateCh.StateCh,
 	rateLimit *ratelimitanything.RateLimitAnything,
@@ -44,32 +44,32 @@ func NewVmParams(ctx context.Context,
 	validateLater map[string]ast.Stmt,
 ) *VmParams {
 	return &VmParams{
-		ctx:              ctx,
-		rvCh:             rvCh,
-		stats:            stats,
-		doNotProtectMaps: doNotProtectMaps,
-		mapMutex:         mapMutex,
-		pause:            pause,
-		rateLimit:        rateLimit,
-		Validate:         validate,
-		DbgEnabled:       dbgEnabled,
-		has:              has,
-		ValidateLater:    validateLater,
+		ctx:           ctx,
+		rvCh:          rvCh,
+		stats:         stats,
+		protectMaps:   protectMaps,
+		mapMutex:      mapMutex,
+		pause:         pause,
+		rateLimit:     rateLimit,
+		Validate:      validate,
+		DbgEnabled:    dbgEnabled,
+		has:           has,
+		ValidateLater: validateLater,
 	}
 }
 
 type Config struct {
-	Ctx              context.Context
-	Env              envPkg.IEnv
-	Stmt             ast.Stmt
-	Stats            *Stats
-	MapMutex         *MapLocker
-	Pause            *stateCh.StateCh
-	RateLimit        *ratelimitanything.RateLimitAnything
-	DoNotProtectMaps bool
-	Validate         bool
-	DbgEnabled       bool
-	Has              map[any]bool
+	Ctx         context.Context
+	Env         envPkg.IEnv
+	Stmt        ast.Stmt
+	Stats       *Stats
+	MapMutex    *MapLocker
+	Pause       *stateCh.StateCh
+	RateLimit   *ratelimitanything.RateLimitAnything
+	ProtectMaps bool
+	Validate    bool
+	DbgEnabled  bool
+	Has         map[any]bool
 }
 
 func Run(config *Config) (reflect.Value, error) {
@@ -83,7 +83,7 @@ func Run(config *Config) (reflect.Value, error) {
 	// So we need a way to stop the vm from another thread...
 	rvCh := make(chan Result)
 
-	vmp := NewVmParams(config.Ctx, rvCh, config.Stats, config.DoNotProtectMaps, config.MapMutex,
+	vmp := NewVmParams(config.Ctx, rvCh, config.Stats, config.ProtectMaps, config.MapMutex,
 		config.Pause, config.RateLimit, dbgEnabled, validate, config.Has, validateLater)
 
 	go func() {

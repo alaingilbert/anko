@@ -26,24 +26,30 @@ var _ IVM = (*VM)(nil)
 
 // Config for the vm
 type Config struct {
-	Env              envPkg.IEnv
-	RateLimit        int
-	RateLimitPeriod  time.Duration
-	DefineImport     bool
-	ImportCore       bool
-	DoNotDeepCopyEnv bool
-	DoNotProtectMaps bool
+	Env             envPkg.IEnv
+	RateLimit       int
+	RateLimitPeriod time.Duration
+	DefineImport    *bool
+	ImportCore      *bool
+	DeepCopyEnv     *bool
+	ProtectMaps     *bool
+	DbgEnabled      *bool
+	Watchdog        *bool
+	MaxEnvCount     *int
 }
 
 // VM base vm
 type VM struct {
-	env              envPkg.IEnv
-	rateLimit        int
-	rateLimitPeriod  time.Duration
-	importCore       bool
-	defineImport     bool
-	doNotDeepCopyEnv bool
-	doNotProtectMaps bool
+	env             envPkg.IEnv
+	rateLimit       int
+	rateLimitPeriod time.Duration
+	importCore      *bool
+	defineImport    *bool
+	deepCopyEnv     *bool
+	protectMaps     *bool
+	dbgEnabled      *bool
+	watchdog        *bool
+	maxEnvCount     *int
 }
 
 // New creates a new vm
@@ -51,10 +57,13 @@ func New(config *Config) *VM {
 	var env envPkg.IEnv
 	var rateLimit int
 	var rateLimitPeriod time.Duration
-	var importCore bool
-	var defineImport bool
-	var doNotDeepCopyEnv bool
-	var doNotProtectMaps bool
+	var importCore *bool
+	var defineImport *bool
+	var deepCopyEnv *bool
+	var protectMaps *bool
+	var dbgEnabled *bool
+	var watchdog *bool
+	var maxEnvCount *int
 	if config == nil || config.Env == nil {
 		env = envPkg.NewEnv()
 	} else {
@@ -69,17 +78,23 @@ func New(config *Config) *VM {
 		}
 		importCore = config.ImportCore
 		defineImport = config.DefineImport
-		doNotDeepCopyEnv = config.DoNotDeepCopyEnv
-		doNotProtectMaps = config.DoNotProtectMaps
+		deepCopyEnv = config.DeepCopyEnv
+		protectMaps = config.ProtectMaps
+		dbgEnabled = config.DbgEnabled
+		watchdog = config.Watchdog
+		maxEnvCount = config.MaxEnvCount
 	}
 	return &VM{
-		env:              env,
-		rateLimit:        rateLimit,
-		rateLimitPeriod:  rateLimitPeriod,
-		importCore:       importCore,
-		defineImport:     defineImport,
-		doNotDeepCopyEnv: doNotDeepCopyEnv,
-		doNotProtectMaps: doNotProtectMaps,
+		env:             env,
+		rateLimit:       rateLimit,
+		rateLimitPeriod: rateLimitPeriod,
+		importCore:      importCore,
+		defineImport:    defineImport,
+		deepCopyEnv:     deepCopyEnv,
+		protectMaps:     protectMaps,
+		dbgEnabled:      dbgEnabled,
+		watchdog:        watchdog,
+		maxEnvCount:     maxEnvCount,
 	}
 }
 
@@ -121,16 +136,16 @@ func (v *VM) DefineType(k string, val any) error {
 
 func (v *VM) executor() *executor.Executor {
 	return executor.NewExecutor(&executor.Config{
-		DoNotProtectMaps: v.doNotProtectMaps,
-		DoNotDeepCopyEnv: v.doNotDeepCopyEnv,
-		ImportCore:       v.importCore,
-		DefineImport:     v.defineImport,
-		RateLimit:        v.rateLimit,
-		RateLimitPeriod:  v.rateLimitPeriod,
-		Env:              v.env,
-		DbgEnabled:       utils.Bool(true),
-		WatchdogEnabled:  true,
-		MaxEnvCount:      1000,
+		ProtectMaps:     v.protectMaps,
+		DeepCopyEnv:     v.deepCopyEnv,
+		ImportCore:      v.importCore,
+		DefineImport:    v.defineImport,
+		RateLimit:       v.rateLimit,
+		RateLimitPeriod: v.rateLimitPeriod,
+		Env:             v.env,
+		DbgEnabled:      v.dbgEnabled,
+		Watchdog:        v.watchdog,
+		MaxEnvCount:     v.maxEnvCount,
 	})
 }
 

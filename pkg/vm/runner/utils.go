@@ -109,7 +109,7 @@ func equal(lhsV, rhsV reflect.Value) bool {
 }
 
 func readMapIndex(aMap, key reflect.Value, vmp *VmParams) (out reflect.Value) {
-	if !vmp.doNotProtectMaps {
+	if vmp.protectMaps {
 		vmp.mapMutex.Lock()
 		defer vmp.mapMutex.Unlock()
 	}
@@ -117,7 +117,7 @@ func readMapIndex(aMap, key reflect.Value, vmp *VmParams) (out reflect.Value) {
 }
 
 func setMapIndex(aMap, key, value reflect.Value, vmp *VmParams) {
-	if !vmp.doNotProtectMaps {
+	if vmp.protectMaps {
 		vmp.mapMutex.Lock()
 		defer vmp.mapMutex.Unlock()
 	}
@@ -125,7 +125,7 @@ func setMapIndex(aMap, key, value reflect.Value, vmp *VmParams) {
 }
 
 func mapIterNext(mapIter *reflect.MapIter, vmp *VmParams) bool {
-	if !vmp.doNotProtectMaps {
+	if vmp.protectMaps {
 		vmp.mapMutex.Lock()
 		defer vmp.mapMutex.Unlock()
 	}

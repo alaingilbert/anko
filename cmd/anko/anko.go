@@ -124,7 +124,7 @@ func runNonInteractive(args []string, appFlags AppFlags) int {
 		}
 	}
 
-	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
+	v := vm.New(&vm.Config{ImportCore: utils.Bool(true), DefineImport: utils.Bool(true)})
 	_ = v.Define("args", args)
 	executorInst := v.Executor()
 	fileExt := filepath.Ext(appFlags.File)
@@ -197,7 +197,7 @@ func runInteractive(args []string) int {
 	//l.CaptureExitSignal()
 
 	log.SetOutput(l.Stderr())
-	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
+	v := vm.New(&vm.Config{ImportCore: utils.Bool(true), DefineImport: utils.Bool(true)})
 	_ = v.Define("args", args)
 	executorInst := v.Executor()
 	rebuildCompleter(executorInst.GetEnv())
@@ -318,7 +318,7 @@ func compileAndSave(source, fileName string) error {
 }
 
 func runWeb() int {
-	v := vm.New(&vm.Config{ImportCore: true, DefineImport: true})
+	v := vm.New(&vm.Config{ImportCore: utils.Bool(true), DefineImport: utils.Bool(true)})
 
 	const scriptTopic = "script"
 	const systemTopic = "system"

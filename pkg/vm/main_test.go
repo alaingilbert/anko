@@ -6,6 +6,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/compiler"
 	"github.com/alaingilbert/anko/pkg/parser"
+	"github.com/alaingilbert/anko/pkg/utils"
 	"github.com/alaingilbert/anko/pkg/vm/executor"
 	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"reflect"
@@ -162,10 +163,10 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 
 	configs := &Config{}
 	if testingOptions != nil && testingOptions.DefineImport {
-		configs.DefineImport = true
+		configs.DefineImport = utils.Bool(true)
 	}
 	if testingOptions != nil && testingOptions.ImportCore {
-		configs.ImportCore = true
+		configs.ImportCore = utils.Bool(true)
 	}
 	v := New(configs)
 

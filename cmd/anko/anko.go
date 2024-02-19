@@ -404,11 +404,17 @@ a := 123
 delete("a") // delete a from env
 a = "123"   // no error`
 
+	watchdog := `func rec() {
+    return rec()
+}
+rec()`
+
 	scripts := [][]string{
 		{"Default", defaultScript},
 		{"Select", selectScript},
 		{"Typed func", typedFuncScript},
 		{"Typed variables", typedValues},
+		{"Watchdog", watchdog},
 	}
 
 	mux := http.DefaultServeMux

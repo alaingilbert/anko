@@ -514,41 +514,41 @@ func TestMakeChan(t *testing.T) {
 func TestChan(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `a = make(chan bool, 2); 1++ <- 1`, RunError: fmt.Errorf("invalid operation")},
-		{Script: `a = make(chan bool, 2); a <- 1++`, RunError: fmt.Errorf("invalid operation")},
+		{Script: `a = make(chan bool, 2); 1++ <- 1`, RunError: fmt.Errorf("invalid operation"), Name: ""},
+		{Script: `a = make(chan bool, 2); a <- 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 
 		// TODO: move close from core into vm code, then update tests
 
-		{Script: `1 <- 1`, RunError: fmt.Errorf("invalid operation for chan")},
+		{Script: `1 <- 1`, RunError: fmt.Errorf("invalid operation for chan"), Name: ""},
 		// TODO: this panics, should we capture the panic in a better way?
 		// {Script: `a = make(chan bool, 2); close(a); a <- true`, Input: map[string]any{"close": func(b any) { reflect.ValueOf(b).Close() }}, RunError: fmt.Errorf("channel is close")},
 		// TODO: add chan syntax ok
 		// {Script: `a = make(chan bool, 2); a <- true; close(a); b, ok <- a; ok`, Input: map[string]any{"close": func(b any) { reflect.ValueOf(b).Close() }}, RunOutput: false, Output: map[string]any{"b": nil}},
-		{Script: `a = make(chan bool, 2); a <- true; close(a); b = false; b <- a`, Input: map[string]any{"close": func(b any) { reflect.ValueOf(b).Close() }}, RunOutput: true, Output: map[string]any{"b": true}},
+		{Script: `a = make(chan bool, 2); a <- true; close(a); b = false; b <- a`, Input: map[string]any{"close": func(b any) { reflect.ValueOf(b).Close() }}, RunOutput: true, Output: map[string]any{"b": true}, Name: ""},
 		// TOFIX: add chan syntax ok, do not return error. Also b should be nil
-		{Script: `a = make(chan bool, 2); a <- true; close(a); b = false; b <- a; b <- a`, Input: map[string]any{"close": func(b any) { reflect.ValueOf(b).Close() }}, RunError: fmt.Errorf("failed to send to channel"), Output: map[string]any{"b": true}},
+		{Script: `a = make(chan bool, 2); a <- true; close(a); b = false; b <- a; b <- a`, Input: map[string]any{"close": func(b any) { reflect.ValueOf(b).Close() }}, RunError: fmt.Errorf("failed to send to channel"), Output: map[string]any{"b": true}, Name: ""},
 
-		{Script: `a = make(chan bool, 2); a <- 1`, RunError: fmt.Errorf("cannot use type int64 as type bool to send to chan")},
+		{Script: `a = make(chan bool, 2); a <- 1`, RunError: fmt.Errorf("cannot use type int64 as type bool to send to chan"), Name: ""},
 
-		{Script: `a = make(chan interface, 2); a <- nil; <- a`, RunOutput: nil},
-		{Script: `a = make(chan bool, 2); a <- true; <- a`, RunOutput: true},
-		{Script: `a = make(chan int32, 2); a <- 1; <- a`, RunOutput: int32(1)},
-		{Script: `a = make(chan int64, 2); a <- 1; <- a`, RunOutput: int64(1)},
-		{Script: `a = make(chan float32, 2); a <- 1.1; <- a`, RunOutput: float32(1.1)},
-		{Script: `a = make(chan float64, 2); a <- 1.1; <- a`, RunOutput: float64(1.1)},
+		{Script: `a = make(chan interface, 2); a <- nil; <- a`, RunOutput: nil, Name: ""},
+		{Script: `a = make(chan bool, 2); a <- true; <- a`, RunOutput: true, Name: ""},
+		{Script: `a = make(chan int32, 2); a <- 1; <- a`, RunOutput: int32(1), Name: ""},
+		{Script: `a = make(chan int64, 2); a <- 1; <- a`, RunOutput: int64(1), Name: ""},
+		{Script: `a = make(chan float32, 2); a <- 1.1; <- a`, RunOutput: float32(1.1), Name: ""},
+		{Script: `a = make(chan float64, 2); a <- 1.1; <- a`, RunOutput: float64(1.1), Name: ""},
 
-		{Script: `a <- nil; <- a`, Input: map[string]any{"a": make(chan any, 2)}, RunOutput: nil},
-		{Script: `a <- true; <- a`, Input: map[string]any{"a": make(chan bool, 2)}, RunOutput: true},
-		{Script: `a <- 1; <- a`, Input: map[string]any{"a": make(chan int32, 2)}, RunOutput: int32(1)},
-		{Script: `a <- 1; <- a`, Input: map[string]any{"a": make(chan int64, 2)}, RunOutput: int64(1)},
-		{Script: `a <- 1.1; <- a`, Input: map[string]any{"a": make(chan float32, 2)}, RunOutput: float32(1.1)},
-		{Script: `a <- 1.1; <- a`, Input: map[string]any{"a": make(chan float64, 2)}, RunOutput: float64(1.1)},
-		{Script: `a <- "b"; <- a`, Input: map[string]any{"a": make(chan string, 2)}, RunOutput: "b"},
+		{Script: `a <- nil; <- a`, Input: map[string]any{"a": make(chan any, 2)}, RunOutput: nil, Name: ""},
+		{Script: `a <- true; <- a`, Input: map[string]any{"a": make(chan bool, 2)}, RunOutput: true, Name: ""},
+		{Script: `a <- 1; <- a`, Input: map[string]any{"a": make(chan int32, 2)}, RunOutput: int32(1), Name: ""},
+		{Script: `a <- 1; <- a`, Input: map[string]any{"a": make(chan int64, 2)}, RunOutput: int64(1), Name: ""},
+		{Script: `a <- 1.1; <- a`, Input: map[string]any{"a": make(chan float32, 2)}, RunOutput: float32(1.1), Name: ""},
+		{Script: `a <- 1.1; <- a`, Input: map[string]any{"a": make(chan float64, 2)}, RunOutput: float64(1.1), Name: ""},
+		{Script: `a <- "b"; <- a`, Input: map[string]any{"a": make(chan string, 2)}, RunOutput: "b", Name: ""},
 
-		{Script: `a = make(chan bool, 2); a <- true; a <- <- a`, RunOutput: nil},
-		{Script: `a = make(chan bool, 2); a <- true; a <- (<- a)`, RunOutput: nil},
-		{Script: `a = make(chan bool, 2); a <- true; a <- <- a; <- a`, RunOutput: true},
-		{Script: `a = make(chan bool, 2); a <- true; b = false; b <- a`, RunOutput: true, Output: map[string]any{"b": true}},
+		{Script: `a = make(chan bool, 2); a <- true; a <- <- a`, RunOutput: nil, Name: ""},
+		{Script: `a = make(chan bool, 2); a <- true; a <- (<- a)`, RunOutput: nil, Name: ""},
+		{Script: `a = make(chan bool, 2); a <- true; a <- <- a; <- a`, RunOutput: true, Name: ""},
+		{Script: `a = make(chan bool, 2); a <- true; b = false; b <- a`, RunOutput: true, Output: map[string]any{"b": true}, Name: ""},
 		// TOFIX: if variable is not created yet, should make variable instead of error
 		// {Script: `a = make(chan bool, 2); a <- true; b <- a`, RunOutput: true, Output: map[string]any{"b": true}},
 	}

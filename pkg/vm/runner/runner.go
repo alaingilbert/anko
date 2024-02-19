@@ -103,10 +103,10 @@ func Run(config *Config) (reflect.Value, error) {
 				env.WithNewEnv(func(newenv envPkg.IEnv) {
 					_, err = run(vmp, newenv, s)
 				})
-				delete(validateLater, k)
 				if err != nil {
 					return nilValue, err
 				}
+				delete(validateLater, k)
 			}
 		}
 	}

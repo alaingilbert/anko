@@ -405,19 +405,19 @@ func (e *Executor) mainRunNoTargets(ctx context.Context, stmt ast.Stmt, validate
 }
 
 func (e *Executor) mainRunForLoad(ctx context.Context, stmt ast.Stmt) (reflect.Value, error) {
-	_, rv, err := e.mainRun(ctx, stmt, false, nil)
+	_, rv, err := e.mainRun(ctx, stmt, e.env, false, nil)
 	return rv, err
 }
 
-func (e *Executor) watchdog(ctx context.Context, cancel context.CancelFunc) {
+func (e *Executor) watchdog(ctx context.Context, cancel context.CancelFunc, env envPkg.IEnv) {
 	for {
 		select {
 		case <-time.After(time.Second):
 		case <-ctx.Done():
 			return
 		}
-		//fmt.Println(e.env.ChildCount())
-		if e.env.ChildCount() > e.maxEnvCount.Load() {
+		fmt.Println(env.ChildCount(), e.maxEnvCount.Load())
+		if env.ChildCount() > e.maxEnvCount.Load() {
 			cancel()
 			fmt.Println("KILLED")
 			break
@@ -459,30 +459,30 @@ func (e *Executor) mainRunWithWatchdog(ctx context.Context, stmt ast.Stmt, valid
 		_ = e.env.Define("load", e.loadFn(ctx, validate))
 	}
 
+	newEnv := e.env
+	if e.resetEnv {
+		newEnv = newEnv.DeepCopy()
+	}
+
 	// Start thread to watch for memory leaking scripts
 	if e.watchdogEnabled {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithCancel(ctx)
 		defer cancel()
-		go e.watchdog(ctx, cancel)
+		go e.watchdog(ctx, cancel, newEnv)
 	}
 
-	return e.mainRun(ctx, stmt, validate, targets)
+	return e.mainRun(ctx, stmt, newEnv, validate, targets)
 }
 
 var nilValue = vmUtils.NilValue
 var ErrInvalidInput = errors.New("invalid input")
 var ErrAlreadyRunning = errors.New("executor already running")
 
-func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, targets []any) ([]bool, reflect.Value, error) {
+func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, env envPkg.IEnv, validate bool, targets []any) ([]bool, reflect.Value, error) {
 	stmt1, ok := stmt.(*ast.StmtsStmt)
 	if !ok || stmt1 == nil {
 		return nil, nilValue, ErrInvalidInput
-	}
-
-	envCopy := e.env
-	if e.resetEnv {
-		envCopy = envCopy.DeepCopy()
 	}
 
 	has := make(map[any]bool)
@@ -492,7 +492,7 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, validate bool, ta
 
 	rv, err := runner.Run(&runner.Config{
 		Ctx:         ctx,
-		Env:         envCopy,
+		Env:         env,
 		Stmt:        stmt1,
 		Stats:       e.stats,
 		ProtectMaps: e.doNotProtectMaps,

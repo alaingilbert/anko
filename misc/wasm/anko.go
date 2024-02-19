@@ -4,19 +4,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/alaingilbert/anko/pkg/parser"
+	"github.com/alaingilbert/anko/pkg/utils"
+	"github.com/alaingilbert/anko/pkg/vm"
+	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"html"
 	"strings"
 	"syscall/js"
-
-	"github.com/alaingilbert/anko/pkg/packages"
-	"github.com/alaingilbert/anko/pkg/parser"
-	"github.com/alaingilbert/anko/pkg/vm"
 )
 
 var (
-	result = js.Global.Get("document").Call("getElementById", "result")
-	input  = js.Global.Get("document").Call("getElementById", "input")
+	result = js.Global().Get("document").Call("getElementById", "result")
+	input  = js.Global().Get("document").Call("getElementById", "input")
 )
 
 func writeCommand(s string) {
@@ -35,33 +36,33 @@ func writeStderr(s string) {
 }
 
 func main() {
-	env := vm.NewEnv()
-	//vm.Import(env)
-	packages.DefineImport(env)
+	v := vm.New(&vm.Config{DefineImport: utils.Bool(true)})
 
-	env.Define("print", func(a ...any) {
+	_ = v.Define("print", func(a ...any) {
 		writeStdout(fmt.Sprint(a...))
 	})
-	env.Define("printf", func(a string, b ...any) {
+	_ = v.Define("printf", func(a string, b ...any) {
 		writeStdout(fmt.Sprintf(a, b...))
 	})
 
-	var following bool
+	e := v.Executor()
+
 	var source string
 
 	parser.EnableErrorVerbose()
 
 	ch := make(chan string)
 
-	input.Call("addEventListener", "keypress", js.NewCallback(func(args []js.Value) {
+	input.Call("addEventListener", "keypress", js.FuncOf(func(_ js.Value, args []js.Value) any {
 		e := args[0]
 		if e.Get("keyCode").Int() != 13 {
-			return
+			return nil
 		}
 		s := e.Get("target").Get("value").String()
 		e.Get("target").Set("value", "")
 		writeCommand(s)
 		ch <- s
+		return nil
 	}))
 	input.Set("disabled", false)
 	result.Set("innerHTML", "")
@@ -86,31 +87,27 @@ func main() {
 				es := e.Error()
 				if strings.HasPrefix(es, "syntax error: unexpected") {
 					if strings.HasPrefix(es, "syntax error: unexpected $end,") {
-						following = true
 						continue
 					}
 				} else {
 					if e.Pos.Column == len(source) && !e.Fatal {
 						writeStderr(e.Error())
-						following = true
 						continue
 					}
 					if e.Error() == "unexpected EOF" {
-						following = true
 						continue
 					}
 				}
 			}
 
-			following = false
 			source = ""
 			var v any
 
 			if err == nil {
-				v, err = vm.Run(env, stmts)
+				v, err = e.Run(context.Background(), stmts)
 			}
 			if err != nil {
-				if e, ok := err.(*vm.Error); ok {
+				if e, ok := err.(*runner.Error); ok {
 					writeStderr(fmt.Sprintf("%d:%d %s\n", e.Pos.Line, e.Pos.Column, err))
 				} else if e, ok := err.(*parser.Error); ok {
 					writeStderr(fmt.Sprintf("%d:%d %s\n", e.Pos.Line, e.Pos.Column, err))

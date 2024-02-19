@@ -441,6 +441,7 @@ logf("%s | %d", a, b)`
 			html, body { background-color: #333; color: #ccc; font-family: Verdana,Helvetica,Arial,sans-serif; }
 			textarea, button, select { background-color: #444; color: #ccc; padding: 3px 7px; }
 			.mb-2 { margin-bottom: 10px; }
+			.topic { width: 70px; display: inline-block; }
 		</style>
 	</head>
 	<body>
@@ -487,11 +488,23 @@ logf("%s | %d", a, b)`
 		<textarea name="source" id="source" rows="15" cols="80" class="mb-2">{{ .Script }}</textarea>
 		<div id="logs"></div>
 		<script>
+			function sanitize(string) {
+				const map = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#x27;',
+					"/": '&#x2F;',
+				};
+				const reg = /[&<>"'/]/ig;
+				return string.replace(reg, (match)=>(map[match]));
+			}
 			const evtSource = new EventSource("/sse");
 			evtSource.onmessage = (evt) => {
 				var newDiv = document.createElement("div");
 				const data = JSON.parse(evt.data);
-    			newDiv.textContent = data.Topic + ": " + data.Msg;
+    			newDiv.innerHTML = '<span class="topic">' + data.Topic + "</span>: " + sanitize(data.Msg);
 				if (data.Topic === "executor") {
 					switch (data.Msg) {
 						case 1: $("is_running").innerHTML = "running"; break;

@@ -450,6 +450,7 @@ logf("%s | %d", a, b)`
 		<style>
 			html, body { background-color: #333; color: #ccc; font-family: Verdana,Helvetica,Arial,sans-serif; }
 			textarea, button, select, input { background-color: #444; color: #ccc; padding: 3px 7px; }
+			textarea:focus, input:focus { box-shadow: 0px 0px 2px 2px #000; outline: none; }
 			.mb-2 { margin-bottom: 10px; }
 			.ml-3 { margin-left: 20px; }
 			.topic { width: 70px; display: inline-block; }

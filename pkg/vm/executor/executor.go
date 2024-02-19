@@ -110,15 +110,17 @@ func NewExecutor(cfg *Config) *Executor {
 	}
 	e := &Executor{}
 	deepCopyEnv := utils.Default(cfg.DeepCopyEnv, true)
+	importCore := utils.Default(cfg.ImportCore, false)
+	defineImport := utils.Default(cfg.DefineImport, false)
 	if deepCopyEnv {
 		e.env = cfg.Env.DeepCopy()
 	} else {
 		e.env = cfg.Env
 	}
-	if cfg.ImportCore != nil && *cfg.ImportCore {
+	if importCore {
 		runner.Import(e.env)
 	}
-	if cfg.DefineImport != nil && *cfg.DefineImport {
+	if defineImport {
 		runner.DefineImport(e.env)
 	}
 	e.pause = stateCh.NewStateCh(true)

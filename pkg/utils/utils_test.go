@@ -37,6 +37,6 @@ func TestMD5(t *testing.T) {
 func TestDefault(t *testing.T) {
 	assert.Equal(t, true, Default((*bool)(nil), true))
 	assert.Equal(t, false, Default((*bool)(nil), false))
-	assert.Equal(t, true, Default(Bool(true), false))
-	assert.Equal(t, false, Default(Bool(false), true))
+	assert.Equal(t, true, Default(Ptr(true), false))
+	assert.Equal(t, false, Default(Ptr(false), true))
 }

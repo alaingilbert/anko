@@ -163,10 +163,10 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 
 	configs := &Config{}
 	if testingOptions != nil && testingOptions.DefineImport {
-		configs.DefineImport = utils.Bool(true)
+		configs.DefineImport = utils.Ptr(true)
 	}
 	if testingOptions != nil && testingOptions.ImportCore {
-		configs.ImportCore = utils.Bool(true)
+		configs.ImportCore = utils.Ptr(true)
 	}
 	v := New(configs)
 

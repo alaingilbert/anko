@@ -57,7 +57,7 @@ func Default[T any](v *T, d T) T {
 	return *v
 }
 
-func Bool(v bool) *bool { return &v }
+func Ptr[T any](v T) *T { return &v }
 
 func DoParseI64(v string) int64 {
 	parsed, _ := strconv.ParseInt(v, 10, 64)

@@ -430,7 +430,9 @@ logf("%s | %d", a, b)`
 							defer cancel()
 						}
 						if val, err := e.Run(ctx, script); err != nil {
-							ps.Pub(scriptTopic, err.Error())
+							buf := new(bytes.Buffer)
+							handleErr(buf, err)
+							ps.Pub(scriptTopic, buf.String())
 						} else {
 							ps.Pub(scriptTopic, fmt.Sprintf("%#v", val))
 						}

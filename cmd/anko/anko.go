@@ -360,7 +360,7 @@ select {
 
 	typedFuncScript := `// This function is strongly typed for arguments and return values
 func test(a int64, b string) (string, int64) {
-    log("got" + a + " and " + b)
+    log("got " + a + " and " + b)
     return "we can only return a string and int64", 123
 }
 test(42, "hello world")

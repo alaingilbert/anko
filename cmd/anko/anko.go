@@ -572,9 +572,7 @@ a = "123"   // no error`
 			}
 			const evtSource = new EventSource("/sse");
 			evtSource.onmessage = (evt) => {
-				var newDiv = document.createElement("div");
 				const data = JSON.parse(evt.data);
-    			newDiv.innerHTML = '<span class="topic">' + data.Topic + "</span>: " + sanitize(data.Msg);
 				if (data.Topic === "executor") {
 					switch (data.Msg) {
 						case 1: $("is_running").innerHTML = "running"; break;
@@ -583,6 +581,8 @@ a = "123"   // no error`
 						case 4: $("is_paused").innerHTML = "not paused"; break;
 					}
 				} else {
+					var newDiv = document.createElement("div");
+    				newDiv.innerHTML = '<span class="topic">' + data.Topic + "</span>: " + sanitize(data.Msg);
 					$("logs").appendChild(newDiv);
 				}
 			};

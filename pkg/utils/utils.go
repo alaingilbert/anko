@@ -55,3 +55,5 @@ func Default[T any](v *T, d T) T {
 	}
 	return *v
 }
+
+func Bool(v bool) *bool { return &v }

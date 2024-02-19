@@ -359,8 +359,7 @@ go func() {
 select {
     case v = <-ch1: log("received on ch1: " + v)
     case v = <-ch2: log("received on ch2: " + v)
-}
-`
+}`
 
 	typedFuncScript := `// This function is strongly typed for arguments and return values
 func typedFn(a int64, b string) (string, int64) {
@@ -368,8 +367,7 @@ func typedFn(a int64, b string) (string, int64) {
     return "we can only return a string and int64", 123
 }
 a, b = typedFn(42, "hello world")
-logf("%s | %d", a, b)
-`
+logf("%s | %d", a, b)`
 
 	scripts := [][]string{
 		{"Default", defaultScript},

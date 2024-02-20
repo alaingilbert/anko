@@ -391,12 +391,14 @@ func (e *Env) string() string {
 var nilValue = vmUtils.NilValue
 var nilType = vmUtils.NilType
 
+var ErrUnaddressable = fmt.Errorf("unaddressable")
+
 func (e *Env) addr(k string) (reflect.Value, error) {
 	if v, ok := e.values.Get(k); ok {
 		if v.CanAddr() {
 			return v.Addr(), nil
 		}
-		return nilValue, fmt.Errorf("unaddressable")
+		return nilValue, ErrUnaddressable
 	}
 	if e.parent == nil {
 		return nilValue, fmt.Errorf("undefined symbol '%s'", k)

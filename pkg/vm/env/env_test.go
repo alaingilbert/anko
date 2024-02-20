@@ -733,10 +733,10 @@ func TestAddr(t *testing.T) {
 		addrError      error
 	}{
 		{testInfo: "nil", varName: "a", varDefineValue: nil, addrError: nil},
-		{testInfo: "string", varName: "a", varDefineValue: "a", addrError: fmt.Errorf("unaddressable")},
-		{testInfo: "int64", varName: "a", varDefineValue: int64(1), addrError: fmt.Errorf("unaddressable")},
-		{testInfo: "float64", varName: "a", varDefineValue: float64(1), addrError: fmt.Errorf("unaddressable")},
-		{testInfo: "bool", varName: "a", varDefineValue: true, addrError: fmt.Errorf("unaddressable")},
+		{testInfo: "string", varName: "a", varDefineValue: "a", addrError: ErrUnaddressable},
+		{testInfo: "int64", varName: "a", varDefineValue: int64(1), addrError: ErrUnaddressable},
+		{testInfo: "float64", varName: "a", varDefineValue: float64(1), addrError: ErrUnaddressable},
+		{testInfo: "bool", varName: "a", varDefineValue: true, addrError: ErrUnaddressable},
 	}
 
 	// TestAddr

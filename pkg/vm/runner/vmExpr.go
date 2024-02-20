@@ -79,7 +79,7 @@ func invokeExpr(vmp *VmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, e
 	case *ast.IncludeExpr:
 		return invokeIncludeExpr(vmp, env, e)
 	default:
-		return nilValue, newStringError(e, "unknown expression")
+		return nilValue, newStringError1(e, vmUtils.ErrUnknownExpr)
 	}
 }
 
@@ -471,7 +471,7 @@ func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newStringError(e, "type invalid does not support member operation")
+		return nilValueL, newStringError1(e, vmUtils.NewNoSupportMemberOpError("invalid"))
 	}
 	if v.CanInterface() {
 		if vme, ok := v.Interface().(envPkg.IEnv); ok {
@@ -522,7 +522,8 @@ func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 		}
 		return v, nil
 	default:
-		return nilValueL, newStringError(e, "type "+v.Kind().String()+" does not support member operation")
+		err := vmUtils.NewNoSupportMemberOpError(v.Kind().String())
+		return nilValueL, newStringError1(e, err)
 	}
 }
 
@@ -542,11 +543,11 @@ func invokeItemExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ItemExpr) (reflect.Va
 	case reflect.String, reflect.Slice, reflect.Array:
 		ii, err := tryToInt(i)
 		if err != nil {
-			return nilValue, newStringError(e, "index must be a number")
+			return nilValue, newStringError1(e, vmUtils.ErrIndexMustBeNumber)
 		}
 		if !vmp.Validate {
 			if ii < 0 || ii >= v.Len() {
-				return nilValue, newStringError(e, "index out of range")
+				return nilValue, newStringError1(e, vmUtils.ErrIndexOutOfRange)
 			}
 		}
 		if v.Kind() != reflect.String {
@@ -609,10 +610,10 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 			}
 			rbi, err = tryToInt(rb)
 			if err != nil {
-				return nilValueL, newStringError(e, "index must be a number")
+				return nilValueL, newStringError1(e, vmUtils.ErrIndexMustBeNumber)
 			}
 			if rbi < 0 || rbi > v.Len() {
-				return nilValueL, newStringError(e, "index out of range")
+				return nilValueL, newStringError1(e, vmUtils.ErrIndexOutOfRange)
 			}
 		} else {
 			rbi = 0
@@ -624,16 +625,16 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 			}
 			rei, err = tryToInt(re)
 			if err != nil {
-				return nilValueL, newStringError(e, "index must be a number")
+				return nilValueL, newStringError1(e, vmUtils.ErrIndexMustBeNumber)
 			}
 			if rei < 0 || rei > v.Len() {
-				return nilValueL, newStringError(e, "index out of range")
+				return nilValueL, newStringError1(e, vmUtils.ErrIndexOutOfRange)
 			}
 		} else {
 			rei = v.Len()
 		}
 		if rbi > rei {
-			return nilValueL, newStringError(e, "invalid slice index")
+			return nilValueL, newStringError1(e, vmUtils.ErrInvalidSliceIndex)
 		}
 		return v.Slice(rbi, rei), nil
 	default:

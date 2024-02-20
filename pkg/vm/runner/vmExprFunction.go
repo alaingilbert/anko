@@ -210,9 +210,9 @@ func anonCallExpr(vmp *VmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Val
 		return invokeExpr(vmp, env, callExpr)
 	}
 	if !f.IsValid() {
-		return nilValue, newStringError(e, "cannot call type invalid")
+		return nilValue, newStringError1(e, vmUtils.NewCannotCallError("invalid"))
 	}
-	return nilValue, newStringError(e, "cannot call type "+f.Type().String())
+	return nilValue, newStringError1(e, vmUtils.NewCannotCallError(f.Type().String()))
 }
 
 // callExpr handles *ast.CallExpr which calls a function

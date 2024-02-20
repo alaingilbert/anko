@@ -984,7 +984,7 @@ func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 		return nilValue, err
 	}
 	if t == nil {
-		return nilValue, newErrorf(e, "type cannot be nil for make")
+		return nilValue, newStringError(e, "type cannot be nil for make")
 	}
 	switch e.TypeData.Kind {
 	case ast.TypeSlice:
@@ -1033,7 +1033,7 @@ func invokeMakeTypeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeTypeExpr, exp
 		return nilValue, newError(e, err)
 	}
 	if !rv.IsValid() || rv.Type() == nil {
-		return nilValue, newErrorf(expr, "type cannot be nil for make type")
+		return nilValue, newStringError(expr, "type cannot be nil for make type")
 	}
 
 	// if e.Name has a dot in it, it should give a syntax error
@@ -1137,7 +1137,7 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 					return nilValue, vmp.ctx.Err()
 				}
 				if !ok {
-					return nilValue, newErrorf(expr, "failed to send to channel")
+					return nilValue, newStringError(expr, "failed to send to channel")
 				}
 			}
 			return invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, e.Lhs, rv)

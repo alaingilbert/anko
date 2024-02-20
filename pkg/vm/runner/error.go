@@ -47,11 +47,6 @@ var (
 	ErrReturn = errors.New("unexpected return statement")
 )
 
-// newErrorf makes error interface with message.
-func newErrorf(pos ast.Pos, format string, args ...any) error {
-	return newStringError(pos, fmt.Sprintf(format, args...))
-}
-
 // newError makes error interface with message.
 // This doesn't overwrite last error.
 func newError(pos ast.Pos, err error) error {
@@ -69,6 +64,11 @@ func newStringError(pos ast.Pos, err string) error {
 		pos1 = pos.Position()
 	}
 	return &Error{Message: err, Pos: pos1}
+}
+
+// newErrorf makes error interface with message.
+func newErrorf(pos ast.Pos, format string, args ...any) error {
+	return newStringError(pos, fmt.Sprintf(format, args...))
 }
 
 // Error returns the error message.

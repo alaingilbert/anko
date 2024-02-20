@@ -16,11 +16,7 @@ func TestSetError(t *testing.T) {
 	envParent := NewEnv()
 	envChild := envParent.newEnv()
 	err := envChild.set("a", "a")
-	if err == nil {
-		t.Errorf("Set error - received: %v - expected: %v", err, fmt.Errorf("unknown symbol 'a'"))
-	} else if err.Error() != "unknown symbol 'a'" {
-		t.Errorf("Set error - received: %v - expected: %v", err, fmt.Errorf("unknown symbol 'a'"))
-	}
+	assert.ErrorContains(t, err, NewUnknownSymbolErr("a").Error())
 }
 
 func TestAddrError(t *testing.T) {
@@ -69,7 +65,7 @@ func TestDefineAndGet(t *testing.T) {
 		{testInfo: "float64", varName: "a", varDefineValue: float64(1), varGetValue: float64(1), varKind: reflect.Float64},
 		{testInfo: "string", varName: "a", varDefineValue: "a", varGetValue: "a", varKind: reflect.String},
 
-		{testInfo: "string with dot", varName: "a.a", varDefineValue: "a", varGetValue: nil, varKind: reflect.Interface, defineError: fmt.Errorf("unknown symbol 'a.a'"), getError: fmt.Errorf("undefined symbol 'a.a'")},
+		{testInfo: "string with dot", varName: "a.a", varDefineValue: "a", varGetValue: nil, varKind: reflect.Interface, defineError: NewUnknownSymbolErr("a.a"), getError: fmt.Errorf("undefined symbol 'a.a'")},
 		{testInfo: "string with quotes", varName: "a", varDefineValue: `"a"`, varGetValue: `"a"`, varKind: reflect.String},
 	}
 
@@ -425,7 +421,7 @@ func TestDefineType(t *testing.T) {
 		{testInfo: "float64", varName: "a", varDefineValue: float64(1)},
 		{testInfo: "string", varName: "a", varDefineValue: "a"},
 
-		{testInfo: "string with dot", varName: "a.a", varDefineValue: nil, defineError: fmt.Errorf("unknown symbol 'a.a'"), typeError: fmt.Errorf("undefined type 'a.a'")},
+		{testInfo: "string with dot", varName: "a.a", varDefineValue: nil, defineError: NewUnknownSymbolErr("a.a"), typeError: fmt.Errorf("undefined type 'a.a'")},
 	}
 
 	// DefineType
@@ -778,7 +774,7 @@ func TestDelete(t *testing.T) {
 
 	// bad name
 	err = env.Delete("a.b")
-	expectedError := "unknown symbol 'a.b'"
+	expectedError := NewUnknownSymbolErr("a.b").Error()
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("Delete error - received: %v - expected: %v", err, expectedError)
 	}
@@ -807,8 +803,8 @@ func TestDeleteGlobal(t *testing.T) {
 
 	// bad name
 	err = env.DeleteGlobal("a.b")
-	expectedError := "unknown symbol 'a.b'"
-	assert.ErrorContains(t, err, "unknown symbol 'a.b'")
+	expectedError := NewUnknownSymbolErr("a.b").Error()
+	assert.ErrorContains(t, err, expectedError)
 
 	// add & delete a
 	_ = env.Define("a", "a")
@@ -863,7 +859,7 @@ func NewExternalResolver() *ExternalResolver {
 
 func (er *ExternalResolver) SetValue(name string, value any) error {
 	if strings.Contains(name, ".") {
-		return fmt.Errorf("unknown symbol '%s'", name)
+		return NewUnknownSymbolErr(name)
 	}
 
 	if value == nil {
@@ -883,7 +879,7 @@ func (er *ExternalResolver) Get(name string) (reflect.Value, error) {
 
 func (er *ExternalResolver) DefineType(name string, t any) error {
 	if strings.Contains(name, ".") {
-		return fmt.Errorf("unknown symbol '%s'", name)
+		return NewUnknownSymbolErr(name)
 	}
 
 	var typ reflect.Type
@@ -1099,7 +1095,7 @@ func raceDefineAndSetSameVariable(t *testing.T) {
 		go func() {
 			<-waitChan
 			err := envParent.set("a", 1)
-			if err != nil && err.Error() != "unknown symbol 'a'" {
+			if err != nil && err.Error() != NewUnknownSymbolErr("a").Error() {
 				t.Errorf("Set error: %v", err)
 			}
 			waitGroup.Done()
@@ -1117,7 +1113,7 @@ func raceDefineAndSetSameVariable(t *testing.T) {
 		go func() {
 			<-waitChan
 			err := envChild.set("a", 3)
-			if err != nil && err.Error() != "unknown symbol 'a'" {
+			if err != nil && err.Error() != NewUnknownSymbolErr("a").Error() {
 				t.Errorf("Set error: %v", err)
 			}
 			waitGroup.Done()

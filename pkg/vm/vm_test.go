@@ -1140,22 +1140,15 @@ func TestDefineImportPackageDefineError(t *testing.T) {
 	packages.Packages.Insert("testPackage", map[string]any{"bad.name": testing.Coverage})
 
 	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor(nil).Run(nil, `a = import("testPackage")`)
-	expectedError := "import error: unknown symbol 'bad.name'"
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
-	}
-	if value != nil {
-		t.Errorf("execute value - received: %v - expected: %v", value, nil)
-	}
+	expectedError := "import error: " + envPkg.NewUnknownSymbolErr("bad.name").Error()
+	assert.ErrorContains(t, err, expectedError)
+	assert.Nil(t, value)
 
 	packages.Packages.Insert("testPackage", map[string]any{"Coverage": testing.Coverage})
 	packages.PackageTypes.Insert("testPackage", map[string]any{"bad.name": int64(1)})
 
 	value, err = New(&Config{DefineImport: utils.Ptr(true)}).Executor(nil).Run(nil, `a = import("testPackage")`)
-	expectedError = "import error: unknown symbol 'bad.name'"
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
-	}
+	assert.ErrorContains(t, err, expectedError)
 	assert.Nil(t, value)
 }
 

@@ -23,11 +23,7 @@ func TestAddrError(t *testing.T) {
 	envParent := NewEnv()
 	envChild := envParent.newEnv()
 	_, err := envChild.addr("a")
-	if err == nil {
-		t.Errorf("Addr error - received: %v - expected: %v", err, NewUndefinedSymbolErr("a"))
-	} else if err.Error() != "undefined symbol 'a'" {
-		t.Errorf("Addr error - received: %v - expected: %v", err, NewUndefinedSymbolErr("a"))
-	}
+	assert.ErrorContains(t, err, NewUndefinedSymbolErr("a").Error())
 }
 
 func TestGetInvalid(t *testing.T) {
@@ -786,7 +782,7 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Delete error - received: %v - expected: %v", err, nil)
 	}
 	value, err := env.Get("a")
-	expectedError = "undefined symbol 'a'"
+	expectedError = NewUndefinedSymbolErr("a").Error()
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("Get error - received: %v - expected: %v", err, expectedError)
 	}
@@ -811,8 +807,8 @@ func TestDeleteGlobal(t *testing.T) {
 	err = env.DeleteGlobal("a")
 	assert.NoError(t, err)
 	value, err := env.Get("a")
-	expectedError = "undefined symbol 'a'"
-	assert.ErrorContains(t, err, "undefined symbol 'a'")
+	expectedError = NewUndefinedSymbolErr("a").Error()
+	assert.ErrorContains(t, err, NewUndefinedSymbolErr("a").Error())
 	assert.Nil(t, value)
 
 	// parent & child, var in child, delete in parent

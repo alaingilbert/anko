@@ -1884,7 +1884,7 @@ func TestDefineCtx(t *testing.T) {
 }
 
 func TestRateLimitPeriod(t *testing.T) {
-	v := New(&Config{RateLimitPeriod: time.Minute})
+	v := New(&Config{RateLimitPeriod: utils.Ptr(time.Minute)})
 	_ = v.DefineCtx("a", func(context.Context) int64 { return 1 })
 	e := v.Executor(nil)
 	tests := []Test{

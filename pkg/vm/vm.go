@@ -27,8 +27,8 @@ var _ IVM = (*VM)(nil)
 // Config for the vm
 type Config struct {
 	Env             envPkg.IEnv
-	RateLimit       int
-	RateLimitPeriod time.Duration
+	RateLimit       *int
+	RateLimitPeriod *time.Duration
 	DefineImport    *bool
 	ImportCore      *bool
 	DeepCopyEnv     *bool
@@ -42,8 +42,8 @@ type Config struct {
 // VM base vm
 type VM struct {
 	env             envPkg.IEnv
-	rateLimit       int
-	rateLimitPeriod time.Duration
+	rateLimit       *int
+	rateLimitPeriod *time.Duration
 	importCore      *bool
 	defineImport    *bool
 	deepCopyEnv     *bool
@@ -57,8 +57,8 @@ type VM struct {
 // New creates a new vm
 func New(config *Config) *VM {
 	var env envPkg.IEnv
-	var rateLimit int
-	var rateLimitPeriod time.Duration
+	var rateLimit *int
+	var rateLimitPeriod *time.Duration
 	var importCore *bool
 	var defineImport *bool
 	var deepCopyEnv *bool
@@ -74,11 +74,7 @@ func New(config *Config) *VM {
 	}
 	if config != nil {
 		rateLimit = config.RateLimit
-		if config.RateLimitPeriod == 0 {
-			rateLimitPeriod = time.Second
-		} else {
-			rateLimitPeriod = config.RateLimitPeriod
-		}
+		rateLimitPeriod = config.RateLimitPeriod
 		importCore = config.ImportCore
 		defineImport = config.DefineImport
 		deepCopyEnv = config.DeepCopyEnv
@@ -161,12 +157,8 @@ func (v *VM) executor(cfg *executor.Config) *executor.Executor {
 		if cfg.Env != nil {
 			cfgToUse.Env = cfg.Env
 		}
-		if cfg.RateLimit != 0 {
-			cfgToUse.RateLimit = cfg.RateLimit
-		}
-		if cfg.RateLimitPeriod != 0 {
-			cfgToUse.RateLimitPeriod = cfg.RateLimitPeriod
-		}
+		cfgToUse.RateLimit = utils.Override(cfgToUse.RateLimit, cfg.RateLimit)
+		cfgToUse.RateLimitPeriod = utils.Override(cfgToUse.RateLimitPeriod, cfg.RateLimitPeriod)
 		cfgToUse.Watchdog = utils.Override(cfgToUse.Watchdog, cfg.Watchdog)
 		cfgToUse.MaxEnvCount = utils.Override(cfgToUse.MaxEnvCount, cfg.MaxEnvCount)
 		cfgToUse.ProtectMaps = utils.Override(cfgToUse.ProtectMaps, cfg.ProtectMaps)

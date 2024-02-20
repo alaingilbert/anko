@@ -101,8 +101,8 @@ type Config struct {
 	DefineImport    *bool
 	DbgEnabled      *bool
 	ResetEnv        *bool
-	RateLimit       int
-	RateLimitPeriod time.Duration
+	RateLimit       *int
+	RateLimitPeriod *time.Duration
 	Env             envPkg.IEnv
 	MaxEnvCount     *int
 }
@@ -112,10 +112,16 @@ func NewExecutor(cfg *Config) *Executor {
 	if cfg == nil {
 		return nil
 	}
+	if cfg.Env == nil {
+		return nil
+	}
 	e := &Executor{}
 	deepCopyEnv := utils.Default(cfg.DeepCopyEnv, true)
 	importCore := utils.Default(cfg.ImportCore, false)
 	defineImport := utils.Default(cfg.DefineImport, false)
+	maxEnvCount := utils.Default(cfg.MaxEnvCount, 1000)
+	rateLimit := utils.Default(cfg.RateLimit, 0)
+	period := utils.Default(cfg.RateLimitPeriod, time.Second)
 	if deepCopyEnv {
 		e.env = cfg.Env.DeepCopy()
 	} else {
@@ -135,8 +141,8 @@ func NewExecutor(cfg *Config) *Executor {
 	e.doNotProtectMaps = utils.Default(cfg.ProtectMaps, true)
 	e.mapMutex = &runner.MapLocker{}
 	e.watchdogEnabled = utils.Default(cfg.Watchdog, true)
-	e.maxEnvCount = mtx.NewRWMtxPtr(int64(utils.Default(cfg.MaxEnvCount, 1000)))
-	e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(cfg.RateLimit), cfg.RateLimitPeriod)
+	e.maxEnvCount = mtx.NewRWMtxPtr(int64(maxEnvCount))
+	e.rateLimit = ratelimitanything.NewRateLimitAnything(int64(rateLimit), period)
 	e.pubSubEvts = pubsub.NewPubSub[Evt](nil)
 	return e
 }

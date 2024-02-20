@@ -59,9 +59,6 @@ func newError(pos ast.Pos, err error) error {
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, ErrBreak) || errors.Is(err, ErrContinue) || errors.Is(err, ErrReturn) {
-		return err
-	}
 	var pe *parser.Error
 	if errors.As(err, &pe) {
 		return pe

@@ -1087,8 +1087,8 @@ func TestCallStructMethod(t *testing.T) {
 	// Define value 'val' to struct Bar in VM
 	ref = 10
 	tests = []Test{
-		{Script: "val.ValueReceiver()", Input: map[string]interface{}{"val": val}, RunOutput: 200},
-		{Script: "val.PointerReceiver()", Input: map[string]interface{}{"val": val}, RunOutput: []interface{}{0, 0}},
+		{Script: "val.ValueReceiver()", Input: map[string]any{"val": val}, RunOutput: 200},
+		{Script: "val.PointerReceiver()", Input: map[string]any{"val": val}, RunOutput: []any{0, 0}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })

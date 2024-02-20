@@ -16,7 +16,7 @@ import (
 
 type (
 	testStruct1 struct {
-		aInterface interface{}
+		aInterface any
 		aBool      bool
 		aInt32     int32
 		aInt64     int64
@@ -25,14 +25,14 @@ type (
 		aString    string
 		aFunc      func()
 
-		aPtrInterface      *interface{}
+		aPtrInterface      *any
 		aPtrBool           *bool
 		aPtrInt32          *int32
 		aPtrInt64          *int64
 		aPtrFloat32        *float32
 		aPtrFloat64        *float32
 		aPtrString         *string
-		aPtrSliceInterface *[]interface{}
+		aPtrSliceInterface *[]any
 		aPtrSliceBool      *[]bool
 		aPtrSliceInt32     *[]int32
 		aPtrSliceInt64     *[]int64
@@ -40,14 +40,14 @@ type (
 		aPtrSliceFloat64   *[]float32
 		aPtrSliceString    *[]string
 
-		aSliceInterface    []interface{}
+		aSliceInterface    []any
 		aSliceBool         []bool
 		aSliceInt32        []int32
 		aSliceInt64        []int64
 		aSliceFloat32      []float32
 		aSliceFloat64      []float32
 		aSliceString       []string
-		aSlicePtrInterface []*interface{}
+		aSlicePtrInterface []*any
 		aSlicePtrBool      []*bool
 		aSlicePtrInt32     []*int32
 		aSlicePtrInt64     []*int64
@@ -55,14 +55,14 @@ type (
 		aSlicePtrFloat64   []*float32
 		aSlicePtrString    []*string
 
-		aMapInterface    map[string]interface{}
+		aMapInterface    map[string]any
 		aMapBool         map[string]bool
 		aMapInt32        map[string]int32
 		aMapInt64        map[string]int64
 		aMapFloat32      map[string]float32
 		aMapFloat64      map[string]float32
 		aMapString       map[string]string
-		aMapPtrInterface map[string]*interface{}
+		aMapPtrInterface map[string]*any
 		aMapPtrBool      map[string]*bool
 		aMapPtrInt32     map[string]*int32
 		aMapPtrInt64     map[string]*int64
@@ -70,14 +70,14 @@ type (
 		aMapPtrFloat64   map[string]*float32
 		aMapPtrString    map[string]*string
 
-		aChanInterface    chan interface{}
+		aChanInterface    chan any
 		aChanBool         chan bool
 		aChanInt32        chan int32
 		aChanInt64        chan int64
 		aChanFloat32      chan float32
 		aChanFloat64      chan float32
 		aChanString       chan string
-		aChanPtrInterface chan *interface{}
+		aChanPtrInterface chan *any
 		aChanPtrBool      chan *bool
 		aChanPtrInt32     chan *int32
 		aChanPtrInt64     chan *int64

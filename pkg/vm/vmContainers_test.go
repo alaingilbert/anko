@@ -1685,58 +1685,58 @@ func TestMakeStructs(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 
 	tests := []Test{
-		{Script: `a = make(struct1)`, Types: map[string]interface{}{"struct1": &testStruct1{}}, RunOutput: &testStruct1{}, Output: map[string]interface{}{"a": &testStruct1{}}},
-		{Script: `a = make(struct2)`, Types: map[string]interface{}{"struct2": &testStruct2{}}, RunOutput: &testStruct2{}, Output: map[string]interface{}{"a": &testStruct2{}}},
-		{Script: `make(struct1)`, Types: map[string]interface{}{"struct1": &struct {
-			A interface{}
-			B interface{}
+		{Script: `a = make(struct1)`, Types: map[string]any{"struct1": &testStruct1{}}, RunOutput: &testStruct1{}, Output: map[string]any{"a": &testStruct1{}}},
+		{Script: `a = make(struct2)`, Types: map[string]any{"struct2": &testStruct2{}}, RunOutput: &testStruct2{}, Output: map[string]any{"a": &testStruct2{}}},
+		{Script: `make(struct1)`, Types: map[string]any{"struct1": &struct {
+			A any
+			B any
 		}{}},
 			RunOutput: &struct {
-				A interface{}
-				B interface{}
+				A any
+				B any
 			}{}},
 
-		{Script: `a = make(struct1)`, Types: map[string]interface{}{"struct1": &struct {
-			A interface{}
-			B interface{}
+		{Script: `a = make(struct1)`, Types: map[string]any{"struct1": &struct {
+			A any
+			B any
 		}{}},
 			RunOutput: &struct {
-				A interface{}
-				B interface{}
+				A any
+				B any
 			}{},
-			Output: map[string]interface{}{"a": &struct {
-				A interface{}
-				B interface{}
+			Output: map[string]any{"a": &struct {
+				A any
+				B any
 			}{}}},
 
-		{Script: `a = make(struct1); a.A = 3; a.B = 4`, Types: map[string]interface{}{"struct1": &struct {
-			A interface{}
-			B interface{}
+		{Script: `a = make(struct1); a.A = 3; a.B = 4`, Types: map[string]any{"struct1": &struct {
+			A any
+			B any
 		}{}},
 			RunOutput: int64(4),
-			Output: map[string]interface{}{"a": &struct {
-				A interface{}
-				B interface{}
-			}{A: interface{}(int64(3)), B: interface{}(int64(4))}}},
+			Output: map[string]any{"a": &struct {
+				A any
+				B any
+			}{A: any(int64(3)), B: any(int64(4))}}},
 
-		{Script: `a = make(struct1); a = *a; a.A = 3; a.B = 4`, Types: map[string]interface{}{"struct1": &struct {
-			A interface{}
-			B interface{}
+		{Script: `a = make(struct1); a = *a; a.A = 3; a.B = 4`, Types: map[string]any{"struct1": &struct {
+			A any
+			B any
 		}{}},
 			RunOutput: int64(4),
-			Output: map[string]interface{}{"a": struct {
-				A interface{}
-				B interface{}
-			}{A: interface{}(int64(3)), B: interface{}(int64(4))}}},
+			Output: map[string]any{"a": struct {
+				A any
+				B any
+			}{A: any(int64(3)), B: any(int64(4))}}},
 
-		{Script: `a = make(struct1); a.A = func () { return 1 }; a.A()`, Types: map[string]interface{}{"struct1": &struct {
-			A interface{}
-			B interface{}
+		{Script: `a = make(struct1); a.A = func () { return 1 }; a.A()`, Types: map[string]any{"struct1": &struct {
+			A any
+			B any
 		}{}},
 			RunOutput: int64(1)},
-		{Script: `a = make(struct1); a.A = func () { return 1 }; a = *a; a.A()`, Types: map[string]interface{}{"struct1": &struct {
-			A interface{}
-			B interface{}
+		{Script: `a = make(struct1); a.A = func () { return 1 }; a = *a; a.A()`, Types: map[string]any{"struct1": &struct {
+			A any
+			B any
 		}{}},
 			RunOutput: int64(1)},
 

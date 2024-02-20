@@ -121,3 +121,19 @@ func NewCannotCallError(typ string) *CannotCallError {
 func (e *CannotCallError) Error() string {
 	return "cannot call type " + e.typ
 }
+
+type TypeCannotBeAssignedError struct {
+	from, to, into string
+}
+
+func NewTypeCannotBeAssignedError(from, to, into string) *TypeCannotBeAssignedError {
+	return &TypeCannotBeAssignedError{from, to, into}
+}
+
+func (e *TypeCannotBeAssignedError) Error() string {
+	out := fmt.Sprintf("type %s cannot be assigned to type %s", e.from, e.to)
+	if e.into != "" {
+		out += fmt.Sprintf(" for %s", e.into)
+	}
+	return out
+}

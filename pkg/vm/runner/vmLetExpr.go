@@ -90,7 +90,7 @@ func invokeLetMemberStructExpr(vmp *VmParams, v, rv reflect.Value, lhs *ast.Memb
 
 	rv, err = convertReflectValueToType(vmp, rv, v.Type())
 	if err != nil {
-		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String()+" for struct")
+		return nilValueL, newError(lhs, NewTypeCannotBeAssignedError(rv.Type().String(), v.Type().String(), "struct"))
 	}
 
 	v.Set(rv)
@@ -102,7 +102,7 @@ func invokeLetMemberMapExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, 
 	if v.Type().Elem() != interfaceType && v.Type().Elem() != rv.Type() {
 		rv, err = convertReflectValueToType(vmp, rv, v.Type().Elem())
 		if err != nil {
-			return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
+			return nilValueL, newError(lhs, NewTypeCannotBeAssignedError(rv.Type().String(), v.Type().Elem().String(), "map"))
 		}
 	}
 	if v.IsNil() {
@@ -158,7 +158,7 @@ func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, 
 			return invokeLetExpr(vmp, env, stmt, lhs.Value, v)
 		}
 		if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
-			return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for array index")
+			return nilValueL, newError(lhs, NewTypeCannotBeAssignedError(rv.Type().String(), v.Type().Elem().String(), "array index"))
 		}
 
 		newSlice := reflect.MakeSlice(v.Type().Elem(), 0, rv.Len())
@@ -188,7 +188,7 @@ func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, 
 	}
 
 	if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
-		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String()+" for array index")
+		return nilValueL, newError(lhs, NewTypeCannotBeAssignedError(rv.Type().String(), v.Type().String(), "array index"))
 	}
 
 	newSlice := reflect.MakeSlice(v.Type(), 0, rv.Len())
@@ -219,7 +219,7 @@ func invokeLetItemMapExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, rv
 		rv, errr = convertReflectValueToType(vmp, rv, v.Type().Elem())
 		if errr != nil {
 			vv = nilValue
-			err = newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().Elem().String()+" for map")
+			err = newError(lhs, NewTypeCannotBeAssignedError(rv.Type().String(), v.Type().Elem().String(), "map"))
 			return
 		}
 	}
@@ -239,7 +239,7 @@ func invokeLetItemStringExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt,
 	nilValueL := nilValue
 	rv, err = convertReflectValueToType(vmp, rv, v.Type())
 	if err != nil {
-		return nilValueL, newStringError(lhs, "type "+rv.Type().String()+" cannot be assigned to type "+v.Type().String())
+		return nilValueL, newError(lhs, NewTypeCannotBeAssignedError(rv.Type().String(), v.Type().String(), ""))
 	}
 
 	indexInt, err := tryToInt(index)

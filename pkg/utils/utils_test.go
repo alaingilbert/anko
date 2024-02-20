@@ -40,3 +40,15 @@ func TestDefault(t *testing.T) {
 	assert.Equal(t, true, Default(Ptr(true), false))
 	assert.Equal(t, false, Default(Ptr(false), true))
 }
+
+func TestOverride(t *testing.T) {
+	assert.Equal(t, (*bool)(nil), Override((*bool)(nil), (*bool)(nil)))
+	assert.Equal(t, true, *Override((*bool)(nil), Ptr(true)))
+	assert.Equal(t, false, *Override((*bool)(nil), Ptr(false)))
+	assert.Equal(t, true, *Override(Ptr(true), (*bool)(nil)))
+	assert.Equal(t, true, *Override(Ptr(true), Ptr(true)))
+	assert.Equal(t, false, *Override(Ptr(true), Ptr(false)))
+	assert.Equal(t, false, *Override(Ptr(false), (*bool)(nil)))
+	assert.Equal(t, true, *Override(Ptr(false), Ptr(true)))
+	assert.Equal(t, false, *Override(Ptr(false), Ptr(false)))
+}

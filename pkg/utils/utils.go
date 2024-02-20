@@ -50,6 +50,16 @@ func DefaultCtx(ctx context.Context) context.Context {
 	return ctx
 }
 
+func Override[T any](v *T, w *T) *T {
+	if w != nil {
+		if v == nil {
+			v = new(T)
+		}
+		*v = *w
+	}
+	return v
+}
+
 func Default[T any](v *T, d T) T {
 	if v == nil {
 		return d

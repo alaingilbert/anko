@@ -28,6 +28,9 @@ import (
 %type<expr> expr
 %type<expr_idents> expr_idents
 %type<func_expr_idents> func_expr_idents
+%type<func_expr_idents_not_empty> func_expr_idents_not_empty
+%type<func_expr_untyped_idents> func_expr_untyped_idents
+%type<func_expr_typed_idents> func_expr_typed_idents
 %type<opt_func_return_expr_idents> opt_func_return_expr_idents
 %type<opt_func_return_expr_idents1> opt_func_return_expr_idents1
 %type<type_data> type_data
@@ -58,7 +61,10 @@ import (
 	expr                   ast.Expr
 	exprs                  []ast.Expr
 	expr_idents            []string
-	func_expr_idents       []*ast.ParamExpr
+	func_expr_idents         []*ast.ParamExpr
+	func_expr_idents_not_empty []*ast.ParamExpr
+	func_expr_untyped_idents   []*ast.ParamExpr
+	func_expr_typed_idents     []*ast.ParamExpr
 	opt_func_return_expr_idents []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents1 []*ast.FuncReturnValuesExpr
 	expr_map               *ast.MapExpr
@@ -545,22 +551,40 @@ func_expr_idents :
 	{
 		$$ = []*ast.ParamExpr{}
 	}
-	| IDENT
+	| func_expr_idents_not_empty
+	{
+		$$ = $1
+	}
+
+func_expr_idents_not_empty :
+	func_expr_untyped_idents
+	{
+		$$ = $1
+	}
+	| func_expr_typed_idents
+	{
+		$$ = $1
+	}
+
+func_expr_untyped_idents :
+	IDENT
 	{
 		$$ = []*ast.ParamExpr{&ast.ParamExpr{Name: $1.Lit}}
 	}
-	| IDENT type_data
-	{
-		$$ = []*ast.ParamExpr{&ast.ParamExpr{Name: $1.Lit, TypeData: $2}}
-	}
-	| func_expr_idents ',' opt_newlines IDENT
+	| func_expr_idents_not_empty ',' opt_newlines IDENT
 	{
 		if len($1) == 0 {
 			yylex.Error("syntax error: unexpected ','")
 		}
 		$$ = append($1, &ast.ParamExpr{Name: $4.Lit})
 	}
-	| func_expr_idents ',' opt_newlines IDENT type_data
+
+func_expr_typed_idents :
+	IDENT type_data
+	{
+		$$ = []*ast.ParamExpr{&ast.ParamExpr{Name: $1.Lit, TypeData: $2}}
+	}
+	| func_expr_idents_not_empty ',' opt_newlines IDENT type_data
 	{
 		if len($1) == 0 {
 			yylex.Error("syntax error: unexpected ','")
@@ -676,9 +700,34 @@ expr :
 		$$ = &ast.FuncExpr{Params: $3, Returns: $5, Stmt: $7}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC '(' func_expr_idents VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
+	| FUNC '(' func_expr_untyped_idents VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
 	{
 		$$ = &ast.FuncExpr{Params: $3, Returns: $6, Stmt: $8, VarArg: true}
+		$$.SetPosition($1.Position())
+	}
+	| FUNC '(' func_expr_untyped_idents VARARG type_data ')' opt_func_return_expr_idents '{' compstmt '}'
+	{
+		$3[len($3)-1].TypeData = $5
+		$$ = &ast.FuncExpr{Params: $3, Returns: $7, Stmt: $9, VarArg: true}
+		$$.SetPosition($1.Position())
+	}
+	| FUNC '(' func_expr_idents ',' opt_newlines func_expr_untyped_idents VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
+	{
+		if len($3) == 0 {
+			yylex.Error("syntax error: unexpected ','")
+		}
+		$3 = append($3, $6...)
+		$$ = &ast.FuncExpr{Params: $3, Returns: $9, Stmt: $11, VarArg: true}
+		$$.SetPosition($1.Position())
+	}
+	| FUNC '(' func_expr_idents ',' opt_newlines func_expr_untyped_idents VARARG type_data ')' opt_func_return_expr_idents '{' compstmt '}'
+	{
+		if len($3) == 0 {
+			yylex.Error("syntax error: unexpected ','")
+		}
+		$6[len($6)-1].TypeData = $8
+		$3 = append($3, $6...)
+		$$ = &ast.FuncExpr{Params: $3, Returns: $10, Stmt: $12, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
 	| FUNC IDENT '(' func_expr_idents ')' opt_func_return_expr_idents '{' compstmt '}'
@@ -686,9 +735,34 @@ expr :
 		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $6, Stmt: $8}
 		$$.SetPosition($1.Position())
 	}
-	| FUNC IDENT '(' func_expr_idents VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
+	| FUNC IDENT '(' func_expr_untyped_idents VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
 	{
 		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $7, Stmt: $9, VarArg: true}
+		$$.SetPosition($1.Position())
+	}
+	| FUNC IDENT '(' func_expr_untyped_idents VARARG type_data ')' opt_func_return_expr_idents '{' compstmt '}'
+	{
+		$4[len($4)-1].TypeData = $6
+		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $8, Stmt: $10, VarArg: true}
+		$$.SetPosition($1.Position())
+	}
+	| FUNC IDENT '(' func_expr_idents ',' opt_newlines func_expr_untyped_idents VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
+	{
+		if len($4) == 0 {
+			yylex.Error("syntax error: unexpected ','")
+		}
+		$4 = append($4, $7...)
+		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $10, Stmt: $12, VarArg: true}
+		$$.SetPosition($1.Position())
+	}
+	| FUNC IDENT '(' func_expr_idents ',' opt_newlines func_expr_untyped_idents VARARG type_data ')' opt_func_return_expr_idents '{' compstmt '}'
+	{
+		if len($4) == 0 {
+			yylex.Error("syntax error: unexpected ','")
+		}
+		$7[len($7)-1].TypeData = $9
+		$4 = append($4, $7...)
+		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $11, Stmt: $13, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
 	| '[' ']'

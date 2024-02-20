@@ -182,7 +182,7 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 	if funcExpr.Name != "" {
 		err := env.DefineValue(funcExpr.Name, rv)
 		if err != nil {
-			return nilValueL, newError(funcExpr, err)
+			return nilValueL, newStringError1(funcExpr, err)
 		}
 	}
 
@@ -199,7 +199,7 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 func anonCallExpr(vmp *VmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Value, error) {
 	f, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
-		return nilValue, newError(e, err)
+		return nilValue, newStringError1(e, err)
 	}
 	if f.Kind() == reflect.Interface && !f.IsNil() {
 		f = f.Elem()
@@ -227,7 +227,7 @@ func callExpr(vmp *VmParams, envArg env.IEnv, callExpr *ast.CallExpr) (rv reflec
 		// if function is not valid try to get by function name
 		f, err = envArg.GetValue(callExpr.Name)
 		if err != nil {
-			err = newError(callExpr, err)
+			err = newStringError1(callExpr, err)
 			return
 		}
 	}
@@ -469,7 +469,7 @@ func makeCallArgsFnNotVarCallNotVar(vmp *VmParams, env env.IEnv, rt reflect.Type
 	subExpr := callExpr.SubExprs[indexExpr]
 	arg, err := invokeExpr(vmp, env, subExpr)
 	if err != nil {
-		return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
+		return []reflect.Value{}, []reflect.Type{}, false, newStringError1(subExpr, err)
 	}
 	if isRunVMFunction {
 		if rt.In(indexInReal) != reflectValueType {
@@ -501,7 +501,7 @@ func makeCallArgsFnNotVarCallVar(vmp *VmParams, env env.IEnv, rt reflect.Type, i
 	subExpr := callExpr.SubExprs[indexExpr]
 	arg, err := invokeExpr(vmp, env, subExpr)
 	if err != nil {
-		return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
+		return []reflect.Value{}, []reflect.Type{}, false, newStringError1(subExpr, err)
 	}
 	if arg.Kind() != reflect.Slice && arg.Kind() != reflect.Array {
 		return []reflect.Value{}, []reflect.Type{}, false, newStringError(callExpr, "call is variadic but last parameter is of type "+arg.Type().String())
@@ -553,7 +553,7 @@ func makeCallArgsDoNotCare(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVM
 	subExpr := callExpr.SubExprs[indexExpr]
 	arg, err := invokeExpr(vmp, env, subExpr)
 	if err != nil {
-		return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
+		return []reflect.Value{}, []reflect.Type{}, false, newStringError1(subExpr, err)
 	}
 	if isRunVMFunction {
 		args = append(args, reflect.ValueOf(arg))
@@ -578,7 +578,7 @@ func makeCallArgsFnVarCallNotVar(vmp *VmParams, env env.IEnv, rt reflect.Type, n
 		subExpr := callExpr.SubExprs[indexExpr]
 		arg, err := invokeExpr(vmp, env, subExpr)
 		if err != nil {
-			return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
+			return []reflect.Value{}, []reflect.Type{}, false, newStringError1(subExpr, err)
 		}
 		arg, err = convertReflectValueToType(vmp, arg, sliceType)
 		if err != nil {
@@ -604,7 +604,7 @@ func makeCallArgsFnVarCallVar(vmp *VmParams, env env.IEnv, rt reflect.Type, arg 
 	subExpr := callExpr.SubExprs[indexExpr]
 	arg, err = invokeExpr(vmp, env, subExpr)
 	if err != nil {
-		return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
+		return []reflect.Value{}, []reflect.Type{}, false, newStringError1(subExpr, err)
 	}
 	if sliceType != InterfaceSliceType && arg.Type() != sliceType {
 		err := newStringError1(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))

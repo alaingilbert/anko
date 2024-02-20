@@ -85,7 +85,7 @@ func runStmtsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.StmtsStmt) (reflect.
 func runExprStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ExprStmt) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, stmt.Expr)
 	if err != nil {
-		return rv, newError(stmt.Expr, err)
+		return rv, newStringError1(stmt.Expr, err)
 	}
 	return rv, nil
 }
@@ -98,7 +98,7 @@ func runVarStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.VarStmt) (reflect.Valu
 	for i, expr := range stmt.Exprs {
 		rvs[i], err = invokeExpr(vmp, env, expr)
 		if err != nil {
-			return nilValue, newError(expr, err)
+			return nilValue, newStringError1(expr, err)
 		}
 	}
 
@@ -136,7 +136,7 @@ func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 	for i, rhs := range stmt.Rhss {
 		rvs[i], err = invokeExpr(vmp, env, rhs)
 		if err != nil {
-			return nilValueL, newError(rhs, err)
+			return nilValueL, newStringError1(rhs, err)
 		}
 	}
 
@@ -151,7 +151,7 @@ func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 			for i := 0; i < value.Len() && i < len(stmt.Lhss); i++ {
 				_, err = invokeLetExpr(vmp, env, stmt, stmt.Lhss[i], value.Index(i))
 				if err != nil {
-					return nilValueL, newError(stmt.Lhss[i], err)
+					return nilValueL, newStringError1(stmt.Lhss[i], err)
 				}
 			}
 			// return last value of slice/array
@@ -167,12 +167,12 @@ func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 		}
 		_, err = invokeLetExpr(vmp, env, stmt, stmt.Lhss[i], value)
 		if err != nil {
-			return nilValueL, newError(stmt.Lhss[i], err)
+			return nilValueL, newStringError1(stmt.Lhss[i], err)
 		}
 	}
 
 	if len(rvs) == 0 {
-		return nilValueL, newError(stmt.Lhss[0], errors.New("invalid syntax"))
+		return nilValueL, newStringError1(stmt.Lhss[0], errors.New("invalid syntax"))
 	}
 
 	// return last right side value
@@ -183,7 +183,7 @@ func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt)
 	nilValueL := nilValue
 	rv, err := invokeExpr(vmp, env, stmt.Rhs)
 	if err != nil {
-		return nilValueL, newError(stmt, err)
+		return nilValueL, newStringError1(stmt, err)
 	}
 	var rvs []reflect.Value
 	if isNil(rv) {
@@ -198,7 +198,7 @@ func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt)
 		}
 		_, err = invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, lhs, v)
 		if err != nil {
-			return nilValueL, newError(lhs, err)
+			return nilValueL, newStringError1(lhs, err)
 		}
 	}
 	return rvs[0], nil
@@ -209,7 +209,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 	// if
 	rv, err := invokeExpr(vmp, env, stmt.If)
 	if err != nil {
-		return rv, newError(stmt.If, err)
+		return rv, newStringError1(stmt.If, err)
 	}
 
 	if toBool(rv) || validate {
@@ -218,7 +218,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 			rv, err = runSingleStmt(vmp, newenv, stmt.Then)
 		})
 		if err != nil {
-			return rv, newError(stmt, err)
+			return rv, newStringError1(stmt, err)
 		}
 		if !validate {
 			return rv, nil
@@ -232,7 +232,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 			rv, err = invokeExpr(vmp, newenv, elseIf.If)
 		})
 		if err != nil {
-			return rv, newError(elseIf.If, err)
+			return rv, newStringError1(elseIf.If, err)
 		}
 		if !toBool(rv) && !validate {
 			continue
@@ -243,7 +243,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 			rv, err = runSingleStmt(vmp, newenv, elseIf.Then)
 		})
 		if err != nil {
-			return rv, newError(elseIf, err)
+			return rv, newStringError1(elseIf, err)
 		}
 		if !validate {
 			return rv, nil
@@ -256,7 +256,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 			rv, err = runSingleStmt(vmp, newenv, stmt.Else)
 		})
 		if err != nil {
-			return rv, newError(stmt, err)
+			return rv, newStringError1(stmt, err)
 		}
 	}
 
@@ -320,7 +320,7 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 			if errors.Is(err, ErrReturn) {
 				return rv, err
 			}
-			return nilValueL, newError(stmt, err)
+			return nilValueL, newStringError1(stmt, err)
 		}
 		if vmp.Validate {
 			break
@@ -370,7 +370,7 @@ func runForStmtSlice(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 			if errors.Is(err, ErrReturn) {
 				return rv, err
 			}
-			return nilValueL, newError(stmt, err)
+			return nilValueL, newStringError1(stmt, err)
 		}
 	}
 	return nilValueL, nil
@@ -398,7 +398,7 @@ func runForStmtMap(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 			if errors.Is(err, ErrReturn) {
 				return rv, err
 			}
-			return nilValueL, newError(stmt, err)
+			return nilValueL, newStringError1(stmt, err)
 		}
 	}
 	return nilValueL, nil
@@ -441,7 +441,7 @@ func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 			if errors.Is(err, ErrReturn) {
 				return rv, err
 			}
-			return nilValue, newError(stmt, err)
+			return nilValue, newStringError1(stmt, err)
 		}
 		if vmp.Validate {
 			break
@@ -478,7 +478,7 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 			if errors.Is(err, ErrReturn) {
 				return rv, err
 			}
-			return nilValueL, newError(stmt, err)
+			return nilValueL, newStringError1(stmt, err)
 		}
 		_, err = invokeExpr(vmp, newenv, stmt.Expr3)
 		if err != nil {
@@ -500,7 +500,7 @@ func runReturnStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ReturnStmt) (reflec
 	case 1:
 		rv, err = invokeExpr(vmp, env, stmt.Exprs[0])
 		if err != nil {
-			return rv, newError(stmt, err)
+			return rv, newStringError1(stmt, err)
 		}
 		return rv, nil
 	}
@@ -508,7 +508,7 @@ func runReturnStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ReturnStmt) (reflec
 	for i, expr := range stmt.Exprs {
 		rv, err = invokeExpr(vmp, env, expr)
 		if err != nil {
-			return rv, newError(stmt, err)
+			return rv, newStringError1(stmt, err)
 		}
 		if !rv.IsValid() || !rv.CanInterface() {
 			rvs[i] = nil
@@ -522,10 +522,10 @@ func runReturnStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ReturnStmt) (reflec
 func runThrowStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ThrowStmt) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, stmt.Expr)
 	if err != nil {
-		return rv, newError(stmt, err)
+		return rv, newStringError1(stmt, err)
 	}
 	if !rv.IsValid() {
-		return nilValue, newError(stmt, err)
+		return nilValue, newStringError(stmt, "invalid type")
 	}
 	return rv, newStringError(stmt, fmt.Sprint(rv.Interface()))
 }
@@ -535,7 +535,7 @@ func runModuleStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ModuleStmt) (reflec
 	defer newenv.Destroy()
 	rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 	if err != nil {
-		return rv, newError(stmt, err)
+		return rv, newStringError1(stmt, err)
 	}
 	_ = env.DefineGlobalValue(stmt.Name, reflect.ValueOf(newenv))
 	return rv, nil
@@ -572,7 +572,7 @@ func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 			pos = e.Expr
 			che, ok = e.Expr.(*ast.ChanExpr)
 		}
-		invalidOperationErr := newError(pos, ErrInvalidOperation)
+		invalidOperationErr := newStringError1(pos, ErrInvalidOperation)
 		if !ok {
 			return nilValueL, invalidOperationErr
 		}
@@ -582,7 +582,7 @@ func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 		}
 		v, err := newenv.GetValue(ident.Lit)
 		if err != nil {
-			return nilValueL, newError(che, err)
+			return nilValueL, newStringError1(che, err)
 		}
 		letsStmts = append(letsStmts, letStmt)
 		bodies = append(bodies, caseStmt.Stmt)
@@ -607,7 +607,7 @@ func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 		if letStmt := letsStmts[chosen]; letStmt != nil {
 			rv, err = invokeLetExpr(vmp, newenv, letStmt, letStmt.Lhss[0], rv)
 			if err != nil {
-				return nilValueL, newError(letStmt.Lhss[0], err)
+				return nilValueL, newStringError1(letStmt.Lhss[0], err)
 			}
 		}
 		if statements := bodies[chosen]; statements != nil {
@@ -642,7 +642,7 @@ func runSwitchStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SwitchStmt) (reflec
 	defer newenv.Destroy()
 	rv, err := invokeExpr(vmp, newenv, stmt.Expr)
 	if err != nil {
-		return rv, newError(stmt, err)
+		return rv, newStringError1(stmt, err)
 	}
 
 	for _, switchCaseStmt := range stmt.Cases {
@@ -650,12 +650,12 @@ func runSwitchStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SwitchStmt) (reflec
 		for _, expr := range caseStmt.Exprs {
 			caseValue, err := invokeExpr(vmp, newenv, expr)
 			if err != nil {
-				return nilValue, newError(expr, err)
+				return nilValue, newStringError1(expr, err)
 			}
 			if equal(rv, caseValue) || validate {
 				val, err := runSingleStmt(vmp, newenv, caseStmt.Stmt)
 				if err != nil {
-					return val, newError(expr, err)
+					return val, newStringError1(expr, err)
 				}
 				if !validate {
 					return val, err

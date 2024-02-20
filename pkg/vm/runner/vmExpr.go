@@ -306,7 +306,7 @@ func invokeDeferExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr
 	invalidOperationErr := newInvalidOperation(e)
 	v, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
-		return nilValue, newError(e.Expr, err)
+		return nilValue, newStringError1(e.Expr, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -360,7 +360,7 @@ func invokeAddrExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr) (reflect.Va
 	case *ast.MemberExpr:
 		return invokeAddrExprMemberExpr(vmp, env, ee)
 	default:
-		return nilValueL, newError(e, ErrInvalidOperationForTheValue)
+		return nilValueL, newStringError1(e, ErrInvalidOperationForTheValue)
 	}
 }
 
@@ -1226,7 +1226,7 @@ func invokeIncludeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.IncludeExpr) (refl
 	nilValueL := nilValue
 	itemExpr, err := invokeExpr(vmp, env, e.ItemExpr)
 	if err != nil {
-		return nilValueL, newError(e.ItemExpr, err)
+		return nilValueL, newStringError1(e.ItemExpr, err)
 	}
 	listExpr, err := invokeExpr(vmp, env, e.ListExpr.(*ast.SliceExpr))
 	if err != nil {

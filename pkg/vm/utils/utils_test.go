@@ -29,3 +29,23 @@ func TestFormatValue(t *testing.T) {
 		})
 	}
 }
+
+func TestKindIsNumeric(t *testing.T) {
+	type args struct {
+		kind reflect.Kind
+	}
+	tests := []struct {
+		args args
+		want bool
+		name string
+	}{
+		{args{kind: reflect.Int8}, true, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := KindIsNumeric(tt.args.kind); got != tt.want {
+				t.Errorf("KindIsNumeric() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
-	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"reflect"
 )
 
@@ -53,7 +52,7 @@ func runSingleStmt(vmp *VmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value
 	case *ast.DeferStmt:
 		return runDeferStmt(vmp, env, stmt)
 	default:
-		return nilValue, newError(stmt, vmUtils.ErrUnknownStmt)
+		return nilValue, newError(stmt, ErrUnknownStmt)
 	}
 }
 

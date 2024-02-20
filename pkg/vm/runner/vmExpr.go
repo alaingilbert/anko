@@ -79,7 +79,7 @@ func invokeExpr(vmp *VmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, e
 	case *ast.IncludeExpr:
 		return invokeIncludeExpr(vmp, env, e)
 	default:
-		return nilValue, newError(e, vmUtils.ErrUnknownExpr)
+		return nilValue, newError(e, ErrUnknownExpr)
 	}
 }
 
@@ -446,7 +446,7 @@ func invokeUnaryExpr(vmp *VmParams, env envPkg.IEnv, e *ast.UnaryExpr) (reflect.
 	case "!":
 		return reflect.ValueOf(!toBool(v)), nil
 	default:
-		return nilValue, newError(e, vmUtils.ErrUnknownOperator)
+		return nilValue, newError(e, ErrUnknownOperator)
 	}
 }
 func invokeParenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ParenExpr) (reflect.Value, error) {
@@ -543,11 +543,11 @@ func invokeItemExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ItemExpr) (reflect.Va
 	case reflect.String, reflect.Slice, reflect.Array:
 		ii, err := tryToInt(i)
 		if err != nil {
-			return nilValue, newError(e, vmUtils.ErrIndexMustBeNumber)
+			return nilValue, newError(e, ErrIndexMustBeNumber)
 		}
 		if !vmp.Validate {
 			if ii < 0 || ii >= v.Len() {
-				return nilValue, newError(e, vmUtils.ErrIndexOutOfRange)
+				return nilValue, newError(e, ErrIndexOutOfRange)
 			}
 		}
 		if v.Kind() != reflect.String {
@@ -610,10 +610,10 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 			}
 			rbi, err = tryToInt(rb)
 			if err != nil {
-				return nilValueL, newError(e, vmUtils.ErrIndexMustBeNumber)
+				return nilValueL, newError(e, ErrIndexMustBeNumber)
 			}
 			if rbi < 0 || rbi > v.Len() {
-				return nilValueL, newError(e, vmUtils.ErrIndexOutOfRange)
+				return nilValueL, newError(e, ErrIndexOutOfRange)
 			}
 		} else {
 			rbi = 0
@@ -625,16 +625,16 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 			}
 			rei, err = tryToInt(re)
 			if err != nil {
-				return nilValueL, newError(e, vmUtils.ErrIndexMustBeNumber)
+				return nilValueL, newError(e, ErrIndexMustBeNumber)
 			}
 			if rei < 0 || rei > v.Len() {
-				return nilValueL, newError(e, vmUtils.ErrIndexOutOfRange)
+				return nilValueL, newError(e, ErrIndexOutOfRange)
 			}
 		} else {
 			rei = v.Len()
 		}
 		if rbi > rei {
-			return nilValueL, newError(e, vmUtils.ErrInvalidSliceIndex)
+			return nilValueL, newError(e, ErrInvalidSliceIndex)
 		}
 		return v.Slice(rbi, rei), nil
 	default:
@@ -835,7 +835,7 @@ func invokeBinOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.
 	case "<<":
 		return reflect.ValueOf(toInt64(lhsV) << uint64(toInt64(rhsV))), nil
 	default:
-		return nilValueL, newError(e, vmUtils.ErrUnknownOperator)
+		return nilValueL, newError(e, ErrUnknownOperator)
 	}
 }
 

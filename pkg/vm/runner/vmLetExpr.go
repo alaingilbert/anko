@@ -147,7 +147,7 @@ func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, 
 	nilValueL := nilValue
 	indexInt, err := tryToInt(index)
 	if err != nil {
-		return nilValueL, newError(lhs, vmUtils.ErrIndexMustBeNumber)
+		return nilValueL, newError(lhs, ErrIndexMustBeNumber)
 	}
 
 	if indexInt == v.Len() {
@@ -174,7 +174,7 @@ func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, 
 	}
 
 	if indexInt < 0 || indexInt >= v.Len() {
-		return nilValueL, newError(lhs, vmUtils.ErrIndexOutOfRange)
+		return nilValueL, newError(lhs, ErrIndexOutOfRange)
 	}
 	v = v.Index(indexInt)
 	if !v.CanSet() {
@@ -247,7 +247,7 @@ func invokeLetItemStringExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt,
 
 	indexInt, err := tryToInt(index)
 	if err != nil {
-		return nilValueL, newError(lhs, vmUtils.ErrIndexMustBeNumber)
+		return nilValueL, newError(lhs, ErrIndexMustBeNumber)
 	}
 
 	if indexInt == v.Len() {
@@ -262,7 +262,7 @@ func invokeLetItemStringExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt,
 	}
 
 	if indexInt < 0 || indexInt >= v.Len() {
-		return nilValueL, newError(lhs, vmUtils.ErrIndexOutOfRange)
+		return nilValueL, newError(lhs, ErrIndexOutOfRange)
 	}
 
 	if v.CanSet() {
@@ -294,10 +294,10 @@ func invokeLetSliceExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *a
 			}
 			rbi, err = tryToInt(rb)
 			if err != nil {
-				return nilValueL, newError(lhs, vmUtils.ErrIndexMustBeNumber)
+				return nilValueL, newError(lhs, ErrIndexMustBeNumber)
 			}
 			if rbi < 0 || rbi > v.Len() {
-				return nilValueL, newError(lhs, vmUtils.ErrIndexOutOfRange)
+				return nilValueL, newError(lhs, ErrIndexOutOfRange)
 			}
 		} else {
 			rbi = 0
@@ -309,16 +309,16 @@ func invokeLetSliceExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *a
 			}
 			rei, err = tryToInt(re)
 			if err != nil {
-				return nilValueL, newError(lhs, vmUtils.ErrIndexMustBeNumber)
+				return nilValueL, newError(lhs, ErrIndexMustBeNumber)
 			}
 			if rei < 0 || rei > v.Len() {
-				return nilValueL, newError(lhs, vmUtils.ErrIndexOutOfRange)
+				return nilValueL, newError(lhs, ErrIndexOutOfRange)
 			}
 		} else {
 			rei = v.Len()
 		}
 		if rbi > rei {
-			return nilValueL, newError(lhs, vmUtils.ErrInvalidSliceIndex)
+			return nilValueL, newError(lhs, ErrInvalidSliceIndex)
 		}
 		v = v.Slice(rbi, rei)
 		if !v.CanSet() {

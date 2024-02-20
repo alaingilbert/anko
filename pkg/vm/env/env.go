@@ -488,6 +488,7 @@ func (e *Env) setValue(k string, v reflect.Value) error {
 				if v.Kind().String() != typedValue.V.Kind().String() {
 					return vmUtils.ErrTypeMismatch
 				}
+				v = reflect.ValueOf(&vmUtils.StronglyTyped{V: v})
 			}
 		}
 		e.values.Insert(k, v)

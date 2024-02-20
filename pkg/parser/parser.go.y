@@ -85,18 +85,18 @@ import (
             CONTINUE PLUSPLUS MINUSMINUS POW SHIFTLEFT SHIFTRIGHT SWITCH SELECT CASE DEFAULT GO DEFER CHAN MAKE
             OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG WALRUS
 
-%right '='
-%right '?' ':'
-%right NILCOALESCE
+%left ,
+%right '=' PLUSEQ MINUSEQ MULEQ DIVEQ ANDEQ OREQ EQOPCHAN
+%right ':'
+%right OPCHAN
+%right '?' NILCOALESCE
 %left OROR
 %left ANDAND
+%left EQEQ NEQ '<' LE '>' GE
+%left '+' '-' '|' '^'
+%left '*' '/' '%' SHIFTLEFT SHIFTRIGHT '&'
 %right IN
-%left IDENT
-%nonassoc EQEQ NEQ ','
-%left '>' GE '<' LE SHIFTLEFT SHIFTRIGHT
-
-%left '+' '-' PLUSPLUS MINUSMINUS
-%left '*' '/' '%'
+%right PLUSPLUS MINUSMINUS
 %right UNARY
 
 %%

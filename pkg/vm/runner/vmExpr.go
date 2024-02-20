@@ -34,8 +34,6 @@ func invokeExpr(vmp *VmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, e
 		return invokeDerefExpr(vmp, env, e)
 	case *ast.AddrExpr:
 		return invokeAddrExpr(vmp, env, e)
-	case *ast.UnaryExpr:
-		return invokeUnaryExpr(vmp, env, e)
 	case *ast.ParenExpr:
 		return invokeParenExpr(vmp, env, e)
 	case *ast.MemberExpr:
@@ -48,6 +46,8 @@ func invokeExpr(vmp *VmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, e
 		return invokeAssocExpr(vmp, env, e)
 	case *ast.LetsExpr:
 		return invokeLetsExpr(vmp, env, e)
+	case *ast.UnaryExpr:
+		return invokeUnaryExpr(vmp, env, e)
 	case *ast.BinOpExpr:
 		return invokeBinOpExpr(vmp, env, e, expr)
 	case *ast.ConstExpr:
@@ -427,28 +427,6 @@ func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr)
 	return v.Addr(), nil
 }
 
-func invokeUnaryExpr(vmp *VmParams, env envPkg.IEnv, e *ast.UnaryExpr) (reflect.Value, error) {
-	v, err := invokeExpr(vmp, env, e.Expr)
-	if err != nil {
-		return nilValue, newError(e.Expr, err)
-	}
-	switch e.Operator {
-	case "-":
-		if v.Kind() == reflect.Int64 {
-			return reflect.ValueOf(-v.Int()), nil
-		}
-		if v.Kind() == reflect.Float64 {
-			return reflect.ValueOf(-v.Float()), nil
-		}
-		return reflect.ValueOf(-toFloat64(v)), nil
-	case "^":
-		return reflect.ValueOf(^toInt64(v)), nil
-	case "!":
-		return reflect.ValueOf(!toBool(v)), nil
-	default:
-		return nilValue, newError(e, ErrUnknownOperator)
-	}
-}
 func invokeParenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ParenExpr) (reflect.Value, error) {
 	v, err := invokeExpr(vmp, env, e.SubExpr)
 	if err != nil {
@@ -731,6 +709,29 @@ func invokeLetsExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Va
 		}
 	}
 	return rvs[len(rvs)-1], nil
+}
+
+func invokeUnaryExpr(vmp *VmParams, env envPkg.IEnv, e *ast.UnaryExpr) (reflect.Value, error) {
+	v, err := invokeExpr(vmp, env, e.Expr)
+	if err != nil {
+		return nilValue, newError(e.Expr, err)
+	}
+	switch e.Operator {
+	case "-":
+		if v.Kind() == reflect.Int64 {
+			return reflect.ValueOf(-v.Int()), nil
+		}
+		if v.Kind() == reflect.Float64 {
+			return reflect.ValueOf(-v.Float()), nil
+		}
+		return reflect.ValueOf(-toFloat64(v)), nil
+	case "^":
+		return reflect.ValueOf(^toInt64(v)), nil
+	case "!":
+		return reflect.ValueOf(!toBool(v)), nil
+	default:
+		return nilValue, newError(e, ErrUnknownOperator)
+	}
 }
 
 func invokeBinOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.Expr) (reflect.Value, error) {

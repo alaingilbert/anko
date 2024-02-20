@@ -13,6 +13,19 @@ var (
 	NilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
 )
 
+type WrongArgTypeError struct {
+	want     string
+	received string
+}
+
+func NewWrongArgTypeError(want, receive string) *WrongArgTypeError {
+	return &WrongArgTypeError{want: want, received: receive}
+}
+
+func (e *WrongArgTypeError) Error() string {
+	return "function wants argument type " + e.want + " but received type " + e.received
+}
+
 var ErrInvalidTypeConversion = errors.New("invalid type conversion")
 var ErrTypeMismatch = errors.New("type mismatch")
 

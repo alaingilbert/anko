@@ -446,7 +446,7 @@ func invokeUnaryExpr(vmp *VmParams, env envPkg.IEnv, e *ast.UnaryExpr) (reflect.
 	case "!":
 		return reflect.ValueOf(!toBool(v)), nil
 	default:
-		return nilValue, newStringError(e, "unknown operator ''")
+		return nilValue, newError(e, vmUtils.ErrUnknownOperator)
 	}
 }
 func invokeParenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ParenExpr) (reflect.Value, error) {
@@ -835,7 +835,7 @@ func invokeBinOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.
 	case "<<":
 		return reflect.ValueOf(toInt64(lhsV) << uint64(toInt64(rhsV))), nil
 	default:
-		return nilValueL, newStringError(e, "unknown operator")
+		return nilValueL, newError(e, vmUtils.ErrUnknownOperator)
 	}
 }
 

@@ -52,6 +52,7 @@ func (e *CannotCallError) Error() string {
 
 var ErrUnknownStmt = errors.New("unknown statement")
 var ErrUnknownExpr = errors.New("unknown expression")
+var ErrUnknownOperator = errors.New("unknown operator")
 var ErrInvalidSliceIndex = errors.New("invalid slice index")
 var ErrIndexMustBeNumber = errors.New("index must be a number")
 var ErrIndexOutOfRange = errors.New("index out of range")

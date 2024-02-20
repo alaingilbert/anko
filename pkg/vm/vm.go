@@ -156,10 +156,27 @@ func (v *VM) getDefaultExecutorConfig() *executor.Config {
 }
 
 func (v *VM) executor(cfg *executor.Config) *executor.Executor {
-	if cfg == nil {
-		cfg = v.getDefaultExecutorConfig()
+	cfgToUse := v.getDefaultExecutorConfig()
+	if cfg != nil {
+		if cfg.Env != nil {
+			cfgToUse.Env = cfg.Env
+		}
+		if cfg.RateLimit != 0 {
+			cfgToUse.RateLimit = cfg.RateLimit
+		}
+		if cfg.RateLimitPeriod != 0 {
+			cfgToUse.RateLimitPeriod = cfg.RateLimitPeriod
+		}
+		cfgToUse.Watchdog = utils.Override(cfgToUse.Watchdog, cfg.Watchdog)
+		cfgToUse.MaxEnvCount = utils.Override(cfgToUse.MaxEnvCount, cfg.MaxEnvCount)
+		cfgToUse.ProtectMaps = utils.Override(cfgToUse.ProtectMaps, cfg.ProtectMaps)
+		cfgToUse.DeepCopyEnv = utils.Override(cfgToUse.DeepCopyEnv, cfg.DeepCopyEnv)
+		cfgToUse.ImportCore = utils.Override(cfgToUse.ImportCore, cfg.ImportCore)
+		cfgToUse.DefineImport = utils.Override(cfgToUse.DefineImport, cfg.DefineImport)
+		cfgToUse.DbgEnabled = utils.Override(cfgToUse.DbgEnabled, cfg.DbgEnabled)
+		cfgToUse.ResetEnv = utils.Override(cfgToUse.ResetEnv, cfg.ResetEnv)
 	}
-	return executor.NewExecutor(cfg)
+	return executor.NewExecutor(cfgToUse)
 }
 
 func (v *VM) validate(ctx context.Context, val any) error {

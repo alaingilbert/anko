@@ -891,7 +891,7 @@ func runCancelTestWithContext(t *testing.T, script string) {
 		t.Errorf("Define error: %v", err)
 	}
 
-	_, err = v.Executor().Run(ctx, script)
+	_, err = v.Executor(nil).Run(ctx, script)
 	if err == nil || !errors.Is(err, context.Canceled) {
 		t.Errorf("execute error - received %#v - expected: %#v", err, context.Canceled)
 	}
@@ -902,7 +902,7 @@ func TestTwoContextSameEnv(t *testing.T) {
 	env := envPkg.NewEnv()
 	v := New(&Config{Env: env})
 	ctx1, cancel := context.WithCancel(context.Background())
-	e := v.Executor()
+	e := v.Executor(nil)
 	waitGroup.Add(1)
 	go func() {
 		_, err := e.Run(ctx1, "func myFn(a) { return 123; }; for { }")
@@ -929,7 +929,7 @@ func TestContextConcurrency(t *testing.T) {
 	waitGroup.Add(100)
 	for i := 0; i < 100; i++ {
 		go func() {
-			_, err := v.Executor().Run(ctx, "for { }")
+			_, err := v.Executor(nil).Run(ctx, "for { }")
 			if err == nil || !errors.Is(err, context.Canceled) {
 				t.Errorf("execute error - received %#v - expected: %#v", err, context.Canceled)
 			}
@@ -980,7 +980,7 @@ func TestAssignToInterface(t *testing.T) {
 	if err != nil {
 		t.Errorf("Define error: %v", err)
 	}
-	_, err = v.Executor().Run(nil, `X.Stdout = a`)
+	_, err = v.Executor(nil).Run(nil, `X.Stdout = a`)
 	if err != nil {
 		t.Errorf("execute error - received %#v - expected: %#v", err, context.Canceled)
 	}
@@ -1097,7 +1097,7 @@ func TestCallStructMethod(t *testing.T) {
 
 func TestURL(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
-	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor().Run(nil, `
+	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor(nil).Run(nil, `
 url = import("net/url")
 v1 = make(url.Values)
 v1.Set("a", "a")
@@ -1122,7 +1122,7 @@ v2.Get("a")
 var testPackagesEnvSetupFunc = func(t *testing.T, env *envPkg.Env) { runner.DefineImport(env) }
 
 func TestDefineImport(t *testing.T) {
-	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor().Run(nil, `strings = import("strings"); strings.ToLower("TEST")`)
+	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor(nil).Run(nil, `strings = import("strings"); strings.ToLower("TEST")`)
 	if err != nil {
 		t.Errorf("execute error - received: %v - expected: %v", err, nil)
 	}
@@ -1133,7 +1133,7 @@ func TestDefineImport(t *testing.T) {
 
 func TestDefineImportPackageNotFound(t *testing.T) {
 	_ = os.Unsetenv("ANKO_DEBUG")
-	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor().Run(nil, `a = import("a")`)
+	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor(nil).Run(nil, `a = import("a")`)
 	expectedError := "package 'a' not found"
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
@@ -1147,7 +1147,7 @@ func TestDefineImportPackageDefineError(t *testing.T) {
 	_ = os.Unsetenv("ANKO_DEBUG")
 	packages.Packages.Insert("testPackage", map[string]any{"bad.name": testing.Coverage})
 
-	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor().Run(nil, `a = import("testPackage")`)
+	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor(nil).Run(nil, `a = import("testPackage")`)
 	expectedError := "import error: unknown symbol 'bad.name'"
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
@@ -1159,7 +1159,7 @@ func TestDefineImportPackageDefineError(t *testing.T) {
 	packages.Packages.Insert("testPackage", map[string]any{"Coverage": testing.Coverage})
 	packages.PackageTypes.Insert("testPackage", map[string]any{"bad.name": int64(1)})
 
-	value, err = New(&Config{DefineImport: utils.Ptr(true)}).Executor().Run(nil, `a = import("testPackage")`)
+	value, err = New(&Config{DefineImport: utils.Ptr(true)}).Executor(nil).Run(nil, `a = import("testPackage")`)
 	expectedError = "import error: unknown symbol 'bad.name'"
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
@@ -1605,7 +1605,7 @@ func TestAddPackage(t *testing.T) {
 	// empty
 	v := New(nil)
 	pack, _ := v.AddPackage("empty", map[string]any{}, map[string]any{})
-	value, err := v.Executor().Run(nil, "empty")
+	value, err := v.Executor(nil).Run(nil, "empty")
 	if err != nil {
 		t.Errorf("AddPackage error - received: %v - expected: %v", err, nil)
 	}
@@ -1657,7 +1657,7 @@ func TestAddPackage(t *testing.T) {
 	// method
 	v = New(nil)
 	_, _ = v.AddPackage("strings", map[string]any{"ToLower": strings.ToLower}, map[string]any{})
-	value, err = v.Executor().Run(nil, `strings.ToLower("TEST")`)
+	value, err = v.Executor(nil).Run(nil, `strings.ToLower("TEST")`)
 	if err != nil {
 		t.Errorf("AddPackage error - received: %v - expected: %v", err, nil)
 	}
@@ -1668,7 +1668,7 @@ func TestAddPackage(t *testing.T) {
 	// type
 	v = New(nil)
 	_, _ = v.AddPackage("test", map[string]any{}, map[string]any{"array2x": [][]any{}})
-	value, err = v.Executor().Run(nil, "a = make(test.array2x); a += [[1]]")
+	value, err = v.Executor(nil).Run(nil, "a = make(test.array2x); a += [[1]]")
 	if err != nil {
 		t.Errorf("AddPackage error - received: %v - expected: %v", err, nil)
 	}
@@ -1758,7 +1758,7 @@ func TestTypedValues(t *testing.T) {
 
 func TestExecuteError(t *testing.T) {
 	script := "a]]"
-	_, err := New(nil).Executor().Run(nil, script)
+	_, err := New(nil).Executor(nil).Run(nil, script)
 	if err == nil {
 		t.Errorf("execute error - received: %v - expected: %v", err, fmt.Errorf("syntax error"))
 	} else if err.Error() != "syntax error" {
@@ -1858,11 +1858,11 @@ func TestHas(t *testing.T) {
 
 func TestTest(t *testing.T) {
 	v := New(nil)
-	e1 := v.Executor()
+	e1 := v.Executor(nil)
 	_, _ = e1.Run(nil, "a = 1")
 	assert.Equal(t, int64(1), utils.Must(e1.GetEnv().Get("a")).(int64))
 	assert.Error(t, utils.MustErr(v.env.Get("b")))
-	e2 := v.Executor()
+	e2 := v.Executor(nil)
 	_, _ = e2.Run(nil, "b = 2")
 	assert.Error(t, utils.MustErr(v.env.Get("a")))
 	assert.Equal(t, int64(2), utils.Must(e2.GetEnv().Get("b")).(int64))
@@ -1872,7 +1872,7 @@ func TestDefineCtx(t *testing.T) {
 	v := New(nil)
 	_ = v.DefineCtx("a", func(context.Context) int64 { return 1 })
 	_ = v.DefineCtx("b", func(context.Context, int64) int64 { return 1 })
-	e := v.Executor()
+	e := v.Executor(nil)
 	tests := []Test{
 		{Script: `a()`, RunOutput: int64(1), Name: ""},
 		{Script: `a(1)`, RunError: fmt.Errorf("function wants 0 arguments but received 1"), Name: ""},
@@ -1886,7 +1886,7 @@ func TestDefineCtx(t *testing.T) {
 func TestRateLimitPeriod(t *testing.T) {
 	v := New(&Config{RateLimitPeriod: time.Minute})
 	_ = v.DefineCtx("a", func(context.Context) int64 { return 1 })
-	e := v.Executor()
+	e := v.Executor(nil)
 	tests := []Test{
 		{Script: `a()`, RunOutput: int64(1), Name: ""},
 	}

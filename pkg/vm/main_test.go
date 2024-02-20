@@ -193,7 +193,7 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 	var value any
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	e := v.Executor()
+	e := v.Executor(nil)
 	if testingOptions != nil && testingOptions.Executor != nil {
 		e = testingOptions.Executor
 	}

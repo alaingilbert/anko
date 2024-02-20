@@ -83,7 +83,7 @@ println(a)
 
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -156,7 +156,7 @@ a = 1 == 2 || 1 == 1
 println(a)
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -218,7 +218,7 @@ if a == 1 && b == 2 {
 }
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -290,7 +290,7 @@ for i = 0; i < 10; i++ {
 
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -337,7 +337,7 @@ println(a[:2])
 println(a[1:2])
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -375,7 +375,7 @@ println(<- a)
 
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}

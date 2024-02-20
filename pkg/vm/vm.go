@@ -11,7 +11,7 @@ import (
 
 // IVM interface that VM implements
 type IVM interface {
-	Executor() executor.IExecutor
+	Executor(*executor.Config) executor.IExecutor
 	Validate(context.Context, any) error
 	Has(context.Context, any, []any) ([]bool, error)
 
@@ -104,8 +104,8 @@ func New(config *Config) *VM {
 }
 
 // Executor creates a new executor
-func (v *VM) Executor() executor.IExecutor {
-	return v.executor()
+func (v *VM) Executor(cfg *executor.Config) executor.IExecutor {
+	return v.executor(cfg)
 }
 
 // Validate a script without executing it
@@ -139,8 +139,8 @@ func (v *VM) DefineType(k string, val any) error {
 	return v.env.DefineType(k, val)
 }
 
-func (v *VM) executor() *executor.Executor {
-	return executor.NewExecutor(&executor.Config{
+func (v *VM) getDefaultExecutorConfig() *executor.Config {
+	return &executor.Config{
 		ProtectMaps:     v.protectMaps,
 		DeepCopyEnv:     v.deepCopyEnv,
 		ImportCore:      v.importCore,
@@ -152,13 +152,20 @@ func (v *VM) executor() *executor.Executor {
 		Watchdog:        v.watchdog,
 		MaxEnvCount:     v.maxEnvCount,
 		ResetEnv:        v.resetEnv,
-	})
+	}
+}
+
+func (v *VM) executor(cfg *executor.Config) *executor.Executor {
+	if cfg == nil {
+		cfg = v.getDefaultExecutorConfig()
+	}
+	return executor.NewExecutor(cfg)
 }
 
 func (v *VM) validate(ctx context.Context, val any) error {
-	return v.executor().Validate(utils.DefaultCtx(ctx), val)
+	return v.executor(nil).Validate(utils.DefaultCtx(ctx), val)
 }
 
 func (v *VM) has(ctx context.Context, val any, targets []any) ([]bool, error) {
-	return v.executor().Has(utils.DefaultCtx(ctx), val, targets)
+	return v.executor(nil).Has(utils.DefaultCtx(ctx), val, targets)
 }

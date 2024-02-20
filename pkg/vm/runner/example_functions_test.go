@@ -62,7 +62,7 @@ func add(a, b) {
 println(add([1, 2]...))
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -112,7 +112,7 @@ func () {
 println(a)
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -170,7 +170,7 @@ a = aFunc([1, 2, 3])
 println(a) 
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}

@@ -793,7 +793,7 @@ func TestCallFunctionWithVararg(t *testing.T) {
 	if err != nil {
 		t.Errorf("Define error: %v", err)
 	}
-	got, err := v.Executor().Run(nil, `X(a...)`)
+	got, err := v.Executor(nil).Run(nil, `X(a...)`)
 	if err != nil {
 		t.Errorf("execute error - received %#v - expected: %#v", err, context.Canceled)
 	}

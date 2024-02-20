@@ -1281,7 +1281,7 @@ func TestMakeArraysData(t *testing.T) {
 		t.Errorf("DefineType error - received %v - expected: %v", err, nil)
 	}
 
-	value, err := v.Executor().Run(nil, stmts)
+	value, err := v.Executor(nil).Run(nil, stmts)
 	if err != nil {
 		t.Errorf("Run error - received %v - expected: %v", err, nil)
 	}
@@ -1312,7 +1312,7 @@ func TestMakeArraysData(t *testing.T) {
 		t.Errorf("DefineType error - received %v - expected: %v", err, nil)
 	}
 
-	value, err = v.Executor().Run(nil, stmts)
+	value, err = v.Executor(nil).Run(nil, stmts)
 	if err != nil {
 		t.Errorf("Run error - received %v - expected: %v", err, nil)
 	}
@@ -1346,7 +1346,7 @@ func TestMakeMapsData(t *testing.T) {
 		t.Errorf("DefineType error - received %v - expected: %v", err, nil)
 	}
 
-	value, err := v.Executor().Run(nil, stmts)
+	value, err := v.Executor(nil).Run(nil, stmts)
 	if err != nil {
 		t.Errorf("Run error - received %v - expected: %v", err, nil)
 	}
@@ -1367,7 +1367,7 @@ func TestMakeMapsData(t *testing.T) {
 		t.Errorf("DefineType error - received %v - expected: %v", err, nil)
 	}
 
-	value, err = v.Executor().Run(nil, stmts)
+	value, err = v.Executor(nil).Run(nil, stmts)
 	if err != nil {
 		t.Errorf("Run error - received %v - expected: %v", err, nil)
 	}

@@ -60,7 +60,7 @@ println(len(a))
 println(a[1])
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -121,7 +121,7 @@ println(len(a))
 
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -194,7 +194,7 @@ println(rectangle2.area())
 println(rectangle2.perimeter())
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}

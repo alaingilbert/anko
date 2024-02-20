@@ -38,7 +38,7 @@ println("this line should not be printed")
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		close(waitChan)
-		vv, err := v.Executor().Run(ctx, script)
+		vv, err := v.Executor(nil).Run(ctx, script)
 		fmt.Println(vv, err)
 		waitGroup.Done()
 	}()
@@ -93,7 +93,7 @@ println(e)
 println(f)
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -119,7 +119,7 @@ func Example_vmHelloWorld() {
 println("Hello World :)")
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}
@@ -172,7 +172,7 @@ func a (x) {
 a(3) // 4
 `
 
-	_, err = v.Executor().Run(nil, script)
+	_, err = v.Executor(nil).Run(nil, script)
 	if err != nil {
 		log.Fatalf("execute error: %v\n", err)
 	}

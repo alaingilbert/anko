@@ -129,7 +129,7 @@ func runNonInteractive(args []string, appFlags AppFlags) int {
 		DefineImport: utils.Ptr(true),
 	})
 	_ = v.Define("args", args)
-	executorInst := v.Executor()
+	executorInst := v.Executor(nil)
 	fileExt := filepath.Ext(appFlags.File)
 	var err error
 	if appFlags.FlagExecute != "" || fileExt == ankoFileExt {
@@ -206,7 +206,7 @@ func runInteractive(args []string) int {
 		ResetEnv:     utils.Ptr(false),
 	})
 	_ = v.Define("args", args)
-	executorInst := v.Executor()
+	executorInst := v.Executor(nil)
 	rebuildCompleter(executorInst.GetEnv())
 	for {
 		line, err := l.Readline()
@@ -358,7 +358,7 @@ func runWeb() int {
 		}
 	})
 
-	e := v.Executor()
+	e := v.Executor(nil)
 
 	defaultScript := `time = import("time")
 for i=0; i<10; i++ {

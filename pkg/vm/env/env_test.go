@@ -61,7 +61,7 @@ func TestDefineAndGet(t *testing.T) {
 		{testInfo: "float64", varName: "a", varDefineValue: float64(1), varGetValue: float64(1), varKind: reflect.Float64},
 		{testInfo: "string", varName: "a", varDefineValue: "a", varGetValue: "a", varKind: reflect.String},
 
-		{testInfo: "string with dot", varName: "a.a", varDefineValue: "a", varGetValue: nil, varKind: reflect.Interface, defineError: NewUnknownSymbolErr("a.a"), getError: fmt.Errorf("undefined symbol 'a.a'")},
+		{testInfo: "string with dot", varName: "a.a", varDefineValue: "a", varGetValue: nil, varKind: reflect.Interface, defineError: NewUnknownSymbolErr("a.a"), getError: NewUndefinedSymbolErr("a.a")},
 		{testInfo: "string with quotes", varName: "a", varDefineValue: `"a"`, varGetValue: `"a"`, varKind: reflect.String},
 	}
 

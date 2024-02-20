@@ -68,7 +68,7 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 				err = newEnv.DefineValue(funcExpr.Params[i].Name, reflect.ValueOf(inInterface))
 			}
 			if err != nil {
-				return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+				return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 			}
 		}
 		// add last Params to newEnv
@@ -78,7 +78,7 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 				rv = in[len(funcExpr.Params)]
 				err = newEnv.DefineValue(funcExpr.Params[len(funcExpr.Params)-1].Name, rv)
 				if err != nil {
-					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 				}
 			} else {
 				// function is not variadic, add last Params to newEnv
@@ -90,7 +90,7 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 				}
 				err = newEnv.DefineValue(funcExpr.Params[len(funcExpr.Params)-1].Name, rv)
 				if err != nil {
-					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 				}
 			}
 		}
@@ -112,11 +112,11 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 		//env.defers = nil
 
 		if err != nil && !errors.Is(err, ErrReturn) {
-			err = newError(funcExpr, err)
+			err = newStringError1(funcExpr, err)
 			// return nil value and error
 			// need to do single reflect.ValueOf because nilValue is already reflect.Value of nil
 			// need to do double reflect.ValueOf of newError in order to match
-			return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+			return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 		}
 
 		// Validate return values types
@@ -124,31 +124,31 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 			if rv.Type() == InterfaceSliceType {
 				if rv.Len() != len(funcExpr.Returns) {
 					err = fmt.Errorf("invalid number of returned values, have %d, expected: %d", rv.Len(), len(funcExpr.Returns))
-					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 				}
 				for i := 0; i < rv.Len(); i++ {
 					rvv := rv.Index(i)
 					rvvT := reflect.TypeOf(rvv.Interface())
 					expectedT, err := makeType(vmp, env, funcExpr.Returns[i].TypeData)
 					if err != nil {
-						return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+						return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 					}
 					if expectedT == errorType && rvv.IsNil() {
 					} else {
 						if expectedT == errorType && !rvv.IsNil() {
 							if !rvvT.Implements(errorType) {
 								err = fmt.Errorf("invalid type for returned value %d, have: %s, want: %s", i, rvvT, expectedT)
-								return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+								return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 							}
 						} else if rvvT != expectedT {
 							if expectedT.Kind() == reflect.Interface {
 								if !rvvT.Implements(expectedT) {
 									err = fmt.Errorf("invalid type for returned value %d, have: %s, want: %s", i, rvvT, expectedT)
-									return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+									return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 								}
 							} else {
 								err = fmt.Errorf("invalid type for returned value %d, have: %s, want: %s", i, rvvT, expectedT)
-								return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+								return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 							}
 						}
 					}
@@ -157,15 +157,15 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 			} else {
 				if len(funcExpr.Returns) != 1 {
 					err = fmt.Errorf("invalid number of returned values, have %d, expected: %d", 1, len(funcExpr.Returns))
-					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 				}
 				expectedT, err := makeType(vmp, env, funcExpr.Returns[0].TypeData)
 				if err != nil {
-					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 				}
 				if expectedT != interfaceType && rv.Type() != expectedT {
 					err = fmt.Errorf("invalid type for returned value, have: %s, expected: %s", rv.Type(), expectedT)
-					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
+					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newStringError1(funcExpr, err)))}
 				}
 			}
 		}
@@ -420,7 +420,7 @@ func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 		subExpr := callExpr.SubExprs[indexExpr]
 		arg, err = invokeExpr(vmp, env, subExpr)
 		if err != nil {
-			return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
+			return []reflect.Value{}, []reflect.Type{}, false, newStringError1(subExpr, err)
 		}
 		if isRunVMFunction {
 			if rt.In(indexInReal) != reflectValueType {

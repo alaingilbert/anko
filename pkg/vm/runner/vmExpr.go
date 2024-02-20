@@ -88,7 +88,7 @@ func invokeNumberExpr(_ *VmParams, env envPkg.IEnv, e *ast.NumberExpr) (reflect.
 	if strings.Contains(e.Lit, ".") || strings.Contains(e.Lit, "e") {
 		v, err := strconv.ParseFloat(e.Lit, 64)
 		if err != nil {
-			return nilValueL, newError(e, err)
+			return nilValueL, newStringError1(e, err)
 		}
 		return reflect.ValueOf(float64(v)), nil
 	}
@@ -100,7 +100,7 @@ func invokeNumberExpr(_ *VmParams, env envPkg.IEnv, e *ast.NumberExpr) (reflect.
 		i, err = strconv.ParseInt(e.Lit, 10, 64)
 	}
 	if err != nil {
-		return nilValueL, newError(e, err)
+		return nilValueL, newStringError1(e, err)
 	}
 	return reflect.ValueOf(i), nil
 }
@@ -229,7 +229,7 @@ func invokeArrayExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ArrayExpr) (reflect.
 		for i, expr := range e.Exprs {
 			arg, err := invokeExpr(vmp, env, expr)
 			if err != nil {
-				return nilValue, newError(expr, err)
+				return nilValue, newStringError1(expr, err)
 			}
 			a[i] = arg.Interface()
 		}
@@ -266,12 +266,12 @@ func invokeMapExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MapExpr) (reflect.Valu
 	for i, ee := range e.Keys {
 		key, err := invokeExpr(vmp, env, ee)
 		if err != nil {
-			return nilValueL, newError(ee, err)
+			return nilValueL, newStringError1(ee, err)
 		}
 		valueExpr := e.Values[i]
 		rv, err := invokeExpr(vmp, env, valueExpr)
 		if err != nil {
-			return nilValueL, newError(valueExpr, err)
+			return nilValueL, newStringError1(valueExpr, err)
 		}
 		m[key.Interface()] = rv.Interface()
 	}
@@ -286,7 +286,7 @@ func invokeDerefExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DerefExpr) (reflect.
 	case *ast.MemberExpr:
 		return invokeDeferExprMemberExpr(vmp, env, ee)
 	default:
-		return nilValue, newError(e, ErrInvalidOperationForTheValue)
+		return nilValue, newStringError1(e, ErrInvalidOperationForTheValue)
 	}
 }
 
@@ -294,7 +294,7 @@ func invokeDeferExprIdentExpr(v reflect.Value, env envPkg.IEnv, e *ast.IdentExpr
 	var err error
 	v, err = env.GetValue(e.Lit)
 	if err != nil {
-		return nilValue, newError(e, err)
+		return nilValue, newStringError1(e, err)
 	}
 	if v.Kind() != reflect.Pointer {
 		return nilValue, newStringError(e, "cannot deference for the value")
@@ -367,7 +367,7 @@ func invokeAddrExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AddrExpr) (reflect.Va
 func invokeAddrExprIdentExpr(env envPkg.IEnv, e *ast.IdentExpr) (reflect.Value, error) {
 	v, err := env.GetValue(e.Lit)
 	if err != nil {
-		return nilValue, newError(e, err)
+		return nilValue, newStringError1(e, err)
 	}
 	if !v.CanAddr() {
 		i := v.Interface()
@@ -381,7 +381,7 @@ func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr)
 	invalidOperationErr := newInvalidOperation(e)
 	v, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
-		return nilValue, newError(e.Expr, err)
+		return nilValue, newStringError1(e.Expr, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -430,7 +430,7 @@ func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr)
 func invokeUnaryExpr(vmp *VmParams, env envPkg.IEnv, e *ast.UnaryExpr) (reflect.Value, error) {
 	v, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
-		return nilValue, newError(e.Expr, err)
+		return nilValue, newStringError1(e.Expr, err)
 	}
 	switch e.Operator {
 	case "-":
@@ -452,7 +452,7 @@ func invokeUnaryExpr(vmp *VmParams, env envPkg.IEnv, e *ast.UnaryExpr) (reflect.
 func invokeParenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ParenExpr) (reflect.Value, error) {
 	v, err := invokeExpr(vmp, env, e.SubExpr)
 	if err != nil {
-		return nilValue, newError(e.SubExpr, err)
+		return nilValue, newStringError1(e.SubExpr, err)
 	}
 	return v, nil
 }
@@ -465,7 +465,7 @@ func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
-		return nilValueL, newError(e.Expr, err)
+		return nilValueL, newStringError1(e.Expr, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -530,11 +530,11 @@ func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 func invokeItemExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ItemExpr) (reflect.Value, error) {
 	v, err := invokeExpr(vmp, env, e.Value)
 	if err != nil {
-		return nilValue, newError(e.Value, err)
+		return nilValue, newStringError1(e.Value, err)
 	}
 	i, err := invokeExpr(vmp, env, e.Index)
 	if err != nil {
-		return nilValue, newError(e.Index, err)
+		return nilValue, newStringError1(e.Index, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -595,7 +595,7 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, e.Value)
 	if err != nil {
-		return nilValueL, newError(e.Value, err)
+		return nilValueL, newStringError1(e.Value, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -606,7 +606,7 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 		if e.Begin != nil {
 			rb, err := invokeExpr(vmp, env, e.Begin)
 			if err != nil {
-				return nilValueL, newError(e.Begin, err)
+				return nilValueL, newStringError1(e.Begin, err)
 			}
 			rbi, err = tryToInt(rb)
 			if err != nil {
@@ -621,7 +621,7 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 		if e.End != nil {
 			re, err := invokeExpr(vmp, env, e.End)
 			if err != nil {
-				return nilValueL, newError(e.End, err)
+				return nilValueL, newStringError1(e.End, err)
 			}
 			rei, err = tryToInt(re)
 			if err != nil {
@@ -648,7 +648,7 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 		if alhs, ok := e.Lhs.(*ast.IdentExpr); ok {
 			v, err := env.GetValue(alhs.Lit)
 			if err != nil {
-				return nilValue, newError(e, err)
+				return nilValue, newStringError1(e, err)
 			}
 			switch v.Kind() {
 			case reflect.Float64, reflect.Float32:
@@ -672,7 +672,7 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 		if alhs, ok := e.Lhs.(*ast.IdentExpr); ok {
 			v, err := env.GetValue(alhs.Lit)
 			if err != nil {
-				return nilValue, newError(e, err)
+				return nilValue, newStringError1(e, err)
 			}
 			switch v.Kind() {
 			case reflect.Float64, reflect.Float32:
@@ -700,7 +700,7 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 	}
 	v, err := invokeExpr(vmp, env, &ast.BinOpExpr{Lhs: e.Lhs, Operator: e.Operator[0:1], Rhs: e.Rhs})
 	if err != nil {
-		return nilValue, newError(e, err)
+		return nilValue, newStringError1(e, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -714,7 +714,7 @@ func invokeLetsExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Va
 	for i, rhs := range e.Rhss {
 		rvs[i], err = invokeExpr(vmp, env, rhs)
 		if err != nil {
-			return nilValue, newError(rhs, err)
+			return nilValue, newStringError1(rhs, err)
 		}
 	}
 	for i, lhs := range e.Lhss {
@@ -727,7 +727,7 @@ func invokeLetsExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Va
 		}
 		_, err = invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, lhs, v)
 		if err != nil {
-			return nilValue, newError(lhs, err)
+			return nilValue, newStringError1(lhs, err)
 		}
 	}
 	return rvs[len(rvs)-1], nil
@@ -741,7 +741,7 @@ func invokeBinOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.
 
 	lhsV, err = invokeExpr(vmp, env, e.Lhs)
 	if err != nil {
-		return nilValueL, newError(e.Lhs, err)
+		return nilValueL, newStringError1(e.Lhs, err)
 	}
 	if lhsV.Kind() == reflect.Interface && !lhsV.IsNil() {
 		lhsV = lhsV.Elem()
@@ -759,7 +759,7 @@ func invokeBinOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.
 	if e.Rhs != nil {
 		rhsV, err = invokeExpr(vmp, env, e.Rhs)
 		if err != nil {
-			return nilValueL, newError(e.Rhs, err)
+			return nilValueL, newStringError1(e.Rhs, err)
 		}
 		if rhsV.Kind() == reflect.Interface && !rhsV.IsNil() {
 			rhsV = rhsV.Elem()
@@ -852,18 +852,18 @@ func invokeConstExpr(_ *VmParams, _ envPkg.IEnv, e *ast.ConstExpr) (reflect.Valu
 func invokeTernaryOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.TernaryOpExpr) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
-		return nilValue, newError(e.Expr, err)
+		return nilValue, newStringError1(e.Expr, err)
 	}
 	if toBool(rv) {
 		lhsV, err := invokeExpr(vmp, env, e.Lhs)
 		if err != nil {
-			return nilValue, newError(e.Lhs, err)
+			return nilValue, newStringError1(e.Lhs, err)
 		}
 		return lhsV, nil
 	}
 	rhsV, err := invokeExpr(vmp, env, e.Rhs)
 	if err != nil {
-		return nilValue, newError(e.Rhs, err)
+		return nilValue, newStringError1(e.Rhs, err)
 	}
 	return rhsV, nil
 }
@@ -876,7 +876,7 @@ func invokeNilCoalescingOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.NilCoalesc
 	}
 	rv, err = invokeExpr(vmp, env, e.Rhs)
 	if err != nil {
-		return nilValue, newError(e.Rhs, err)
+		return nilValue, newStringError1(e.Rhs, err)
 	}
 	return rv, nil
 }
@@ -884,7 +884,7 @@ func invokeNilCoalescingOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.NilCoalesc
 func invokeLenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LenExpr) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, e.Expr)
 	if err != nil {
-		return nilValue, newError(e.Expr, err)
+		return nilValue, newStringError1(e.Expr, err)
 	}
 
 	if rv.Kind() == reflect.Interface && !rv.IsNil() {
@@ -1030,7 +1030,7 @@ func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 func invokeMakeTypeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeTypeExpr, expr ast.Expr) (reflect.Value, error) {
 	rv, err := invokeExpr(vmp, env, e.Type)
 	if err != nil {
-		return nilValue, newError(e, err)
+		return nilValue, newStringError1(e, err)
 	}
 	if !rv.IsValid() || rv.Type() == nil {
 		return nilValue, newErrorf(expr, "type cannot be nil for make type")
@@ -1046,7 +1046,7 @@ func invokeMakeTypeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeTypeExpr, exp
 func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Expr) (reflect.Value, error) {
 	rhs, err := invokeExpr(vmp, env, e.Rhs)
 	if err != nil {
-		return nilValue, newError(e.Rhs, err)
+		return nilValue, newStringError1(e.Rhs, err)
 	}
 
 	if e.Lhs == nil {
@@ -1072,7 +1072,7 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 	} else {
 		lhs, err := invokeExpr(vmp, env, e.Lhs)
 		if err != nil {
-			return nilValue, newError(e.Lhs, err)
+			return nilValue, newStringError1(e.Lhs, err)
 		}
 		if lhs.Kind() == reflect.Chan {
 			chanType := lhs.Type().Elem()
@@ -1163,7 +1163,7 @@ func invokeCloseExpr(vmp *VmParams, env envPkg.IEnv, e *ast.CloseExpr) (reflect.
 	nilValueL := nilValue
 	whatExpr, err := invokeExpr(vmp, env, e.WhatExpr)
 	if err != nil {
-		return nilValueL, newError(e.WhatExpr, err)
+		return nilValueL, newStringError1(e.WhatExpr, err)
 	}
 	if whatExpr.Kind() == reflect.Interface && !whatExpr.IsNil() {
 		whatExpr = whatExpr.Elem()
@@ -1185,13 +1185,13 @@ func invokeDeleteExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DeleteExpr) (reflec
 	nilValueL := nilValue
 	whatExpr, err := invokeExpr(vmp, env, e.WhatExpr)
 	if err != nil {
-		return nilValueL, newError(e.WhatExpr, err)
+		return nilValueL, newStringError1(e.WhatExpr, err)
 	}
 	var keyExpr reflect.Value
 	if e.KeyExpr != nil {
 		keyExpr, err = invokeExpr(vmp, env, e.KeyExpr)
 		if err != nil {
-			return nilValueL, newError(e.KeyExpr, err)
+			return nilValueL, newStringError1(e.KeyExpr, err)
 		}
 	}
 	if whatExpr.Kind() == reflect.Interface && !whatExpr.IsNil() {
@@ -1230,7 +1230,7 @@ func invokeIncludeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.IncludeExpr) (refl
 	}
 	listExpr, err := invokeExpr(vmp, env, e.ListExpr.(*ast.SliceExpr))
 	if err != nil {
-		return nilValueL, newError(e.ListExpr.(*ast.SliceExpr), err)
+		return nilValueL, newStringError1(e.ListExpr.(*ast.SliceExpr), err)
 	}
 
 	if listExpr.Kind() != reflect.Slice && listExpr.Kind() != reflect.Array {

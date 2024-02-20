@@ -275,7 +275,7 @@ func runTryStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Valu
 				_ = catchEnv.DefineValue(stmt.Var, reflect.ValueOf(err))
 			}
 			if _, catchErr := runSingleStmt(vmp, catchEnv, stmt.Catch); catchErr != nil {
-				err = newError(stmt.Catch, catchErr)
+				err = newStringError1(stmt.Catch, catchErr)
 			} else {
 				err = nil
 			}
@@ -285,7 +285,7 @@ func runTryStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Valu
 		// Finally
 		_, e2 := runSingleStmt(vmp, newenv, stmt.Finally)
 		if e2 != nil {
-			err = newError(stmt.Finally, e2)
+			err = newStringError1(stmt.Finally, e2)
 		}
 	}
 	return nilValue, newError(stmt, err)

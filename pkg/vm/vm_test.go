@@ -1704,7 +1704,7 @@ func TestTypedValues(t *testing.T) {
 		{Script: `a = 1; a = "1"`, RunOutput: "1"},
 		{Script: `a := 1; a = "1"`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
 		{Script: `a := 1; delete("a"); a = "1"`, RunOutput: "1"},
-		{Script: `a := 1; a=2; a = "1"`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
+		{Script: `a := 1; a = 2; a = "1"`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true, ResetEnv: true}) })

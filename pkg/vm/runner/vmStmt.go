@@ -317,9 +317,6 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 			if errors.Is(err, ErrBreak) {
 				break
 			}
-			if errors.Is(err, ErrBreak) {
-				break
-			}
 			if errors.Is(err, ErrReturn) {
 				return rv, err
 			}

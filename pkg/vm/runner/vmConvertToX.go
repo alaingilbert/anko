@@ -2,6 +2,7 @@ package runner
 
 import (
 	"fmt"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"reflect"
 )
 
@@ -82,7 +83,7 @@ func convertReflectValueToType(vmp *VmParams, rv reflect.Value, rt reflect.Type)
 
 	// TODO: need to handle the case where either rv or rt are a pointer but not both
 
-	return rv, fmt.Errorf("invalid type conversion")
+	return rv, vmUtils.ErrInvalidTypeConversion
 }
 
 // convertSliceOrArray trys to covert the reflect.Value slice or array to the slice or array reflect.Type
@@ -104,7 +105,7 @@ func convertSliceOrArray(vmp *VmParams, rv reflect.Value, rt reflect.Type) (refl
 	for i := 0; i < rv.Len(); i++ {
 		if !value.Index(i).CanSet() {
 			// is there a way for new slice/array not to be settable?
-			return rv, fmt.Errorf("invalid type conversion")
+			return rv, vmUtils.ErrInvalidTypeConversion
 		}
 		v, err = convertReflectValueToType(vmp, rv.Index(i), rtElemType)
 		if err != nil {
@@ -157,7 +158,7 @@ func convertMap(vmp *VmParams, rv reflect.Value, rt reflect.Type) (reflect.Value
 func convertVMFunctionToType(vmp *VmParams, rv reflect.Value, rt reflect.Type) (reflect.Value, error) {
 	// only translates runVMFunction type
 	if !checkIfRunVMFunction(rv.Type()) {
-		return rv, fmt.Errorf("invalid type conversion")
+		return rv, vmUtils.ErrInvalidTypeConversion
 	}
 
 	// create runVMConvertFunction to match reflect.Type

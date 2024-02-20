@@ -5,6 +5,7 @@ import (
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/packages"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"reflect"
 )
 
@@ -179,7 +180,7 @@ func appendSlice(expr ast.Expr, lhsV reflect.Value, rhsV reflect.Value) (reflect
 	rightHasSubArray := rhsT.Kind() == reflect.Slice || rhsT.Kind() == reflect.Array
 
 	if leftHasSubArray != rightHasSubArray && lhsT != interfaceType && rhsT != interfaceType {
-		return nilValueL, newStringError(expr, "invalid type conversion")
+		return nilValueL, newStringError1(expr, vmUtils.ErrInvalidTypeConversion)
 	}
 
 	if !leftHasSubArray && !rightHasSubArray {
@@ -193,7 +194,7 @@ func appendSlice(expr ast.Expr, lhsV reflect.Value, rhsV reflect.Value) (reflect
 			} else if value.Type().ConvertibleTo(lhsT) {
 				lhsV = reflect.Append(lhsV, value.Convert(lhsT))
 			} else {
-				return nilValueL, newStringError(expr, "invalid type conversion")
+				return nilValueL, newStringError1(expr, vmUtils.ErrInvalidTypeConversion)
 			}
 		}
 		return lhsV, nil
@@ -205,7 +206,7 @@ func appendSlice(expr ast.Expr, lhsV reflect.Value, rhsV reflect.Value) (reflect
 			if rhsT == interfaceType {
 				value = value.Elem()
 				if value.Kind() != reflect.Slice && value.Kind() != reflect.Array {
-					return nilValueL, newStringError(expr, "invalid type conversion")
+					return nilValueL, newStringError1(expr, vmUtils.ErrInvalidTypeConversion)
 				}
 			}
 			newSlice, err := appendSlice(expr, reflect.MakeSlice(lhsT, 0, value.Len()), value)
@@ -217,7 +218,7 @@ func appendSlice(expr ast.Expr, lhsV reflect.Value, rhsV reflect.Value) (reflect
 		return lhsV, nil
 	}
 
-	return nilValueL, newStringError(expr, "invalid type conversion")
+	return nilValueL, newStringError1(expr, vmUtils.ErrInvalidTypeConversion)
 }
 
 func getTypeFromEnv(env envPkg.IEnv, typeStruct *ast.TypeStruct) (reflect.Type, error) {

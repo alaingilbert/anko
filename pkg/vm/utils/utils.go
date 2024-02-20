@@ -13,6 +13,7 @@ var (
 	NilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
 )
 
+var ErrInvalidTypeConversion = errors.New("invalid type conversion")
 var ErrTypeMismatch = errors.New("type mismatch")
 
 // StronglyTyped is a special type that let the vm know that the value is strongly typed and should keep its type

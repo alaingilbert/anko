@@ -435,11 +435,6 @@ stmt_select_case :
 		$$ = &ast.SelectCaseStmt{Expr: $2, Stmt: $4}
 		$$.SetPosition($1.Position())
 	}
-    	| CASE stmt ':' compstmt
-	{
-		$$ = &ast.SelectCaseStmt{Expr: $2, Stmt: $4}
-		$$.SetPosition($1.Position())
-	}
 
 stmt_select_default :
     DEFAULT ':' compstmt

@@ -1669,6 +1669,9 @@ func TestFuncTypedParams(t *testing.T) {
 		{Script: `func a(x int64...){return x}; a(1,2,3)`, RunOutput: []int64{1, 2, 3}, Name: ""},
 		{Script: `func a(x int64...){return x}; a(1,"2",3)`, RunError: fmt.Errorf("function wants argument type []int64 but received type string"), Name: ""},
 		{Script: `func a(x int64, y int64, z int64){return x}; a([]int64{1,2,3}...)`, RunOutput: int64(1), Name: ""},
+		{Script: `func a(x){x="test";x=1;return x}; a(1)`, RunOutput: int64(1), Name: ""},
+		{Script: `func a(x int64){x="test";x=1;return x}; a(1)`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
+		{Script: `func a(x int64, y int64){x="test";x=1;return x}; a(1, 2)`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })

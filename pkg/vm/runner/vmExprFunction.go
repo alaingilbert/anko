@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/utils"
 	"github.com/alaingilbert/anko/pkg/vm/env"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"math"
 	"math/rand"
 	"os"
@@ -59,12 +60,20 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 		defer newEnv.Destroy()
 		// add Params to newEnv, except last Params
 		for i := 0; i < len(funcExpr.Params)-1; i++ {
+			isTyped := funcExpr.Params[i].TypeData != nil
 			var ok bool
 			inInterface := in[i+1].Interface()
 			if rv, ok = inInterface.(reflect.Value); ok {
+				if isTyped {
+					rv = reflect.ValueOf(&vmUtils.StronglyTyped{V: rv})
+				}
 				err = newEnv.DefineValue(funcExpr.Params[i].Name, rv)
 			} else {
-				err = newEnv.DefineValue(funcExpr.Params[i].Name, reflect.ValueOf(inInterface))
+				tmp := reflect.ValueOf(inInterface)
+				if isTyped {
+					tmp = reflect.ValueOf(&vmUtils.StronglyTyped{V: tmp})
+				}
+				err = newEnv.DefineValue(funcExpr.Params[i].Name, tmp)
 			}
 			if err != nil {
 				return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
@@ -80,14 +89,22 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 				}
 			} else {
+				lenParams := len(funcExpr.Params)
+				isTyped := funcExpr.Params[lenParams-1].TypeData != nil
 				// function is not variadic, add last Params to newEnv
-				inInterface := in[len(funcExpr.Params)].Interface()
+				inInterface := in[lenParams].Interface()
 				if newRv, ok := inInterface.(reflect.Value); ok {
+					if isTyped {
+						newRv = reflect.ValueOf(&vmUtils.StronglyTyped{V: in[lenParams]})
+					}
 					rv = newRv
 				} else {
 					rv = reflect.ValueOf(inInterface)
+					if isTyped {
+						rv = reflect.ValueOf(&vmUtils.StronglyTyped{V: rv})
+					}
 				}
-				err = newEnv.DefineValue(funcExpr.Params[len(funcExpr.Params)-1].Name, rv)
+				err = newEnv.DefineValue(funcExpr.Params[lenParams-1].Name, rv)
 				if err != nil {
 					return []reflect.Value{reflect.ValueOf(nilValueL), reflect.ValueOf(reflect.ValueOf(newError(funcExpr, err)))}
 				}

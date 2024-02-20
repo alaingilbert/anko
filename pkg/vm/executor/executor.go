@@ -409,17 +409,16 @@ func (e *Executor) mainRunForLoad(ctx context.Context, stmt ast.Stmt) (reflect.V
 	return rv, err
 }
 
-func (e *Executor) watchdog(ctx context.Context, cancel context.CancelFunc, env envPkg.IEnv) {
+func (e *Executor) watchdog(ctx context.Context, cancel context.CancelCauseFunc, env envPkg.IEnv) {
 	for {
 		select {
 		case <-time.After(time.Second):
 		case <-ctx.Done():
 			return
 		}
-		fmt.Println(env.ChildCount(), e.maxEnvCount.Load())
+		//fmt.Println(env.ChildCount(), e.maxEnvCount.Load())
 		if env.ChildCount() > e.maxEnvCount.Load() {
-			cancel()
-			fmt.Println("KILLED")
+			cancel(errors.New("killed by watchdog"))
 			break
 		}
 	}
@@ -466,9 +465,8 @@ func (e *Executor) mainRunWithWatchdog(ctx context.Context, stmt ast.Stmt, valid
 
 	// Start thread to watch for memory leaking scripts
 	if e.watchdogEnabled {
-		var cancel context.CancelFunc
-		ctx, cancel = context.WithCancel(ctx)
-		defer cancel()
+		var cancel context.CancelCauseFunc
+		ctx, cancel = context.WithCancelCause(ctx)
 		go e.watchdog(ctx, cancel, newEnv)
 	}
 
@@ -507,6 +505,9 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, env envPkg.IEnv, 
 		err = nil
 	}
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			err = context.Cause(ctx)
+		}
 		return nil, rv, err
 	}
 
@@ -517,5 +518,5 @@ func (e *Executor) mainRun(ctx context.Context, stmt ast.Stmt, env envPkg.IEnv, 
 		}
 	}
 
-	return oks, rv, err
+	return oks, rv, nil
 }

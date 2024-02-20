@@ -15,7 +15,7 @@ import (
 // invokeExpr evaluates one expression.
 func invokeExpr(vmp *VmParams, env envPkg.IEnv, expr ast.Expr) (reflect.Value, error) {
 	if err := incrCycle(vmp); err != nil {
-		return nilValue, ErrInterrupt
+		return nilValue, err
 	}
 	//fmt.Println("invokeExpr", reflect.ValueOf(expr).String())
 
@@ -1064,7 +1064,7 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 			}}
 			chosen, rv, _ := reflect.Select(cases)
 			if chosen == 0 {
-				return nilValue, ErrInterrupt
+				return nilValue, vmp.ctx.Err()
 			}
 			return rv, nil
 		}
@@ -1087,7 +1087,7 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 				}}
 				if !vmp.Validate {
 					if chosen, _, _ := reflect.Select(cases); chosen == 0 {
-						return nilValue, ErrInterrupt
+						return nilValue, vmp.ctx.Err()
 					}
 				}
 			} else {
@@ -1112,7 +1112,7 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 				}}
 				if !vmp.Validate {
 					if chosen, _, _ := reflect.Select(cases); chosen == 0 {
-						return nilValue, ErrInterrupt
+						return nilValue, vmp.ctx.Err()
 					}
 				}
 			}
@@ -1133,7 +1133,7 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 				var ok bool
 				chosen, rv, ok = reflect.Select(cases)
 				if chosen == 0 {
-					return nilValue, ErrInterrupt
+					return nilValue, vmp.ctx.Err()
 				}
 				if !ok {
 					return nilValue, newErrorf(expr, "failed to send to channel")

@@ -2,6 +2,7 @@ package vm
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"os"
@@ -794,7 +795,7 @@ func TestCallFunctionWithVararg(t *testing.T) {
 	}
 	got, err := v.Executor().Run(nil, `X(a...)`)
 	if err != nil {
-		t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
+		t.Errorf("execute error - received %#v - expected: %#v", err, context.Canceled)
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("execute error - received %#v - expected: %#v", got, want)

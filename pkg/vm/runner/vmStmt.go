@@ -11,7 +11,7 @@ import (
 // runSingleStmt executes one statement in the specified environment.
 func runSingleStmt(vmp *VmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value, error) {
 	if err := incrCycle(vmp); err != nil {
-		return nilValue, ErrInterrupt
+		return nilValue, err
 	}
 	//fmt.Println("runSingleStmt", reflect.ValueOf(stmt).String())
 	switch stmt := stmt.(type) {
@@ -296,7 +296,7 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 	defer newenv.Destroy()
 	for {
 		if err := incrCycle(vmp); err != nil {
-			return nilValueL, ErrInterrupt
+			return nilValueL, err
 		}
 		if stmt.Expr != nil {
 			ev, ee := invokeExpr(vmp, newenv, stmt.Expr)
@@ -354,7 +354,7 @@ func runForStmtSlice(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 	defer newenv.Destroy()
 	for i := 0; i < val.Len(); i++ {
 		if err := incrCycle(vmp); err != nil {
-			return nilValueL, ErrInterrupt
+			return nilValueL, err
 		}
 		iv := val.Index(i)
 		if iv.Kind() == reflect.Pointer || (iv.Kind() == reflect.Interface && !iv.IsNil()) {
@@ -382,7 +382,7 @@ func runForStmtMap(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 	keys := val.MapKeys()
 	for i := 0; i < len(keys); i++ {
 		if err := incrCycle(vmp); err != nil {
-			return nilValueL, ErrInterrupt
+			return nilValueL, err
 		}
 		_ = newenv.DefineValue(stmt.Vars[0], keys[i])
 		if len(stmt.Vars) > 1 {
@@ -422,7 +422,7 @@ func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 			var ok bool
 			chosen, iv, ok = reflect.Select(cases)
 			if chosen == 0 {
-				return nilValue, ErrInterrupt
+				return nilValue, vmp.ctx.Err()
 			}
 			if !ok {
 				break
@@ -459,7 +459,7 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 	}
 	for {
 		if err := incrCycle(vmp); err != nil {
-			return nilValueL, ErrInterrupt
+			return nilValueL, err
 		}
 		fb, err := invokeExpr(vmp, newenv, stmt.Expr2)
 		if err != nil {
@@ -630,7 +630,7 @@ func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 	}
 	chosen, rv, _ := reflect.Select(cases)
 	if chosen == 0 {
-		return nilValueL, ErrInterrupt
+		return nilValueL, vmp.ctx.Err()
 	}
 	return tmp(chosen, rv)
 }

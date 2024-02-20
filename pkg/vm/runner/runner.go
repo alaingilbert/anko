@@ -135,14 +135,14 @@ func incrCycle(vmp *VmParams) error {
 	// make sure script is not stopped
 	select {
 	case <-vmp.ctx.Done():
-		return ErrInterrupt
+		return vmp.ctx.Err()
 	default:
 	}
 	// if script is NOT paused, `<-vmp.pause.Wait()` will return right away
 	select {
 	case <-vmp.pause.Wait():
 	case <-vmp.ctx.Done():
-		return ErrInterrupt
+		return vmp.ctx.Err()
 	}
 	// halt here if we need to throttle the script
 	rateLimit := vmp.rateLimit
@@ -150,7 +150,7 @@ func incrCycle(vmp *VmParams) error {
 		select {
 		case <-rateLimit.GetWithContext(vmp.ctx):
 		case <-vmp.ctx.Done():
-			return ErrInterrupt
+			return vmp.ctx.Err()
 		}
 	}
 	atomic.AddInt64(&vmp.stats.Cycles, 1)

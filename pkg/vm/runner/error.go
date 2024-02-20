@@ -10,14 +10,18 @@ import (
 	"reflect"
 )
 
-type (
-	// Error provides a convenient interface for handling runtime error.
-	// It can be Error interface with type cast which can call Pos().
-	Error struct {
-		Message string
-		Pos     ast.Position
-	}
-)
+// Error provides a convenient interface for handling runtime error.
+// It can be Error interface with type cast which can call Pos().
+type Error struct {
+	Message string
+	Pos     ast.Position
+	cause   error
+}
+
+// Unwrap returns the wrapped error.
+func (e *Error) Unwrap() error {
+	return e.cause
+}
 
 type IsVmFunc struct{ context.Context }
 
@@ -42,8 +46,6 @@ var (
 	ErrContinue = errors.New("unexpected continue statement")
 	// ErrReturn when there is an unexpected return statement
 	ErrReturn = errors.New("unexpected return statement")
-	// ErrInterrupt when execution has been interrupted
-	ErrInterrupt = errors.New("execution interrupted")
 )
 
 // newErrorf makes error interface with message.
@@ -68,7 +70,15 @@ func newError(pos ast.Pos, err error) error {
 	if errors.As(err, &ee) {
 		return ee
 	}
-	return newStringError(pos, err.Error())
+	return newStringError1(pos, err)
+}
+
+func newStringError1(pos ast.Pos, err error) error {
+	pos1 := ast.Position{Line: 1, Column: 1}
+	if pos != nil {
+		pos1 = pos.Position()
+	}
+	return &Error{Message: err.Error(), Pos: pos1, cause: err}
 }
 
 // newStringError makes error interface with message.

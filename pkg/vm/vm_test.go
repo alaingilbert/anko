@@ -2,6 +2,7 @@ package vm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/packages"
@@ -891,8 +892,8 @@ func runCancelTestWithContext(t *testing.T, script string) {
 	}
 
 	_, err = v.Executor().Run(ctx, script)
-	if err == nil || err.Error() != runner.ErrInterrupt.Error() {
-		t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
+	if err == nil || !errors.Is(err, context.Canceled) {
+		t.Errorf("execute error - received %#v - expected: %#v", err, context.Canceled)
 	}
 }
 
@@ -905,8 +906,8 @@ func TestTwoContextSameEnv(t *testing.T) {
 	waitGroup.Add(1)
 	go func() {
 		_, err := e.Run(ctx1, "func myFn(a) { return 123; }; for { }")
-		if err == nil || err.Error() != runner.ErrInterrupt.Error() {
-			t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
+		if err == nil || !errors.Is(err, context.Canceled) {
+			t.Errorf("execute error - received %#v - expected: %#v", err, context.Canceled)
 		}
 		waitGroup.Done()
 	}()
@@ -929,8 +930,8 @@ func TestContextConcurrency(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		go func() {
 			_, err := v.Executor().Run(ctx, "for { }")
-			if err == nil || err.Error() != runner.ErrInterrupt.Error() {
-				t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
+			if err == nil || !errors.Is(err, context.Canceled) {
+				t.Errorf("execute error - received %#v - expected: %#v", err, context.Canceled)
 			}
 			waitGroup.Done()
 		}()
@@ -981,7 +982,7 @@ func TestAssignToInterface(t *testing.T) {
 	}
 	_, err = v.Executor().Run(nil, `X.Stdout = a`)
 	if err != nil {
-		t.Errorf("execute error - received %#v - expected: %#v", err, runner.ErrInterrupt)
+		t.Errorf("execute error - received %#v - expected: %#v", err, context.Canceled)
 	}
 }
 

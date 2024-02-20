@@ -217,6 +217,18 @@ func NewUnknownSymbolErr(name string) *ErrUnknownSymbol {
 	return &ErrUnknownSymbol{name: name}
 }
 
+type UndefinedSymbolErr struct {
+	symbol string
+}
+
+func NewUndefinedSymbolErr(symbol string) *UndefinedSymbolErr {
+	return &UndefinedSymbolErr{symbol: symbol}
+}
+
+func (e *UndefinedSymbolErr) Error() string {
+	return fmt.Sprintf("undefined symbol '%s'", e.symbol)
+}
+
 func newEnv() *Env {
 	return &Env{
 		parent: nil,
@@ -392,18 +404,6 @@ var nilValue = vmUtils.NilValue
 var nilType = vmUtils.NilType
 
 var ErrUnaddressable = fmt.Errorf("unaddressable")
-
-type UndefinedSymbolErr struct {
-	symbol string
-}
-
-func NewUndefinedSymbolErr(symbol string) *UndefinedSymbolErr {
-	return &UndefinedSymbolErr{symbol: symbol}
-}
-
-func (e *UndefinedSymbolErr) Error() string {
-	return fmt.Sprintf("undefined symbol '%s'", e.symbol)
-}
 
 func (e *Env) addr(k string) (reflect.Value, error) {
 	if v, ok := e.values.Get(k); ok {

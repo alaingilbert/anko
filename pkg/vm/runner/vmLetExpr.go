@@ -54,13 +54,13 @@ func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt 
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newError(lhs, NewNoSupportMemberOpError("invalid"))
+		return nilValueL, newError(lhs, ErrNoSupportMemberOpInvalid)
 	}
 	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newError(lhs, NewNoSupportMemberOpError("invalid"))
+		return nilValueL, newError(lhs, ErrNoSupportMemberOpInvalid)
 	}
 
 	switch v.Kind() {

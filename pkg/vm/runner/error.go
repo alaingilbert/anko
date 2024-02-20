@@ -39,13 +39,14 @@ var (
 	zeroValue                 = reflect.Value{}
 	reflectValueErrorNilValue = reflect.ValueOf(reflect.New(errorType).Elem())
 
-	ErrUnknownStmt           = errors.New("unknown statement")
-	ErrUnknownExpr           = errors.New("unknown expression")
-	ErrUnknownOperator       = errors.New("unknown operator")
-	ErrInvalidSliceIndex     = errors.New("invalid slice index")
-	ErrInvalidTypeConversion = errors.New("invalid type conversion")
-	ErrIndexOutOfRange       = errors.New("index out of range")
-	ErrIndexMustBeNumber     = errors.New("index must be a number")
+	ErrUnknownStmt              = errors.New("unknown statement")
+	ErrUnknownExpr              = errors.New("unknown expression")
+	ErrUnknownOperator          = errors.New("unknown operator")
+	ErrInvalidSliceIndex        = errors.New("invalid slice index")
+	ErrInvalidTypeConversion    = errors.New("invalid type conversion")
+	ErrIndexOutOfRange          = errors.New("index out of range")
+	ErrIndexMustBeNumber        = errors.New("index must be a number")
+	ErrNoSupportMemberOpInvalid = NewNoSupportMemberOpError("invalid")
 
 	// ErrBreak when there is an unexpected break statement
 	ErrBreak = errors.New("unexpected break statement")

@@ -573,9 +573,6 @@ func_expr_untyped_idents :
 	}
 	| func_expr_idents_not_empty ',' opt_newlines IDENT
 	{
-		if len($1) == 0 {
-			yylex.Error("syntax error: unexpected ','")
-		}
 		$$ = append($1, &ast.ParamExpr{Name: $4.Lit})
 	}
 
@@ -586,9 +583,6 @@ func_expr_typed_idents :
 	}
 	| func_expr_idents_not_empty ',' opt_newlines IDENT type_data
 	{
-		if len($1) == 0 {
-			yylex.Error("syntax error: unexpected ','")
-		}
 		$$ = append($1, &ast.ParamExpr{Name: $4.Lit, TypeData: $5})
 	}
 

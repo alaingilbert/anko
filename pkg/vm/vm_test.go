@@ -1156,9 +1156,7 @@ func TestDefineImportPackageDefineError(t *testing.T) {
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
 	}
-	if value != nil {
-		t.Errorf("execute value - received: %v - expected: %v", value, nil)
-	}
+	assert.Nil(t, value)
 }
 
 func TestTime(t *testing.T) {

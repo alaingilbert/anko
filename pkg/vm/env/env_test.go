@@ -266,7 +266,7 @@ func TestDefineModify(t *testing.T) {
 					t.Errorf("DefineModify changeTest %v - Set error - received: %v - expected: %v", test.testInfo, err, changeTest.defineError)
 					continue
 				}
-			} else if err != changeTest.defineError {
+			} else if !errors.Is(changeTest.defineError, err) {
 				t.Errorf("DefineModify changeTest %v - Set error - received: %v - expected: %v", test.testInfo, err, changeTest.defineError)
 				continue
 			}
@@ -277,7 +277,7 @@ func TestDefineModify(t *testing.T) {
 					t.Errorf("DefineModify changeTest  %v - Get error - received: %v - expected: %v", test.testInfo, err, changeTest.getError)
 					continue
 				}
-			} else if err != changeTest.getError {
+			} else if !errors.Is(changeTest.getError, err) {
 				t.Errorf("DefineModify changeTest  %v - Get error - received: %v - expected: %v", test.testInfo, err, changeTest.getError)
 				continue
 			}

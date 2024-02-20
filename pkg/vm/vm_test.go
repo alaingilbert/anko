@@ -1114,21 +1114,15 @@ v2.Get("a")
 	if err != nil {
 		t.Errorf("execute error - received: %v expected: %v", err, nil)
 	}
-	if value != "" {
-		t.Errorf("execute value - received: %#v expected: %#v", value, "")
-	}
+	assert.Equal(t, "", value)
 }
-
-var testPackagesEnvSetupFunc = func(t *testing.T, env *envPkg.Env) { runner.DefineImport(env) }
 
 func TestDefineImport(t *testing.T) {
 	value, err := New(&Config{DefineImport: utils.Ptr(true)}).Executor(nil).Run(nil, `strings = import("strings"); strings.ToLower("TEST")`)
 	if err != nil {
 		t.Errorf("execute error - received: %v - expected: %v", err, nil)
 	}
-	if value != "test" {
-		t.Errorf("execute value - received: %v - expected: %v", value, int(4))
-	}
+	assert.Equal(t, "test", value)
 }
 
 func TestDefineImportPackageNotFound(t *testing.T) {
@@ -1138,9 +1132,7 @@ func TestDefineImportPackageNotFound(t *testing.T) {
 	if err == nil || err.Error() != expectedError {
 		t.Errorf("execute error - received: %v - expected: %v", err, expectedError)
 	}
-	if value != nil {
-		t.Errorf("execute value - received: %v - expected: %v", value, nil)
-	}
+	assert.Nil(t, value)
 }
 
 func TestDefineImportPackageDefineError(t *testing.T) {

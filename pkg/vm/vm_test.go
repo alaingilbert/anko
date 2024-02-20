@@ -1882,3 +1882,15 @@ func TestDefineCtx(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{Executor: e}) })
 	}
 }
+
+func TestRateLimitPeriod(t *testing.T) {
+	v := New(&Config{RateLimitPeriod: time.Minute})
+	_ = v.DefineCtx("a", func(context.Context) int64 { return 1 })
+	e := v.Executor()
+	tests := []Test{
+		{Script: `a()`, RunOutput: int64(1), Name: ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{Executor: e}) })
+	}
+}

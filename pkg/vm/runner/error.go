@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
-	"github.com/alaingilbert/anko/pkg/parser"
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"reflect"
 )
@@ -56,21 +55,13 @@ func newErrorf(pos ast.Pos, format string, args ...any) error {
 // newError makes error interface with message.
 // This doesn't overwrite last error.
 func newError(pos ast.Pos, err error) error {
-	if err == nil {
-		return nil
-	}
-	var pe *parser.Error
-	if errors.As(err, &pe) {
-		return pe
-	}
-	var ee *Error
-	if errors.As(err, &ee) {
-		return ee
-	}
 	return newStringError1(pos, err)
 }
 
 func newStringError1(pos ast.Pos, err error) error {
+	if err == nil {
+		return nil
+	}
 	pos1 := ast.Position{Line: 1, Column: 1}
 	if pos != nil {
 		pos1 = pos.Position()

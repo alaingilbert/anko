@@ -1596,17 +1596,12 @@ func TestAddPackage(t *testing.T) {
 	v := New(nil)
 	pack, _ := v.AddPackage("empty", map[string]any{}, map[string]any{})
 	value, err := v.Executor(nil).Run(nil, "empty")
-	if err != nil {
-		t.Errorf("AddPackage error - received: %v - expected: %v", err, nil)
-	}
+	assert.NoError(t, err)
 	val, _ := pack.GetValue("empty")
 	switch data := value.(type) {
 	case *envPkg.Env:
-		if data.Values().Len() != 0 {
-			t.Errorf("AddPackage value - received: %#v - expected: %#v", value, val)
-		} else if data.Types().Len() != 0 {
-			t.Errorf("AddPackage value - received: %#v - expected: %#v", value, val)
-		}
+		assert.Equal(t, 0, data.Values().Len())
+		assert.Equal(t, 0, data.Types().Len())
 	default:
 		t.Errorf("AddPackage value - received: %#v - expected: %#v", value, val)
 	}
@@ -1614,54 +1609,30 @@ func TestAddPackage(t *testing.T) {
 	// bad package name
 	v = New(nil)
 	_, err = v.AddPackage("bad.package.name", map[string]any{}, map[string]any{})
-	if err == nil {
-		t.Errorf("AddPackage error - received: %v - expected: %v", err, "unknown symbol 'bad.package.name'")
-	} else {
-		if err.Error() != "unknown symbol 'bad.package.name'" {
-			t.Errorf("AddPackage error - received: %v - expected: %v", err, "unknown symbol 'bad.package.name'")
-		}
-	}
+	assert.ErrorContains(t, err, envPkg.NewUnknownSymbolErr("bad.package.name").Error())
 
 	// bad method name
 	v = New(nil)
 	_, err = v.AddPackage("badMethodName", map[string]any{"a.b": "a"}, map[string]any{})
-	if err == nil {
-		t.Errorf("AddPackage error - received: %v - expected: %v", err, "unknown symbol 'a.b'")
-	} else {
-		if err.Error() != "unknown symbol 'a.b'" {
-			t.Errorf("AddPackage error - received: %v - expected: %v", err, "unknown symbol 'a.b'")
-		}
-	}
+	assert.ErrorContains(t, err, envPkg.NewUnknownSymbolErr("a.b").Error())
 
 	// bad type name
 	v = New(nil)
 	_, err = v.AddPackage("badTypeName", map[string]any{}, map[string]any{"a.b": "a"})
-	if err == nil {
-		t.Errorf("AddPackage error - received: %v - expected: %v", err, "unknown symbol 'a.b'")
-	} else {
-		if err.Error() != "unknown symbol 'a.b'" {
-			t.Errorf("AddPackage error - received: %v - expected: %v", err, "unknown symbol 'a.b'")
-		}
-	}
+	assert.ErrorContains(t, err, envPkg.NewUnknownSymbolErr("a.b").Error())
 
 	// method
 	v = New(nil)
 	_, _ = v.AddPackage("strings", map[string]any{"ToLower": strings.ToLower}, map[string]any{})
 	value, err = v.Executor(nil).Run(nil, `strings.ToLower("TEST")`)
-	if err != nil {
-		t.Errorf("AddPackage error - received: %v - expected: %v", err, nil)
-	}
-	if value != "test" {
-		t.Errorf("AddPackage value - received: %v - expected: %v", value, int(4))
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, "test", value)
 
 	// type
 	v = New(nil)
 	_, _ = v.AddPackage("test", map[string]any{}, map[string]any{"array2x": [][]any{}})
 	value, err = v.Executor(nil).Run(nil, "a = make(test.array2x); a += [[1]]")
-	if err != nil {
-		t.Errorf("AddPackage error - received: %v - expected: %v", err, nil)
-	}
+	assert.NoError(t, err)
 	if !reflect.DeepEqual(value, [][]any{{int64(1)}}) {
 		t.Errorf("AddPackage value - received: %#v - expected: %#v", value, [][]any{{int64(1)}})
 	}

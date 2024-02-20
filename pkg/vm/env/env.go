@@ -213,7 +213,7 @@ func (e *ErrUnknownSymbol) Error() string {
 	return fmt.Sprintf("unknown symbol '%s'", e.name)
 }
 
-func newUnknownSymbolErr(name string) *ErrUnknownSymbol {
+func NewUnknownSymbolErr(name string) *ErrUnknownSymbol {
 	return &ErrUnknownSymbol{name: name}
 }
 
@@ -485,7 +485,7 @@ func (e *Env) setValue(k string, v reflect.Value) error {
 		return nil
 	}
 	if e.parent == nil {
-		return newUnknownSymbolErr(k)
+		return NewUnknownSymbolErr(k)
 	}
 	return e.parent.setValue(k, v)
 }
@@ -516,7 +516,7 @@ func (e *Env) defineCtx(k string, v any) error {
 
 func (e *Env) defineValue(k string, v reflect.Value) error {
 	if !isSymbolNameValid(k) {
-		return newUnknownSymbolErr(k)
+		return NewUnknownSymbolErr(k)
 	}
 	e.values.Insert(k, v)
 	return nil
@@ -531,7 +531,7 @@ func (e *Env) deleteGlobal(k string) error {
 
 func (e *Env) delete(k string) error {
 	if !isSymbolNameValid(k) {
-		return newUnknownSymbolErr(k)
+		return NewUnknownSymbolErr(k)
 	}
 	e.values.Delete(k)
 	return nil
@@ -561,7 +561,7 @@ func (e *Env) defineType(k string, t any) error {
 
 func (e *Env) defineReflectType(k string, t reflect.Type) error {
 	if !isSymbolNameValid(k) {
-		return newUnknownSymbolErr(k)
+		return NewUnknownSymbolErr(k)
 	}
 	e.types.Insert(k, t)
 	return nil

@@ -207,6 +207,14 @@ func isSymbolNameValid(name string) bool {
 	return !strings.Contains(name, ".")
 }
 
+func validateSymbolName(name string) error {
+	if !isSymbolNameValid(name) {
+		return NewUnknownSymbolErr(name)
+	}
+	return nil
+}
+
+// ErrUnknownSymbol is returned when you try to set/replace/delete/define the value in the env
 type ErrUnknownSymbol struct{ name string }
 
 func (e *ErrUnknownSymbol) Error() string {
@@ -217,6 +225,7 @@ func NewUnknownSymbolErr(name string) *ErrUnknownSymbol {
 	return &ErrUnknownSymbol{name: name}
 }
 
+// UndefinedSymbolErr is returned when you try to get the value from the env
 type UndefinedSymbolErr struct {
 	symbol string
 }
@@ -515,8 +524,8 @@ func (e *Env) defineCtx(k string, v any) error {
 }
 
 func (e *Env) defineValue(k string, v reflect.Value) error {
-	if !isSymbolNameValid(k) {
-		return NewUnknownSymbolErr(k)
+	if err := validateSymbolName(k); err != nil {
+		return err
 	}
 	e.values.Insert(k, v)
 	return nil
@@ -530,8 +539,8 @@ func (e *Env) deleteGlobal(k string) error {
 }
 
 func (e *Env) delete(k string) error {
-	if !isSymbolNameValid(k) {
-		return NewUnknownSymbolErr(k)
+	if err := validateSymbolName(k); err != nil {
+		return err
 	}
 	e.values.Delete(k)
 	return nil
@@ -560,8 +569,8 @@ func (e *Env) defineType(k string, t any) error {
 }
 
 func (e *Env) defineReflectType(k string, t reflect.Type) error {
-	if !isSymbolNameValid(k) {
-		return NewUnknownSymbolErr(k)
+	if err := validateSymbolName(k); err != nil {
+		return err
 	}
 	e.types.Insert(k, t)
 	return nil

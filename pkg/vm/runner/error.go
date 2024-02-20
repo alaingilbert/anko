@@ -47,14 +47,18 @@ var (
 	ErrReturn = errors.New("unexpected return statement")
 )
 
+func getPos(pos ast.Pos) ast.Position {
+	out := ast.Position{Line: 1, Column: 1}
+	if pos != nil {
+		out = pos.Position()
+	}
+	return out
+}
+
 // newError makes error interface with message.
 // This doesn't overwrite last error.
 func newError(pos ast.Pos, err error) error {
-	pos1 := ast.Position{Line: 1, Column: 1}
-	if pos != nil {
-		pos1 = pos.Position()
-	}
-	return &Error{Message: err.Error(), Pos: pos1, cause: err}
+	return &Error{Message: err.Error(), Pos: getPos(pos), cause: err}
 }
 
 // newStringError makes error interface with message.

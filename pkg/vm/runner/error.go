@@ -83,3 +83,40 @@ func newErrorf(pos ast.Pos, format string, args ...any) error {
 func (e *Error) Error() string {
 	return e.Message
 }
+
+type WrongArgTypeError struct {
+	want     string
+	received string
+}
+
+func NewWrongArgTypeError(want, receive string) *WrongArgTypeError {
+	return &WrongArgTypeError{want: want, received: receive}
+}
+
+func (e *WrongArgTypeError) Error() string {
+	return "function wants argument type " + e.want + " but received type " + e.received
+}
+
+type NoSupportMemberOpError struct {
+	typ string
+}
+
+func NewNoSupportMemberOpError(typ string) *NoSupportMemberOpError {
+	return &NoSupportMemberOpError{typ: typ}
+}
+
+func (e *NoSupportMemberOpError) Error() string {
+	return "type " + e.typ + " does not support member operation"
+}
+
+type CannotCallError struct {
+	typ string
+}
+
+func NewCannotCallError(typ string) *CannotCallError {
+	return &CannotCallError{typ: typ}
+}
+
+func (e *CannotCallError) Error() string {
+	return "cannot call type " + e.typ
+}

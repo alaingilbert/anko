@@ -471,7 +471,7 @@ func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newError(e, vmUtils.NewNoSupportMemberOpError("invalid"))
+		return nilValueL, newError(e, NewNoSupportMemberOpError("invalid"))
 	}
 	if v.CanInterface() {
 		if vme, ok := v.Interface().(envPkg.IEnv); ok {
@@ -522,7 +522,7 @@ func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 		}
 		return v, nil
 	default:
-		err := vmUtils.NewNoSupportMemberOpError(v.Kind().String())
+		err := NewNoSupportMemberOpError(v.Kind().String())
 		return nilValueL, newError(e, err)
 	}
 }

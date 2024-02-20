@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/utils"
 	"github.com/alaingilbert/anko/pkg/vm/env"
-	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"math"
 	"math/rand"
 	"os"
@@ -210,9 +209,9 @@ func anonCallExpr(vmp *VmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Val
 		return invokeExpr(vmp, env, callExpr)
 	}
 	if !f.IsValid() {
-		return nilValue, newError(e, vmUtils.NewCannotCallError("invalid"))
+		return nilValue, newError(e, NewCannotCallError("invalid"))
 	}
-	return nilValue, newError(e, vmUtils.NewCannotCallError(f.Type().String()))
+	return nilValue, newError(e, NewCannotCallError(f.Type().String()))
 }
 
 // callExpr handles *ast.CallExpr which calls a function
@@ -425,7 +424,7 @@ func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 		if isRunVMFunction {
 			if rt.In(indexInReal) != reflectValueType {
 				if rt.In(indexInReal) != interfaceType && arg.Type() != rt.In(indexInReal) {
-					err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
+					err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
 					return []reflect.Value{}, []reflect.Type{}, false, err
 				}
 				types = append(types, arg.Type())
@@ -437,7 +436,7 @@ func makeCallArgs(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVMFunction 
 		} else {
 			arg, err = convertReflectValueToType(vmp, arg, rt.In(indexInReal))
 			if err != nil {
-				err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
+				err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
 				return []reflect.Value{}, []reflect.Type{}, false, err
 			}
 			types = append(types, arg.Type())
@@ -474,7 +473,7 @@ func makeCallArgsFnNotVarCallNotVar(vmp *VmParams, env env.IEnv, rt reflect.Type
 	if isRunVMFunction {
 		if rt.In(indexInReal) != reflectValueType {
 			if rt.In(indexInReal) != interfaceType && arg.Type() != rt.In(indexInReal) {
-				err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
+				err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
 				return []reflect.Value{}, []reflect.Type{}, false, err
 			}
 			args = append(args, arg)
@@ -486,7 +485,7 @@ func makeCallArgsFnNotVarCallNotVar(vmp *VmParams, env env.IEnv, rt reflect.Type
 	} else {
 		arg, err = convertReflectValueToType(vmp, arg, rt.In(indexInReal))
 		if err != nil {
-			err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
+			err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
 			return []reflect.Value{}, []reflect.Type{}, false, err
 		}
 		args = append(args, arg)
@@ -516,7 +515,7 @@ func makeCallArgsFnNotVarCallVar(vmp *VmParams, env env.IEnv, rt reflect.Type, i
 		if isRunVMFunction {
 			if rt.In(indexInReal) != reflectValueType {
 				if rt.In(indexInReal) != interfaceType && arg.Index(indexSlice).Type() != rt.In(indexInReal) {
-					err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Index(indexSlice).Type().String()))
+					err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Index(indexSlice).Type().String()))
 					return []reflect.Value{}, []reflect.Type{}, false, err
 				}
 				args = append(args, arg.Index(indexSlice))
@@ -528,7 +527,7 @@ func makeCallArgsFnNotVarCallVar(vmp *VmParams, env env.IEnv, rt reflect.Type, i
 		} else {
 			arg, err = convertReflectValueToType(vmp, arg.Index(indexSlice), rt.In(indexInReal))
 			if err != nil {
-				err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
+				err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
 				return []reflect.Value{}, []reflect.Type{}, false, err
 			}
 			args = append(args, arg)
@@ -561,7 +560,7 @@ func makeCallArgsDoNotCare(vmp *VmParams, env env.IEnv, rt reflect.Type, isRunVM
 	} else {
 		arg, err = convertReflectValueToType(vmp, arg, rt.In(indexInReal))
 		if err != nil {
-			err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
+			err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
 			return []reflect.Value{}, []reflect.Type{}, false, err
 		}
 		args = append(args, arg)
@@ -582,7 +581,7 @@ func makeCallArgsFnVarCallNotVar(vmp *VmParams, env env.IEnv, rt reflect.Type, n
 		}
 		arg, err = convertReflectValueToType(vmp, arg, sliceType)
 		if err != nil {
-			err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
+			err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
 			return []reflect.Value{}, []reflect.Type{}, false, err
 		}
 		args = append(args, arg)
@@ -607,12 +606,12 @@ func makeCallArgsFnVarCallVar(vmp *VmParams, env env.IEnv, rt reflect.Type, arg 
 		return []reflect.Value{}, []reflect.Type{}, false, newError(subExpr, err)
 	}
 	if sliceType != InterfaceSliceType && arg.Type() != sliceType {
-		err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
+		err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
 		return []reflect.Value{}, []reflect.Type{}, false, err
 	}
 	arg, err = convertReflectValueToType(vmp, arg, sliceType)
 	if err != nil {
-		err := newError(subExpr, vmUtils.NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
+		err := newError(subExpr, NewWrongArgTypeError(rt.In(indexInReal).String(), arg.Type().String()))
 		return []reflect.Value{}, []reflect.Type{}, false, err
 	}
 	args = append(args, arg)

@@ -57,13 +57,13 @@ func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt 
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newError(lhs, vmUtils.NewNoSupportMemberOpError("invalid"))
+		return nilValueL, newError(lhs, NewNoSupportMemberOpError("invalid"))
 	}
 	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newError(lhs, vmUtils.NewNoSupportMemberOpError("invalid"))
+		return nilValueL, newError(lhs, NewNoSupportMemberOpError("invalid"))
 	}
 
 	switch v.Kind() {
@@ -72,7 +72,7 @@ func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt 
 	case reflect.Map:
 		return invokeLetMemberMapExpr(vmp, env, stmt, v, rv, lhs)
 	default:
-		err := vmUtils.NewNoSupportMemberOpError(v.Kind().String())
+		err := NewNoSupportMemberOpError(v.Kind().String())
 		return nilValueL, newError(lhs, err)
 	}
 }

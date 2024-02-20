@@ -24,7 +24,7 @@ func invokeLetExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, expr ast.
 	case *ast.DerefExpr:
 		return invokeLetDerefExpr(vmp, env, rv, stmt, lhs)
 	}
-	return nilValue, newStringError1(expr, ErrInvalidOperation)
+	return nilValue, newError(expr, ErrInvalidOperation)
 }
 
 func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, lhs *ast.IdentExpr) (vv reflect.Value, err error) {
@@ -36,7 +36,7 @@ func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, l
 	}
 	if err := env.SetValue(lhs.Lit, rv); err != nil {
 		if errors.Is(err, vmUtils.ErrTypeMismatch) {
-			return nilValue, newStringError1(lhs, err)
+			return nilValue, newError(lhs, err)
 		}
 		if strings.Contains(lhs.Lit, ".") {
 			return nilValue, newErrorf(lhs, "undefined symbol '%s'", lhs.Lit)
@@ -50,20 +50,20 @@ func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt 
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Expr)
 	if err != nil {
-		return nilValueL, newStringError1(lhs, err)
+		return nilValueL, newError(lhs, err)
 	}
 
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newStringError1(lhs, vmUtils.NewNoSupportMemberOpError("invalid"))
+		return nilValueL, newError(lhs, vmUtils.NewNoSupportMemberOpError("invalid"))
 	}
 	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 	if !v.IsValid() {
-		return nilValueL, newStringError1(lhs, vmUtils.NewNoSupportMemberOpError("invalid"))
+		return nilValueL, newError(lhs, vmUtils.NewNoSupportMemberOpError("invalid"))
 	}
 
 	switch v.Kind() {
@@ -73,7 +73,7 @@ func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt 
 		return invokeLetMemberMapExpr(vmp, env, stmt, v, rv, lhs)
 	default:
 		err := vmUtils.NewNoSupportMemberOpError(v.Kind().String())
-		return nilValueL, newStringError1(lhs, err)
+		return nilValueL, newError(lhs, err)
 	}
 }
 
@@ -121,11 +121,11 @@ func invokeLetItemExpr(vmp *VmParams, rv reflect.Value, env envPkg.IEnv, stmt *a
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Value)
 	if err != nil {
-		return nilValueL, newStringError1(lhs, err)
+		return nilValueL, newError(lhs, err)
 	}
 	index, err := invokeExpr(vmp, env, lhs.Index)
 	if err != nil {
-		return nilValueL, newStringError1(lhs, err)
+		return nilValueL, newError(lhs, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -147,7 +147,7 @@ func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, 
 	nilValueL := nilValue
 	indexInt, err := tryToInt(index)
 	if err != nil {
-		return nilValueL, newStringError1(lhs, vmUtils.ErrIndexMustBeNumber)
+		return nilValueL, newError(lhs, vmUtils.ErrIndexMustBeNumber)
 	}
 
 	if indexInt == v.Len() {
@@ -174,7 +174,7 @@ func invokeLetItemSliceExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, 
 	}
 
 	if indexInt < 0 || indexInt >= v.Len() {
-		return nilValueL, newStringError1(lhs, vmUtils.ErrIndexOutOfRange)
+		return nilValueL, newError(lhs, vmUtils.ErrIndexOutOfRange)
 	}
 	v = v.Index(indexInt)
 	if !v.CanSet() {
@@ -247,7 +247,7 @@ func invokeLetItemStringExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt,
 
 	indexInt, err := tryToInt(index)
 	if err != nil {
-		return nilValueL, newStringError1(lhs, vmUtils.ErrIndexMustBeNumber)
+		return nilValueL, newError(lhs, vmUtils.ErrIndexMustBeNumber)
 	}
 
 	if indexInt == v.Len() {
@@ -262,7 +262,7 @@ func invokeLetItemStringExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt,
 	}
 
 	if indexInt < 0 || indexInt >= v.Len() {
-		return nilValueL, newStringError1(lhs, vmUtils.ErrIndexOutOfRange)
+		return nilValueL, newError(lhs, vmUtils.ErrIndexOutOfRange)
 	}
 
 	if v.CanSet() {
@@ -277,7 +277,7 @@ func invokeLetSliceExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *a
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Value)
 	if err != nil {
-		return nilValueL, newStringError1(lhs, err)
+		return nilValueL, newError(lhs, err)
 	}
 	if v.Kind() == reflect.Interface {
 		v = v.Elem()
@@ -290,14 +290,14 @@ func invokeLetSliceExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *a
 		if lhs.Begin != nil {
 			rb, err := invokeExpr(vmp, env, lhs.Begin)
 			if err != nil {
-				return nilValueL, newStringError1(lhs, err)
+				return nilValueL, newError(lhs, err)
 			}
 			rbi, err = tryToInt(rb)
 			if err != nil {
-				return nilValueL, newStringError1(lhs, vmUtils.ErrIndexMustBeNumber)
+				return nilValueL, newError(lhs, vmUtils.ErrIndexMustBeNumber)
 			}
 			if rbi < 0 || rbi > v.Len() {
-				return nilValueL, newStringError1(lhs, vmUtils.ErrIndexOutOfRange)
+				return nilValueL, newError(lhs, vmUtils.ErrIndexOutOfRange)
 			}
 		} else {
 			rbi = 0
@@ -305,20 +305,20 @@ func invokeLetSliceExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *a
 		if lhs.End != nil {
 			re, err := invokeExpr(vmp, env, lhs.End)
 			if err != nil {
-				return nilValueL, newStringError1(lhs, err)
+				return nilValueL, newError(lhs, err)
 			}
 			rei, err = tryToInt(re)
 			if err != nil {
-				return nilValueL, newStringError1(lhs, vmUtils.ErrIndexMustBeNumber)
+				return nilValueL, newError(lhs, vmUtils.ErrIndexMustBeNumber)
 			}
 			if rei < 0 || rei > v.Len() {
-				return nilValueL, newStringError1(lhs, vmUtils.ErrIndexOutOfRange)
+				return nilValueL, newError(lhs, vmUtils.ErrIndexOutOfRange)
 			}
 		} else {
 			rei = v.Len()
 		}
 		if rbi > rei {
-			return nilValueL, newStringError1(lhs, vmUtils.ErrInvalidSliceIndex)
+			return nilValueL, newError(lhs, vmUtils.ErrInvalidSliceIndex)
 		}
 		v = v.Slice(rbi, rei)
 		if !v.CanSet() {
@@ -339,7 +339,7 @@ func invokeLetSliceExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *a
 func invokeLetDerefExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, lhs *ast.DerefExpr) (vv reflect.Value, err error) {
 	v, err := invokeExpr(vmp, env, lhs.Expr)
 	if err != nil {
-		return nilValue, newStringError1(lhs, err)
+		return nilValue, newError(lhs, err)
 	}
 	v.Elem().Set(rv)
 	return v, nil

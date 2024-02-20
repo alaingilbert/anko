@@ -54,7 +54,7 @@ func newErrorf(pos ast.Pos, format string, args ...any) error {
 
 // newError makes error interface with message.
 // This doesn't overwrite last error.
-func newStringError1(pos ast.Pos, err error) error {
+func newError(pos ast.Pos, err error) error {
 	pos1 := ast.Position{Line: 1, Column: 1}
 	if pos != nil {
 		pos1 = pos.Position()

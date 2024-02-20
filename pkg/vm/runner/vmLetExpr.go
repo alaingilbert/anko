@@ -3,12 +3,10 @@ package runner
 import (
 	"errors"
 	"fmt"
+	"github.com/alaingilbert/anko/pkg/ast"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"reflect"
-	"strings"
-
-	"github.com/alaingilbert/anko/pkg/ast"
 )
 
 func invokeLetExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, expr ast.Expr, rv reflect.Value) (reflect.Value, error) {
@@ -38,10 +36,9 @@ func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, l
 		if errors.Is(err, vmUtils.ErrTypeMismatch) {
 			return nilValue, newError(lhs, err)
 		}
-		if strings.Contains(lhs.Lit, ".") {
-			return nilValue, envPkg.NewUndefinedSymbolErr(lhs.Lit)
+		if err := env.DefineValue(lhs.Lit, rv); err != nil {
+			return nilValue, err
 		}
-		_ = env.DefineValue(lhs.Lit, rv)
 	}
 	return rv, nil
 }

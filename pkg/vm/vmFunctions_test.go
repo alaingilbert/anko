@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"github.com/alaingilbert/anko/pkg/vm/runner"
 	"os"
 	"reflect"
@@ -186,7 +187,7 @@ func TestFunctions(t *testing.T) {
 
 		{Script: `func a() { return "a" }; a.b()`, RunError: fmt.Errorf("type func does not support member operation")},
 		{Script: `a = [func () { return nil}]; func b(c) { return c() }; b(a[1])`, RunError: fmt.Errorf("index out of range")},
-		{Script: `func a() { return "a" }; b()`, RunError: fmt.Errorf("undefined symbol 'b'")},
+		{Script: `func a() { return "a" }; b()`, RunError: envPkg.NewUndefinedSymbolErr("b")},
 		{Script: ` func a() { return "a" }; 1++()`, RunError: fmt.Errorf("invalid operation")},
 		{Script: ` func a(b) { return b }; a(1++)`, RunError: fmt.Errorf("invalid operation")},
 

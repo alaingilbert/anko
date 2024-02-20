@@ -238,7 +238,7 @@ func TestVar(t *testing.T) {
 		{Script: `a = 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 		{Script: `var a = 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 		{Script: `var a := 1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `y = z`, RunError: fmt.Errorf("undefined symbol 'z'"), Name: ""},
+		{Script: `y = z`, RunError: envPkg.NewUndefinedSymbolErr("z"), Name: ""},
 
 		{Script: `a := 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
 		{Script: `a = nil`, RunOutput: nil, Output: map[string]any{"a": nil}, Name: ""},
@@ -373,8 +373,8 @@ a  =  1;
 		{Script: `a, b  = ,,1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `var a, b  = ,,1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 
-		{Script: `a.c, b = 1, 2`, RunError: fmt.Errorf("undefined symbol 'a'"), Name: ""},
-		{Script: `a, b.c = 1, 2`, RunError: fmt.Errorf("undefined symbol 'b'"), Name: ""},
+		{Script: `a.c, b = 1, 2`, RunError: envPkg.NewUndefinedSymbolErr("a"), Name: ""},
+		{Script: `a, b.c = 1, 2`, RunError: envPkg.NewUndefinedSymbolErr("b"), Name: ""},
 
 		{Script: `a, b = 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
 		{Script: `var a, b = 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
@@ -394,8 +394,8 @@ a  =  1;
 		{Script: `var a, b, c = 1, 2, 3, 4`, RunOutput: int64(4), Output: map[string]any{"a": int64(1), "b": int64(2), "c": int64(3)}, Name: ""},
 
 		// scope
-		{Script: `func(){ a = 1 }(); a`, RunError: fmt.Errorf("undefined symbol 'a'"), Name: ""},
-		{Script: `func(){ var a = 1 }(); a`, RunError: fmt.Errorf("undefined symbol 'a'"), Name: ""},
+		{Script: `func(){ a = 1 }(); a`, RunError: envPkg.NewUndefinedSymbolErr("a"), Name: ""},
+		{Script: `func(){ var a = 1 }(); a`, RunError: envPkg.NewUndefinedSymbolErr("a"), Name: ""},
 
 		{Script: `a = 1; func(){ a = 2 }()`, RunOutput: int64(2), Output: map[string]any{"a": int64(2)}, Name: ""},
 		{Script: `var a = 1; func(){ a = 2 }()`, RunOutput: int64(2), Output: map[string]any{"a": int64(2)}, Name: ""},
@@ -577,7 +577,7 @@ func TestVMDelete(t *testing.T) {
 		{Script: `delete(1++)`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 		{Script: `delete("a", 1++)`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 
-		{Script: `a = 1; delete("a"); a`, RunError: fmt.Errorf("undefined symbol 'a'"), Name: ""},
+		{Script: `a = 1; delete("a"); a`, RunError: envPkg.NewUndefinedSymbolErr("a"), Name: ""},
 
 		{Script: `delete("a")`, Name: ""},
 		{Script: `delete("a", false)`, Name: ""},
@@ -586,7 +586,7 @@ func TestVMDelete(t *testing.T) {
 
 		{Script: `a = 1; func b() { delete("a") }; b()`, Output: map[string]any{"a": int64(1)}, Name: ""},
 		{Script: `a = 1; func b() { delete("a", false) }; b()`, Output: map[string]any{"a": int64(1)}, Name: ""},
-		{Script: `a = 1; func b() { delete("a", true) }; b(); a`, RunError: fmt.Errorf("undefined symbol 'a'"), Name: ""},
+		{Script: `a = 1; func b() { delete("a", true) }; b(); a`, RunError: envPkg.NewUndefinedSymbolErr("a"), Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })

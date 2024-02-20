@@ -39,7 +39,7 @@ func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, l
 			return nilValue, newError(lhs, err)
 		}
 		if strings.Contains(lhs.Lit, ".") {
-			return nilValue, newErrorf(lhs, "undefined symbol '%s'", lhs.Lit)
+			return nilValue, envPkg.NewUndefinedSymbolErr(lhs.Lit)
 		}
 		_ = env.DefineValue(lhs.Lit, rv)
 	}

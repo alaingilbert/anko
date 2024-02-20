@@ -28,9 +28,9 @@ func TestAddrError(t *testing.T) {
 	envChild := envParent.newEnv()
 	_, err := envChild.addr("a")
 	if err == nil {
-		t.Errorf("Addr error - received: %v - expected: %v", err, fmt.Errorf("undefined symbol 'a'"))
+		t.Errorf("Addr error - received: %v - expected: %v", err, NewUndefinedSymbolErr("a"))
 	} else if err.Error() != "undefined symbol 'a'" {
-		t.Errorf("Addr error - received: %v - expected: %v", err, fmt.Errorf("undefined symbol 'a'"))
+		t.Errorf("Addr error - received: %v - expected: %v", err, NewUndefinedSymbolErr("a"))
 	}
 }
 
@@ -803,87 +803,53 @@ func TestDeleteGlobal(t *testing.T) {
 	// empty
 	env := NewEnv()
 	err := env.DeleteGlobal("a")
-	if err != nil {
-		t.Errorf("DeleteGlobal error - received: %v - expected: %v", err, nil)
-	}
+	assert.NoError(t, err)
 
 	// bad name
 	err = env.DeleteGlobal("a.b")
 	expectedError := "unknown symbol 'a.b'"
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("DeleteGlobal error - received: %v - expected: %v", err, expectedError)
-	}
+	assert.ErrorContains(t, err, "unknown symbol 'a.b'")
 
 	// add & delete a
 	_ = env.Define("a", "a")
 	err = env.DeleteGlobal("a")
-	if err != nil {
-		t.Errorf("DeleteGlobal error - received: %v - expected: %v", err, nil)
-	}
+	assert.NoError(t, err)
 	value, err := env.Get("a")
 	expectedError = "undefined symbol 'a'"
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("Get error - received: %v - expected: %v", err, expectedError)
-	}
-	if value != nil {
-		t.Errorf("Get value - received: %#v - expected: %#v", value, nil)
-	}
+	assert.ErrorContains(t, err, "undefined symbol 'a'")
+	assert.Nil(t, value)
 
 	// parent & child, var in child, delete in parent
 	envChild := env.NewEnv()
 	_ = envChild.Define("a", "a")
 	err = env.DeleteGlobal("a")
-	if err != nil {
-		t.Errorf("DeleteGlobal error - received: %v - expected: %v", err, nil)
-	}
+	assert.NoError(t, err)
 	value, err = envChild.Get("a")
-	if err != nil {
-		t.Errorf("Get error - received: %v - expected: %v", err, nil)
-	}
-	if value != "a" {
-		t.Errorf("Get value - received: %#v - expected: %#v", value, "a")
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, "a", value)
 
 	// parent & child, var in child, delete in child
 	err = envChild.DeleteGlobal("a")
-	if err != nil {
-		t.Errorf("DeleteGlobal error - received: %v - expected: %v", err, nil)
-	}
+	assert.NoError(t, err)
 	value, err = envChild.Get("a")
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("Get error - received: %v - expected: %v", err, expectedError)
-	}
-	if value != nil {
-		t.Errorf("Get value - received: %#v - expected: %#v", value, nil)
-	}
+	assert.ErrorContains(t, err, expectedError)
+	assert.Nil(t, value)
 
 	// parent & child, var in parent, delete in child
 	_ = env.Define("a", "a")
 	err = envChild.DeleteGlobal("a")
-	if err != nil {
-		t.Errorf("DeleteGlobal error - received: %v - expected: %v", err, nil)
-	}
+	assert.NoError(t, err)
 	value, err = envChild.Get("a")
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("Get error - received: %v - expected: %v", err, expectedError)
-	}
-	if value != nil {
-		t.Errorf("Get value - received: %#v - expected: %#v", value, nil)
-	}
+	assert.ErrorContains(t, err, expectedError)
+	assert.Nil(t, value)
 
 	// parent & child, var in parent, delete in parent
 	_ = env.Define("a", "a")
 	err = env.DeleteGlobal("a")
-	if err != nil {
-		t.Errorf("DeleteGlobal error - received: %v - expected: %v", err, nil)
-	}
+	assert.NoError(t, err)
 	value, err = envChild.Get("a")
-	if err == nil || err.Error() != expectedError {
-		t.Errorf("Get error - received: %v - expected: %v", err, expectedError)
-	}
-	if value != nil {
-		t.Errorf("Get value - received: %#v - expected: %#v", value, nil)
-	}
+	assert.ErrorContains(t, err, expectedError)
+	assert.Nil(t, value)
 }
 
 type ExternalResolver struct {
@@ -912,7 +878,7 @@ func (er *ExternalResolver) Get(name string) (reflect.Value, error) {
 	if v, ok := er.values[name]; ok {
 		return v, nil
 	}
-	return nilValue, fmt.Errorf("undefined symbol '%s'", name)
+	return nilValue, NewUndefinedSymbolErr(name)
 }
 
 func (er *ExternalResolver) DefineType(name string, t any) error {
@@ -939,7 +905,7 @@ func (er *ExternalResolver) Type(name string) (reflect.Type, error) {
 	if v, ok := er.types[name]; ok {
 		return v, nil
 	}
-	return nilType, fmt.Errorf("undefined symbol '%s'", name)
+	return nilType, NewUndefinedSymbolErr(name)
 }
 
 func TestRaceCreateSameVariable(t *testing.T) {

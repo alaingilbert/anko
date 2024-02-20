@@ -2,7 +2,6 @@ package executor
 
 import (
 	"context"
-	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	"github.com/alaingilbert/anko/pkg/compiler"
 	"github.com/alaingilbert/anko/pkg/parser"
@@ -65,6 +64,7 @@ func TestInvalidString(t *testing.T) {
 }
 
 func TestExecutor_Validate(t *testing.T) {
+	invalidFnErr := envPkg.NewUndefinedSymbolErr("invalidFn")
 	tests := []struct {
 		name    string
 		input   any
@@ -72,20 +72,20 @@ func TestExecutor_Validate(t *testing.T) {
 	}{
 		{input: "a = 1; b = 2; if a == b { return a; }; return b", wantErr: nil, name: ""},
 		{input: "a = func(){ return 1; }; a()", wantErr: nil, name: ""},
-		{input: "a = func(){ invalidFn() }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "a = func(){ if (true) { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "a = func(){ if (false) { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		// {input: "a = func(){ if (true) { return 1; } else { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "a = func(){ if (true) { } else { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "a = func(){ if true { } else if true { } else { invalidFn() } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "a = func(){ if true { } else if true { invalidFn() } else { } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "a = func(){ try { } catch err { invalidFn() } finally { } }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "switch 0 { case 1: invalidFn(); }", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "switch 0 { case 1: 1; default: invalidFn(); }", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "ch1 = make(chan int); ch2 = make(chan int); select { case <-ch1: invalidFn(); case <-ch2: 2; }", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "ch1 = make(chan int); ch2 = make(chan int); select { case <-ch1: 1; case <-ch2: invalidFn(); }", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "ch1 = make(chan int); select { case <-ch1: 1; default: invalidFn(); }", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
-		{input: "a = func() { defer func() { invalidFn(); }(); }; a()", wantErr: fmt.Errorf("undefined symbol 'invalidFn'"), name: ""},
+		{input: "a = func(){ invalidFn() }; a()", wantErr: invalidFnErr, name: ""},
+		{input: "a = func(){ if (true) { invalidFn() } }; a()", wantErr: invalidFnErr, name: ""},
+		{input: "a = func(){ if (false) { invalidFn() } }; a()", wantErr: invalidFnErr, name: ""},
+		// {input: "a = func(){ if (true) { return 1; } else { invalidFn() } }; a()", wantErr: invalidFnErr, name: ""},
+		{input: "a = func(){ if (true) { } else { invalidFn() } }; a()", wantErr: invalidFnErr, name: ""},
+		{input: "a = func(){ if true { } else if true { } else { invalidFn() } }; a()", wantErr: invalidFnErr, name: ""},
+		{input: "a = func(){ if true { } else if true { invalidFn() } else { } }; a()", wantErr: invalidFnErr, name: ""},
+		{input: "a = func(){ try { } catch err { invalidFn() } finally { } }; a()", wantErr: invalidFnErr, name: ""},
+		{input: "switch 0 { case 1: invalidFn(); }", wantErr: invalidFnErr, name: ""},
+		{input: "switch 0 { case 1: 1; default: invalidFn(); }", wantErr: invalidFnErr, name: ""},
+		{input: "ch1 = make(chan int); ch2 = make(chan int); select { case <-ch1: invalidFn(); case <-ch2: 2; }", wantErr: invalidFnErr, name: ""},
+		{input: "ch1 = make(chan int); ch2 = make(chan int); select { case <-ch1: 1; case <-ch2: invalidFn(); }", wantErr: invalidFnErr, name: ""},
+		{input: "ch1 = make(chan int); select { case <-ch1: 1; default: invalidFn(); }", wantErr: invalidFnErr, name: ""},
+		{input: "a = func() { defer func() { invalidFn(); }(); }; a()", wantErr: invalidFnErr, name: ""},
 	}
 	e := NewExecutor(&Config{Env: envPkg.NewEnv()})
 	ctx := context.Background()

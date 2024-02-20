@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"os"
 	"reflect"
 	"testing"
@@ -33,8 +34,8 @@ func TestBasicOperators(t *testing.T) {
 		{Script: `a + b`, Input: map[string]any{"a": "a", "b": "b"}, RunOutput: "ab"},
 		{Script: `a + b`, Input: map[string]any{"a": "a", "b": int64(1)}, RunOutput: "a1"},
 		{Script: `a + b`, Input: map[string]any{"a": "a", "b": float64(1.1)}, RunOutput: "a1.1"},
-		{Script: `a + z`, Input: map[string]any{"a": "a"}, RunError: fmt.Errorf("undefined symbol 'z'"), RunOutput: nil},
-		{Script: `z + b`, Input: map[string]any{"a": "a"}, RunError: fmt.Errorf("undefined symbol 'z'"), RunOutput: nil},
+		{Script: `a + z`, Input: map[string]any{"a": "a"}, RunError: envPkg.NewUndefinedSymbolErr("z"), RunOutput: nil},
+		{Script: `z + b`, Input: map[string]any{"a": "a"}, RunError: envPkg.NewUndefinedSymbolErr("z"), RunOutput: nil},
 
 		{Script: `c = a + b`, Input: map[string]any{"a": int64(2), "b": int64(1)}, RunOutput: int64(3), Output: map[string]any{"c": int64(3)}},
 		{Script: `c = a - b`, Input: map[string]any{"a": int64(2), "b": int64(1)}, RunOutput: int64(1), Output: map[string]any{"c": int64(1)}},
@@ -83,8 +84,8 @@ func TestBasicOperators(t *testing.T) {
 
 		{Script: `1++`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
 		{Script: `1--`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
-		{Script: `z++`, RunError: fmt.Errorf("undefined symbol 'z'"), RunOutput: nil},
-		{Script: `z--`, RunError: fmt.Errorf("undefined symbol 'z'"), RunOutput: nil},
+		{Script: `z++`, RunError: envPkg.NewUndefinedSymbolErr("z"), RunOutput: nil},
+		{Script: `z--`, RunError: envPkg.NewUndefinedSymbolErr("z"), RunOutput: nil},
 		{Script: `!(1++)`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
 
 		{Script: `a += 1`, Input: map[string]any{"a": int64(2)}, RunOutput: int64(3), Output: map[string]any{"a": int64(3)}},
@@ -350,9 +351,9 @@ func TestTernaryOperator(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
 		{Script: `a = 1 ? 2 : panic(2)`, RunOutput: int64(2), Output: map[string]any{"a": int64(2)}},
-		{Script: `a = c ? a : b`, RunError: fmt.Errorf("undefined symbol 'c'")},
-		{Script: `a = a ? a : b`, RunError: fmt.Errorf("undefined symbol 'a'")},
-		{Script: `a = 0; a = a ? a : b`, RunError: fmt.Errorf("undefined symbol 'b'")},
+		{Script: `a = c ? a : b`, RunError: envPkg.NewUndefinedSymbolErr("c")},
+		{Script: `a = a ? a : b`, RunError: envPkg.NewUndefinedSymbolErr("a")},
+		{Script: `a = 0; a = a ? a : b`, RunError: envPkg.NewUndefinedSymbolErr("b")},
 		{Script: `a = -1 ? 2 : 1`, RunOutput: int64(2), Output: map[string]any{"a": int64(2)}},
 		{Script: `a = true ? 2 : 1`, RunOutput: int64(2), Output: map[string]any{"a": int64(2)}},
 		{Script: `a = false ? 2 : 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}},
@@ -394,7 +395,7 @@ func TestNilCoalescingOperator(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
 		{Script: `a = 1 ?? panic(2)`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}},
-		{Script: `a = c ?? b`, RunError: fmt.Errorf("undefined symbol 'b'")},
+		{Script: `a = c ?? b`, RunError: envPkg.NewUndefinedSymbolErr("b")},
 		{Script: `a = -1 ?? 1`, RunOutput: int64(-1), Output: map[string]any{"a": int64(-1)}},
 		{Script: `a = true ?? 1`, RunOutput: true, Output: map[string]any{"a": true}},
 		{Script: `a = false ?? 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}},
@@ -474,11 +475,11 @@ func TestIf(t *testing.T) {
 		{Script: `if a == 1 {a = 1} else if a == 3 {a = 3} else if a == 2 {a = nil} else {a = 5}`, Input: map[string]any{"a": int64(2)}, RunOutput: nil, Output: map[string]any{"a": nil}},
 
 		// check scope
-		{Script: `a = 1; if a == 1 { b = 2 }; b`, RunError: fmt.Errorf("undefined symbol 'b'"), Output: map[string]any{"a": int64(1)}},
-		{Script: `a = 1; if a == 2 { b = 3 } else { b = 4 }; b`, RunError: fmt.Errorf("undefined symbol 'b'"), Output: map[string]any{"a": int64(1)}},
-		{Script: `a = 1; if a == 2 { b = 3 } else if a == 1 { b = 4 }; b`, RunError: fmt.Errorf("undefined symbol 'b'"), Output: map[string]any{"a": int64(1)}},
-		{Script: `a = 1; if a == 2 { b = 4 } else if a == 5 { b = 6 } else if a == 1 { c = b }`, RunError: fmt.Errorf("undefined symbol 'b'"), Output: map[string]any{"a": int64(1)}},
-		{Script: `a = 1; if a == 2 { b = 4 } else if a == 5 { b = 6 } else if a == 1 { b = 7 }; b`, RunError: fmt.Errorf("undefined symbol 'b'"), Output: map[string]any{"a": int64(1)}},
+		{Script: `a = 1; if a == 1 { b = 2 }; b`, RunError: envPkg.NewUndefinedSymbolErr("b"), Output: map[string]any{"a": int64(1)}},
+		{Script: `a = 1; if a == 2 { b = 3 } else { b = 4 }; b`, RunError: envPkg.NewUndefinedSymbolErr("b"), Output: map[string]any{"a": int64(1)}},
+		{Script: `a = 1; if a == 2 { b = 3 } else if a == 1 { b = 4 }; b`, RunError: envPkg.NewUndefinedSymbolErr("b"), Output: map[string]any{"a": int64(1)}},
+		{Script: `a = 1; if a == 2 { b = 4 } else if a == 5 { b = 6 } else if a == 1 { c = b }`, RunError: envPkg.NewUndefinedSymbolErr("b"), Output: map[string]any{"a": int64(1)}},
+		{Script: `a = 1; if a == 2 { b = 4 } else if a == 5 { b = 6 } else if a == 1 { b = 7 }; b`, RunError: envPkg.NewUndefinedSymbolErr("b"), Output: map[string]any{"a": int64(1)}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -493,14 +494,14 @@ func TestSelect(t *testing.T) {
 		{Script: `a = make(chan int64, 1); a <- 1; select {case <-a: return 5; default: return 6; default: return 7}`, ParseError: fmt.Errorf("multiple default statement"), RunOutput: int64(5)},
 
 		// test run errors
-		{Script: `select {case a = <-b: return 1}`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil},
+		{Script: `select {case a = <-b: return 1}`, RunError: envPkg.NewUndefinedSymbolErr("b"), RunOutput: nil},
 		{Script: `select {case b = 1: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
 		{Script: `select {case 1: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
 		{Script: `select {case <-1: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
-		{Script: `select {case <-a: return 1}`, RunError: fmt.Errorf("undefined symbol 'a'"), RunOutput: nil},
+		{Script: `select {case <-a: return 1}`, RunError: envPkg.NewUndefinedSymbolErr("a"), RunOutput: nil},
 		{Script: `select {case if true { }: return 1}`, RunError: fmt.Errorf("invalid operation"), RunOutput: nil},
-		{Script: `a = make(chan int64, 1); a <- 1; select {case b.c = <-a: return 1}`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil},
-		{Script: `a = make(chan int64, 1); a <- 1; select {case v = <-a:}; v`, RunError: fmt.Errorf("undefined symbol 'v'"), RunOutput: nil},
+		{Script: `a = make(chan int64, 1); a <- 1; select {case b.c = <-a: return 1}`, RunError: envPkg.NewUndefinedSymbolErr("b"), RunOutput: nil},
+		{Script: `a = make(chan int64, 1); a <- 1; select {case v = <-a:}; v`, RunError: envPkg.NewUndefinedSymbolErr("v"), RunOutput: nil},
 
 		// test 1 channel
 		{Script: `a = make(chan int64, 1); a <- 1; select {case <-a: return 1}`, RunOutput: int64(1)},
@@ -616,12 +617,12 @@ func TestSwitch(t *testing.T) {
 		// test scope without define b
 		{Script: `a = 1; switch a {case 1: b = 5}`, RunOutput: int64(5), Output: map[string]any{"a": int64(1)}, Name: ""},
 		{Script: `a = 2; switch a {case 1: b = 5}`, RunOutput: int64(2), Output: map[string]any{"a": int64(2)}, Name: ""},
-		{Script: `a = 1; switch a {case 1: b = 5}; b`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil, Output: map[string]any{"a": int64(1)}, Name: ""},
-		{Script: `a = 2; switch a {case 1: b = 5}; b`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil, Output: map[string]any{"a": int64(2)}, Name: ""},
+		{Script: `a = 1; switch a {case 1: b = 5}; b`, RunError: envPkg.NewUndefinedSymbolErr("b"), RunOutput: nil, Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `a = 2; switch a {case 1: b = 5}; b`, RunError: envPkg.NewUndefinedSymbolErr("b"), RunOutput: nil, Output: map[string]any{"a": int64(2)}, Name: ""},
 		{Script: `a = 1; switch a {case 1: b = 5; default: b = 6}`, RunOutput: int64(5), Output: map[string]any{"a": int64(1)}, Name: ""},
 		{Script: `a = 2; switch a {case 1: b = 5; default: b = 6}`, RunOutput: int64(6), Output: map[string]any{"a": int64(2)}, Name: ""},
-		{Script: `a = 1; switch a {case 1: b = 5; default: b = 6}; b`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil, Output: map[string]any{"a": int64(1)}, Name: ""},
-		{Script: `a = 2; switch a {case 1: b = 5; default: b = 6}; b`, RunError: fmt.Errorf("undefined symbol 'b'"), RunOutput: nil, Output: map[string]any{"a": int64(2)}, Name: ""},
+		{Script: `a = 1; switch a {case 1: b = 5; default: b = 6}; b`, RunError: envPkg.NewUndefinedSymbolErr("b"), RunOutput: nil, Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `a = 2; switch a {case 1: b = 5; default: b = 6}; b`, RunError: envPkg.NewUndefinedSymbolErr("b"), RunOutput: nil, Output: map[string]any{"a": int64(2)}, Name: ""},
 
 		// test new lines
 		{Script: `
@@ -701,7 +702,7 @@ func TestForLoop(t *testing.T) {
 		{Script: `for var a, b = 1; nil; nil { return }`},
 		{Script: `for var a, b = 1, 2; nil; nil { return }`},
 
-		{Script: `for a.b = 1; nil; nil { return }`, RunError: fmt.Errorf("undefined symbol 'a'")},
+		{Script: `for a.b = 1; nil; nil { return }`, RunError: envPkg.NewUndefinedSymbolErr("a")},
 
 		{Script: `for a = 1; nil; nil { if a == 1 { break } }`, RunOutput: nil},
 		{Script: `for a = 1; nil; nil { if a == 2 { break }; a++ }`, RunOutput: nil},
@@ -770,11 +771,11 @@ func TestForLoop(t *testing.T) {
 		{Script: `for i in a { }`, Input: map[string]any{"a": reflect.Value{}}, RunError: fmt.Errorf("for cannot loop over type struct"), Output: map[string]any{"a": reflect.Value{}}},
 		{Script: `for i in a { }`, Input: map[string]any{"a": any(nil)}, RunError: fmt.Errorf("for cannot loop over type interface"), Output: map[string]any{"a": any(nil)}},
 		{Script: `for i in a { }`, Input: map[string]any{"a": any(true)}, RunError: fmt.Errorf("for cannot loop over type bool"), Output: map[string]any{"a": any(true)}},
-		{Script: `for i in [1, 2, 3] { b++ }`, RunError: fmt.Errorf("undefined symbol 'b'")},
-		{Script: `for a = 1; a < 3; a++ { b++ }`, RunError: fmt.Errorf("undefined symbol 'b'")},
-		{Script: `for a = b; a < 3; a++ { }`, RunError: fmt.Errorf("undefined symbol 'b'")},
-		{Script: `for a = 1; b < 3; a++ { }`, RunError: fmt.Errorf("undefined symbol 'b'")},
-		{Script: `for a = 1; a < 3; b++ { }`, RunError: fmt.Errorf("undefined symbol 'b'")},
+		{Script: `for i in [1, 2, 3] { b++ }`, RunError: envPkg.NewUndefinedSymbolErr("b")},
+		{Script: `for a = 1; a < 3; a++ { b++ }`, RunError: envPkg.NewUndefinedSymbolErr("b")},
+		{Script: `for a = b; a < 3; a++ { }`, RunError: envPkg.NewUndefinedSymbolErr("b")},
+		{Script: `for a = 1; b < 3; a++ { }`, RunError: envPkg.NewUndefinedSymbolErr("b")},
+		{Script: `for a = 1; a < 3; b++ { }`, RunError: envPkg.NewUndefinedSymbolErr("b")},
 
 		{Script: `a = 1; b = [{"c": "c"}]; for i in b { a = i }`, RunOutput: nil, Output: map[string]any{"a": map[any]any{"c": "c"}, "b": []any{map[any]any{"c": "c"}}}},
 		{Script: `a = 1; b = {"x": [{"y": "y"}]};  for i in b.x { a = i }`, RunOutput: nil, Output: map[string]any{"a": map[any]any{"y": "y"}, "b": map[any]any{"x": []any{map[any]any{"y": "y"}}}}},
@@ -782,7 +783,7 @@ func TestForLoop(t *testing.T) {
 		{Script: `a = {}; b = 1; for i in a { b = i }; b`, RunOutput: int64(1), Output: map[string]any{"a": map[any]any{}, "b": int64(1)}},
 		{Script: `a = {"x": 2}; b = 1; for i in a { b = i }; b`, RunOutput: "x", Output: map[string]any{"a": map[any]any{"x": int64(2)}, "b": "x"}},
 		{Script: `a = {"x": 2, "y": 3}; b = 0; for i in a { b++ }; b`, RunOutput: int64(2), Output: map[string]any{"a": map[any]any{"x": int64(2), "y": int64(3)}, "b": int64(2)}},
-		{Script: `a = {"x": 2, "y": 3}; for i in a { b++ }`, RunError: fmt.Errorf("undefined symbol 'b'"), Output: map[string]any{"a": map[any]any{"x": int64(2), "y": int64(3)}}},
+		{Script: `a = {"x": 2, "y": 3}; for i in a { b++ }`, RunError: envPkg.NewUndefinedSymbolErr("b"), Output: map[string]any{"a": map[any]any{"x": int64(2), "y": int64(3)}}},
 
 		{Script: `a = {"x": 2, "y": 3}; b = 0; for i in a { if i ==  "x" { continue }; b = i }; b`, RunOutput: "y", Output: map[string]any{"a": map[any]any{"x": int64(2), "y": int64(3)}, "b": "y"}},
 		{Script: `a = {"x": 2, "y": 3}; b = 0; for i in a { if i ==  "y" { continue }; b = i }; b`, RunOutput: "x", Output: map[string]any{"a": map[any]any{"x": int64(2), "y": int64(3)}, "b": "x"}},

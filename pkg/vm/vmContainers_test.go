@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	"net/url"
 	"os"
 	"reflect"
@@ -419,7 +420,7 @@ func TestArraySlice(t *testing.T) {
 		{Script: `a = [1, 2, 3]; a[:3]`, RunOutput: []any{int64(1), int64(2), int64(3)}, Output: map[string]any{"a": []any{int64(1), int64(2), int64(3)}}, Name: ""},
 		{Script: `a = [1, 2, 3]; a[:4]`, RunError: fmt.Errorf("index out of range"), RunOutput: nil, Output: map[string]any{"a": []any{int64(1), int64(2), int64(3)}}, Name: ""},
 
-		{Script: `b[1:2] = 4`, RunError: fmt.Errorf("undefined symbol 'b'"), Name: ""},
+		{Script: `b[1:2] = 4`, RunError: envPkg.NewUndefinedSymbolErr("b"), Name: ""},
 		{Script: `a = [1, 2, 3]; a[1++:2] = 4`, RunError: fmt.Errorf("invalid operation"), Output: map[string]any{"a": []any{int64(1), int64(2), int64(3)}}, Name: ""},
 		{Script: `a = [1, 2, 3]; a[1:2++] = 4`, RunError: fmt.Errorf("invalid operation"), Output: map[string]any{"a": []any{int64(1), int64(2), int64(3)}}, Name: ""},
 		{Script: `a = [1, 2, 3]; a[nil:2] = 4`, RunError: fmt.Errorf("index must be a number"), Output: map[string]any{"a": []any{int64(1), int64(2), int64(3)}}, Name: ""},
@@ -803,9 +804,9 @@ func TestMaps(t *testing.T) {
 		{Script: `a = {}; a.b.c = 1`, RunError: fmt.Errorf("type invalid does not support member operation"), Name: ""},
 		{Script: `a = {}; a[1++]`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 		{Script: `a = {}; a[1++] = 1`, RunError: fmt.Errorf("invalid operation"), Name: ""},
-		{Script: `b[1]`, RunError: fmt.Errorf("undefined symbol 'b'"), Name: ""},
-		{Script: `b[1] = 1`, RunError: fmt.Errorf("undefined symbol 'b'"), Name: ""},
-		{Script: `z.y.x = 1`, RunError: fmt.Errorf("undefined symbol 'z'"), Name: ""},
+		{Script: `b[1]`, RunError: envPkg.NewUndefinedSymbolErr("b"), Name: ""},
+		{Script: `b[1] = 1`, RunError: envPkg.NewUndefinedSymbolErr("b"), Name: ""},
+		{Script: `z.y.x = 1`, RunError: envPkg.NewUndefinedSymbolErr("z"), Name: ""},
 
 		{Script: `{}`, RunOutput: map[any]any{}, Name: ""},
 		{Script: `{"b": nil}`, RunOutput: map[any]any{"b": nil}, Name: ""},
@@ -1064,8 +1065,8 @@ func TestExistenceOfKeyInMaps(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
 		{Script: `a = {"b":"b"}; v, ok = a[1++]`, RunError: fmt.Errorf("invalid operation"), Name: ""},
-		{Script: `a = {"b":"b"}; b.c, ok = a["b"]`, RunError: fmt.Errorf("undefined symbol 'b'"), Name: ""},
-		{Script: `a = {"b":"b"}; v, b.c = a["b"]`, RunError: fmt.Errorf("undefined symbol 'b'"), Name: ""},
+		{Script: `a = {"b":"b"}; b.c, ok = a["b"]`, RunError: envPkg.NewUndefinedSymbolErr("b"), Name: ""},
+		{Script: `a = {"b":"b"}; v, b.c = a["b"]`, RunError: envPkg.NewUndefinedSymbolErr("b"), Name: ""},
 
 		{Script: `a = {"b":"b"}; v, ok = a["a"]`, RunOutput: nil, Output: map[string]any{"a": map[any]any{"b": "b"}, "v": nil, "ok": false}, Name: ""},
 		{Script: `a = {"b":"b"}; v, ok = a["b"]`, RunOutput: "b", Output: map[string]any{"a": map[any]any{"b": "b"}, "v": "b", "ok": true}, Name: ""},

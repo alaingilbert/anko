@@ -393,6 +393,18 @@ var nilType = vmUtils.NilType
 
 var ErrUnaddressable = fmt.Errorf("unaddressable")
 
+type UndefinedSymbolErr struct {
+	symbol string
+}
+
+func NewUndefinedSymbolErr(symbol string) *UndefinedSymbolErr {
+	return &UndefinedSymbolErr{symbol: symbol}
+}
+
+func (e *UndefinedSymbolErr) Error() string {
+	return fmt.Sprintf("undefined symbol '%s'", e.symbol)
+}
+
 func (e *Env) addr(k string) (reflect.Value, error) {
 	if v, ok := e.values.Get(k); ok {
 		if v.CanAddr() {
@@ -401,7 +413,7 @@ func (e *Env) addr(k string) (reflect.Value, error) {
 		return nilValue, ErrUnaddressable
 	}
 	if e.parent == nil {
-		return nilValue, fmt.Errorf("undefined symbol '%s'", k)
+		return nilValue, NewUndefinedSymbolErr(k)
 	}
 	return e.parent.addr(k)
 }
@@ -437,7 +449,7 @@ func (e *Env) getValue(k string) (reflect.Value, error) {
 		return envValue, nil
 	}
 	if e.parent == nil {
-		return nilValue, fmt.Errorf("undefined symbol '%s'", k)
+		return nilValue, NewUndefinedSymbolErr(k)
 	}
 	return e.parent.getValue(k)
 }

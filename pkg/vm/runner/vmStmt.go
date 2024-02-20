@@ -288,7 +288,10 @@ func runTryStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.TryStmt) (reflect.Valu
 			err = newStringError1(stmt.Finally, e2)
 		}
 	}
-	return nilValue, newError(stmt, err)
+	if err != nil {
+		return nilValue, newStringError1(stmt, err)
+	}
+	return nilValue, nil
 }
 
 func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Value, error) {

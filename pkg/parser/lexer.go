@@ -561,7 +561,7 @@ func Parse(s *Scanner) (ast.Stmt, error) {
 
 // EnableErrorVerbose enabled verbose errors from the parser
 func EnableErrorVerbose() {
-	yyErrorVerbose = true
+	//yyErrorVerbose = true
 }
 
 // ParseSrc provides way to parse the code from source.

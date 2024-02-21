@@ -11,7 +11,7 @@ import (
 func TestBasicOperators(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `]`, ParseError: fmt.Errorf("syntax error")},
+		{Script: `]`, ParseError: fmt.Errorf("unexpected ']'")},
 
 		{Script: `2 + 1`, RunOutput: int64(3)},
 		{Script: `2 - 1`, RunOutput: int64(1)},
@@ -543,9 +543,9 @@ func TestSwitch(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
 		// test parse errors
-		{Script: `switch {}`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `a = 1; switch a; {}`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `a = 1; switch a = 2 {}`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `switch {}`, ParseError: fmt.Errorf("unexpected $end"), Name: ""},
+		{Script: `a = 1; switch a; {}`, ParseError: fmt.Errorf("unexpected ';'"), Name: ""},
+		{Script: `a = 1; switch a = 2 {}`, ParseError: fmt.Errorf("unexpected '='"), Name: ""},
 		{Script: `a = 1; switch a {default: return 6; default: return 7}`, ParseError: fmt.Errorf("multiple default statement"), RunOutput: int64(7), Name: ""},
 		{Script: `a = 1; switch a {case 1: return 5; default: return 6; default: return 7}`, ParseError: fmt.Errorf("multiple default statement"), RunOutput: int64(5), Name: ""},
 

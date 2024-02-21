@@ -372,7 +372,7 @@ func TestMakeArrays(t *testing.T) {
 func TestArraySlice(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `a = [1, 2]; a[:]`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `a = [1, 2]; a[:]`, ParseError: fmt.Errorf("unexpected ']'"), Name: ""},
 		{Script: `(1++)[0:0]`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 		{Script: `a = [1, 2]; a[1++:0]`, RunError: fmt.Errorf("invalid operation"), Output: map[string]any{"a": []any{int64(1), int64(2)}}, Name: ""},
 		{Script: `a = [1, 2]; a[0:1++]`, RunError: fmt.Errorf("invalid operation"), Output: map[string]any{"a": []any{int64(1), int64(2)}}, Name: ""},

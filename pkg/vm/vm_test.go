@@ -60,7 +60,7 @@ func TestNumbers(t *testing.T) {
 `, RunOutput: int64(1)},
 
 		{Script: `1..1`, RunError: fmt.Errorf(`strconv.ParseFloat: parsing "1..1": invalid syntax`), Name: ""},
-		{Script: `0x1g`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `0x1g`, ParseError: fmt.Errorf("unexpected IDENT"), Name: ""},
 		{Script: `9223372036854775808`, RunError: fmt.Errorf(`strconv.ParseInt: parsing "9223372036854775808": value out of range`), Name: ""},
 
 		{Script: `1`, RunOutput: int64(1), Name: ""},
@@ -125,7 +125,7 @@ func TestStrings(t *testing.T) {
 		{Script: `a = "a\b"`, RunOutput: "a\b", Output: map[string]any{"a": "a\b"}, Name: ""},
 		{Script: `a = "a\\b"`, RunOutput: "a\\b", Output: map[string]any{"a": "a\\b"}, Name: ""},
 
-		{Script: `a[:]`, Input: map[string]any{"a": "test data"}, ParseError: fmt.Errorf("syntax error"), Output: map[string]any{"a": "test data"}, Name: ""},
+		{Script: `a[:]`, Input: map[string]any{"a": "test data"}, ParseError: fmt.Errorf("unexpected ']'"), Output: map[string]any{"a": "test data"}, Name: ""},
 
 		{Script: `a[0:]`, Input: map[string]any{"a": ""}, RunOutput: "", Output: map[string]any{"a": ""}, Name: ""},
 		{Script: `a[1:]`, Input: map[string]any{"a": ""}, RunError: fmt.Errorf("index out of range"), Output: map[string]any{"a": ""}, Name: ""},
@@ -234,10 +234,10 @@ func TestVar(t *testing.T) {
 	tests := []Test{
 		// simple one variable
 		{Script: `1 = 2`, RunError: fmt.Errorf("invalid operation"), Name: ""},
-		{Script: `var 1 = 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `var 1 = 2`, ParseError: fmt.Errorf("unexpected NUMBER"), Name: ""},
 		{Script: `a = 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 		{Script: `var a = 1++`, RunError: fmt.Errorf("invalid operation"), Name: ""},
-		{Script: `var a := 1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `var a := 1`, ParseError: fmt.Errorf("unexpected WALRUS"), Name: ""},
 		{Script: `y = z`, RunError: envPkg.NewUndefinedSymbolErr("z"), Name: ""},
 
 		{Script: `a := 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
@@ -349,29 +349,29 @@ a  =  1;
 `, RunOutput: int64(1), Name: ""},
 
 		// one variable many values
-		{Script: `, b = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `var , b = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `a,  = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `var a,  = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `, b = 1, 2`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
+		{Script: `var , b = 1, 2`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
+		{Script: `a,  = 1, 2`, ParseError: fmt.Errorf("unexpected '='"), Name: ""},
+		{Script: `var a,  = 1, 2`, ParseError: fmt.Errorf("unexpected '='"), Name: ""},
 
 		// TOFIX: should not error?
-		{Script: `a = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `a = 1, 2`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
 		{Script: `var a = 1, 2`, RunOutput: int64(2), Output: map[string]any{"a": int64(1)}, Name: ""},
 		// TOFIX: should not error?
-		{Script: `a = 1, 2, 3`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `a = 1, 2, 3`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
 		{Script: `var a = 1, 2, 3`, RunOutput: int64(3), Output: map[string]any{"a": int64(1)}, Name: ""},
 
 		// two variables many values
-		{Script: `a, b  = 1,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `var a, b  = 1,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `a, b  = ,1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `var a, b  = ,1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `a, b  = 1,,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `var a, b  = 1,,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `a, b  = ,1,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `var a, b  = ,1,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `a, b  = ,,1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `var a, b  = ,,1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `a, b  = 1,`, ParseError: fmt.Errorf("unexpected $end"), Name: ""},
+		{Script: `var a, b  = 1,`, ParseError: fmt.Errorf("unexpected $end"), Name: ""},
+		{Script: `a, b  = ,1`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
+		{Script: `var a, b  = ,1`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
+		{Script: `a, b  = 1,,`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
+		{Script: `var a, b  = 1,,`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
+		{Script: `a, b  = ,1,`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
+		{Script: `var a, b  = ,1,`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
+		{Script: `a, b  = ,,1`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
+		{Script: `var a, b  = ,,1`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
 
 		{Script: `a.c, b = 1, 2`, RunError: envPkg.NewUndefinedSymbolErr("a"), Name: ""},
 		{Script: `a, b.c = 1, 2`, RunError: envPkg.NewUndefinedSymbolErr("b"), Name: ""},
@@ -418,7 +418,7 @@ a  =  1;
 func TestModule(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `module a.b { }`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `module a.b { }`, ParseError: fmt.Errorf("unexpected '.'"), Name: ""},
 		{Script: `module a { 1++ }`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 		{Script: `module a { }; a.b`, RunError: fmt.Errorf("invalid operation 'b'"), Name: ""},
 
@@ -1422,7 +1422,7 @@ func TestLoad(t *testing.T) {
 	tests := []Test{
 		{Script: `load('testdata/test.ank'); X(1)`, RunOutput: int64(2)},
 		{Script: `load('testdata/not-found.ank'); X(1)`, RunErrorFunc: &notFoundRunErrorFunc},
-		{Script: `load('testdata/broken.ank'); X(1)`, RunError: fmt.Errorf("syntax error")},
+		{Script: `load('testdata/broken.ank'); X(1)`, RunError: fmt.Errorf("unexpected IDENT")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
@@ -1719,7 +1719,7 @@ func TestExecuteError(t *testing.T) {
 	_, err := New(nil).Executor(nil).Run(nil, script)
 	if err == nil {
 		t.Errorf("execute error - received: %v - expected: %v", err, fmt.Errorf("syntax error"))
-	} else if err.Error() != "syntax error" {
+	} else if err.Error() != "unexpected ']'" {
 		t.Errorf("execute error - received: %v - expected: %v", err, fmt.Errorf("syntax error"))
 	}
 }

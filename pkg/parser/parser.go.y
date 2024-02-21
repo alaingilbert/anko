@@ -853,6 +853,23 @@ expr_member_or_ident :
 	expr_ident    { $$ = $1 }
 	| expr_member { $$ = $1 }
 
+expr_for_idents :
+	IDENT
+	{
+		$$ = []string{$1.Lit}
+	}
+	| IDENT ',' IDENT
+	{
+		$$ = []string{$1.Lit, $3.Lit}
+	}
+
+expr_ident :
+	IDENT
+	{
+		$$ = &ast.IdentExpr{Lit: $1.Lit}
+		$$.SetPosition($1.Position())
+	}
+
 expr_member :
 	expr '.' IDENT
 	{
@@ -1263,16 +1280,6 @@ expr_slice_helper1 :
 		$$ = &ast.SliceExpr{Begin: nil, End: $3}
 	}
 
-expr_for_idents :
-	IDENT
-	{
-		$$ = []string{$1.Lit}
-	}
-	| IDENT ',' IDENT
-	{
-		$$ = []string{$1.Lit, $3.Lit}
-	}
-
 expr_idents :
 	IDENT
 	{
@@ -1281,13 +1288,6 @@ expr_idents :
 	| expr_idents comma_opt_newlines IDENT
 	{
 		$$ = append($1, $3.Lit)
-	}
-
-expr_ident :
-	IDENT
-	{
-		$$ = &ast.IdentExpr{Lit: $1.Lit}
-		$$.SetPosition($1.Position())
 	}
 
 opt_term :

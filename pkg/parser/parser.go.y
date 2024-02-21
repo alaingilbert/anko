@@ -30,6 +30,7 @@ import (
 %type<exprs> exprs
 %type<expr> expr
 %type<expr_func> expr_func
+%type<expr_dbg> expr_dbg
 %type<expr_idents> expr_idents
 %type<func_expr_idents> func_expr_idents
 %type<func_expr_idents_not_empty> func_expr_idents_not_empty
@@ -68,6 +69,7 @@ import (
 	stmt_select_default    ast.Stmt
 	stmt                   ast.Stmt
 	expr                   ast.Expr
+	expr_dbg               ast.Expr
 	expr_func              ast.Expr
 	exprs                  []ast.Expr
 	expr_idents            []string
@@ -871,21 +873,7 @@ expr :
 		$$ = &ast.LenExpr{Expr: $3}
 		$$.SetPosition($1.Position())
 	}
-	| DBG '(' ')'
-	{
-		$$ = &ast.DbgExpr{}
-		$$.SetPosition($1.Position())
-	}
-	| DBG '(' expr ')'
-	{
-		$$ = &ast.DbgExpr{Expr: $3}
-		$$.SetPosition($1.Position())
-	}
-	| DBG '(' type_data ')'
-	{
-		$$ = &ast.DbgExpr{TypeData: $3}
-		$$.SetPosition($1.Position())
-	}
+	| expr_dbg { $$ = $1 }
 	| NEW '(' type_data ')'
 	{
 		if $3.Kind == ast.TypeDefault {
@@ -961,6 +949,23 @@ expr :
 	| expr IN expr
 	{
 		$$ = &ast.IncludeExpr{ItemExpr: $1, ListExpr: &ast.SliceExpr{Value: $3, Begin: nil, End: nil}}
+		$$.SetPosition($1.Position())
+	}
+
+expr_dbg :
+	DBG '(' ')'
+	{
+		$$ = &ast.DbgExpr{}
+		$$.SetPosition($1.Position())
+	}
+	| DBG '(' expr ')'
+	{
+		$$ = &ast.DbgExpr{Expr: $3}
+		$$.SetPosition($1.Position())
+	}
+	| DBG '(' type_data ')'
+	{
+		$$ = &ast.DbgExpr{TypeData: $3}
 		$$.SetPosition($1.Position())
 	}
 

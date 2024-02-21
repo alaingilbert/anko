@@ -478,17 +478,17 @@ stmt_select :
 	}
 
 stmt_select_content :
-	opt_newlines stmt_select_cases opt_newlines
+	/* nothing */
+	{
+		$$ = &ast.SelectBodyStmt{}
+	}
+	| opt_newlines stmt_select_cases opt_newlines
 	{
 		$$ = $2
 	}
 
 stmt_select_cases :
-	/* nothing */
-	{
-		$$ = &ast.SelectBodyStmt{}
-	}
-	| stmt_select_cases_helper
+	stmt_select_cases_helper
 	{
 		$$ = $1
 	}

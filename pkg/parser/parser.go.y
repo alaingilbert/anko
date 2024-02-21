@@ -1213,9 +1213,6 @@ expr_map_content_helper :
 	}
 	| expr_map_content_helper comma_opt_newlines expr_map_key_value
 	{
-		if $1.Keys == nil {
-			yylex.Error("syntax error: unexpected ','")
-		}
 		$$.Keys = append($$.Keys, $3[0])
 		$$.Values = append($$.Values, $3[1])
 	}

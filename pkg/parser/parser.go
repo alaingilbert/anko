@@ -2643,9 +2643,6 @@ yynewstate:
 		}
 	case 209:
 		{
-			if yyS[yypt-2].expr_map_content_helper.Keys == nil {
-				yylex.Error("syntax error: unexpected ','")
-			}
 			yyVAL.expr_map_content_helper.Keys = append(yyVAL.expr_map_content_helper.Keys, yyS[yypt-0].expr_map_key_value[0])
 			yyVAL.expr_map_content_helper.Values = append(yyVAL.expr_map_content_helper.Values, yyS[yypt-0].expr_map_key_value[1])
 		}

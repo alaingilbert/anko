@@ -53,6 +53,12 @@ import (
 %type<expr_in> expr_in
 %type<expr_opchan> expr_opchan
 %type<expr_new> expr_new
+%type<expr_len> expr_len
+%type<expr_ternary> expr_ternary
+%type<expr_nil_coalesce> expr_nil_coalesce
+%type<expr_array> expr_array
+%type<expr_paren> expr_paren
+%type<expr_item> expr_item
 %type<expr_unary> expr_unary
 %type<expr_binary> expr_binary
 %type<expr_idents> expr_idents
@@ -115,6 +121,12 @@ import (
 	expr_in                         ast.Expr
 	expr_opchan                     ast.Expr
 	expr_new                        ast.Expr
+	expr_array                      ast.Expr
+	expr_item                       ast.Expr
+	expr_paren                      ast.Expr
+	expr_nil_coalesce               ast.Expr
+	expr_ternary                    ast.Expr
+	expr_len                        ast.Expr
 	expr_unary                      ast.Expr
 	expr_binary                     ast.Expr
 	expr_member_or_ident            ast.Expr
@@ -682,70 +694,27 @@ exprs :
 
 expr :
 	expr_member_or_ident { $$ = $1 }
-	| expr_literals { $$ = $1 }
-	| expr_unary { $$ = $1 }
-	| expr '?' expr ':' expr
-	{
-		$$ = &ast.TernaryOpExpr{Expr: $1, Lhs: $3, Rhs: $5}
-		$$.SetPosition($1.Position())
-	}
-	| expr NILCOALESCE expr
-	{
-		$$ = &ast.NilCoalescingOpExpr{Lhs: $1, Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr_func { $$ = $1 }
-	| '[' ']'
-	{
-		$$ = &ast.ArrayExpr{}
-		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
-	}
-	| '[' opt_newlines opt_exprs opt_comma_newlines ']'
-	{
-		$$ = &ast.ArrayExpr{Exprs: $3}
-		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
-	}
-	| slice_count type_data '{' opt_newlines opt_exprs opt_comma_newlines '}'
-	{
-		$$ = &ast.ArrayExpr{Exprs: $5, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}}
-		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
-	}
-	| '(' expr ')'
-	{
-		$$ = &ast.ParenExpr{SubExpr: $2}
-		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
-	}
-	| expr_binary { $$ = $1 }
-	| expr_call { $$ = $1 }
-	| expr_anon_call { $$ = $1 }
-	| expr_ident '[' expr ']'
-	{
-		$$ = &ast.ItemExpr{Value: $1, Index: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr '[' expr ']'
-	{
-		$$ = &ast.ItemExpr{Value: $1, Index: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr_slice
-	{
-		$$ = $1
-		$$.SetPosition($1.Position())
-	}
-	| LEN '(' expr ')'
-	{
-		$$ = &ast.LenExpr{Expr: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr_dbg { $$ = $1 }
-	| expr_new { $$ = $1 }
-	| expr_make { $$ = $1 }
-	| expr_map { $$ = $1 }
-	| expr_opchan { $$ = $1 }
-	| expr_close { $$ = $1 }
-	| expr_delete { $$ = $1 }
-	| expr_in { $$ = $1 }
+	| expr_literals      { $$ = $1 }
+	| expr_unary         { $$ = $1 }
+	| expr_ternary       { $$ = $1 }
+	| expr_nil_coalesce  { $$ = $1 }
+	| expr_func          { $$ = $1 }
+	| expr_array         { $$ = $1 }
+	| expr_paren         { $$ = $1 }
+	| expr_binary        { $$ = $1 }
+	| expr_call          { $$ = $1 }
+	| expr_anon_call     { $$ = $1 }
+	| expr_item          { $$ = $1 }
+	| expr_slice         { $$ = $1 }
+	| expr_len           { $$ = $1 }
+	| expr_dbg           { $$ = $1 }
+	| expr_new           { $$ = $1 }
+	| expr_make          { $$ = $1 }
+	| expr_map           { $$ = $1 }
+	| expr_opchan        { $$ = $1 }
+	| expr_close         { $$ = $1 }
+	| expr_delete        { $$ = $1 }
+	| expr_in            { $$ = $1 }
 
 expr_dbg :
 	DBG '(' ')'
@@ -761,6 +730,63 @@ expr_dbg :
 	| DBG '(' type_data ')'
 	{
 		$$ = &ast.DbgExpr{TypeData: $3}
+		$$.SetPosition($1.Position())
+	}
+
+expr_len :
+	LEN '(' expr ')'
+	{
+		$$ = &ast.LenExpr{Expr: $3}
+		$$.SetPosition($1.Position())
+	}
+
+expr_item :
+	expr_ident '[' expr ']'
+	{
+		$$ = &ast.ItemExpr{Value: $1, Index: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr '[' expr ']'
+	{
+		$$ = &ast.ItemExpr{Value: $1, Index: $3}
+		$$.SetPosition($1.Position())
+	}
+
+expr_paren :
+	'(' expr ')'
+	{
+		$$ = &ast.ParenExpr{SubExpr: $2}
+		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
+	}
+
+expr_array :
+	'[' ']'
+	{
+		$$ = &ast.ArrayExpr{}
+		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
+	}
+	| '[' opt_newlines opt_exprs opt_comma_newlines ']'
+	{
+		$$ = &ast.ArrayExpr{Exprs: $3}
+		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
+	}
+	| slice_count type_data '{' opt_newlines opt_exprs opt_comma_newlines '}'
+	{
+		$$ = &ast.ArrayExpr{Exprs: $5, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}}
+		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
+	}
+
+expr_nil_coalesce :
+	expr NILCOALESCE expr
+	{
+		$$ = &ast.NilCoalescingOpExpr{Lhs: $1, Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+
+expr_ternary :
+	expr '?' expr ':' expr
+	{
+		$$ = &ast.TernaryOpExpr{Expr: $1, Lhs: $3, Rhs: $5}
 		$$.SetPosition($1.Position())
 	}
 
@@ -1226,26 +1252,32 @@ expr_slice :
 	expr_ident '[' expr ':' expr ']'
 	{
 		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: $5}
+		$$.SetPosition($1.Position())
 	}
 	| expr_ident '[' expr ':' ']'
 	{
 		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: nil}
+		$$.SetPosition($1.Position())
 	}
 	| expr_ident '[' ':' expr ']'
 	{
 		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
+		$$.SetPosition($1.Position())
 	}
 	| expr '[' expr ':' expr ']'
 	{
 		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: $5}
+		$$.SetPosition($1.Position())
 	}
 	| expr '[' expr ':' ']'
 	{
 		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: nil}
+		$$.SetPosition($1.Position())
 	}
 	| expr '[' ':' expr ']'
 	{
 		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
+		$$.SetPosition($1.Position())
 	}
 
 expr_ident :

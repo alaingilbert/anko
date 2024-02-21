@@ -65,6 +65,7 @@ import (
 %type<expr_array> expr_array
 %type<expr_paren> expr_paren
 %type<expr_unary> expr_unary
+%type<unary_op> unary_op
 %type<bin_op> bin_op
 %type<op_assoc> op_assoc
 %type<op_assoc1> op_assoc1
@@ -143,6 +144,7 @@ import (
 	expr_ternary                    ast.Expr
 	expr_len                        ast.Expr
 	expr_unary                      ast.Expr
+	unary_op                        string
 	expr_binary                     ast.Expr
 	expr_assoc                      ast.Expr
 	expr_member_or_ident            ast.Expr
@@ -889,20 +891,15 @@ expr_call_helper :
 		$$ = struct{Exprs []ast.Expr; VarArg bool}{Exprs: $2}
 	}
 
+unary_op :
+	'-'   { $$ = "-" }
+	| '!' { $$ = "!" }
+	| '^' { $$ = "^" }
+
 expr_unary :
-	'-' expr %prec UNARY
+	unary_op expr %prec UNARY
 	{
-		$$ = &ast.UnaryExpr{Operator: "-", Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| '!' expr %prec UNARY
-	{
-		$$ = &ast.UnaryExpr{Operator: "!", Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| '^' expr %prec UNARY
-	{
-		$$ = &ast.UnaryExpr{Operator: "^", Expr: $2}
+		$$ = &ast.UnaryExpr{Operator: $1, Expr: $2}
 		$$.SetPosition($2.Position())
 	}
 	| '&' expr_member_or_ident %prec UNARY

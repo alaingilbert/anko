@@ -307,7 +307,7 @@ var (
 		57407: 107, // compstmt (32x)
 		57486: 108, // type_data (28x)
 		57451: 109, // opt_newlines (20x)
-		57406: 110, // comma_newlines (14x)
+		57406: 110, // comma_opt_newlines (14x)
 		57437: 111, // exprs (13x)
 		57426: 112, // expr_map_content (8x)
 		57447: 113, // opt_exprs (6x)
@@ -319,7 +319,7 @@ var (
 		57483: 119, // stmt_var_or_lets (4x)
 		57441: 120, // func_expr_typed_ident (3x)
 		57443: 121, // func_expr_untyped_ident (3x)
-		57446: 122, // opt_comma_newlines (3x)
+		57446: 122, // opt_comma_opt_newlines (3x)
 		57455: 123, // stmt (3x)
 		57456: 124, // stmt_break (3x)
 		57457: 125, // stmt_continue (3x)
@@ -478,7 +478,7 @@ var (
 		"compstmt",
 		"type_data",
 		"opt_newlines",
-		"comma_newlines",
+		"comma_opt_newlines",
 		"exprs",
 		"expr_map_content",
 		"opt_exprs",
@@ -490,7 +490,7 @@ var (
 		"stmt_var_or_lets",
 		"func_expr_typed_ident",
 		"func_expr_untyped_ident",
-		"opt_comma_newlines",
+		"opt_comma_opt_newlines",
 		"stmt",
 		"stmt_break",
 		"stmt_continue",

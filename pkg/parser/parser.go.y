@@ -605,7 +605,7 @@ opt_func_return_expr_idents2 :
 	{
 		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $1}}
 	}
-	| opt_func_return_expr_idents2 comma_newlines type_data
+	| opt_func_return_expr_idents2 comma_opt_newlines type_data
 	{
 		$$ = append($1, &ast.FuncReturnValuesExpr{TypeData: $3})
 	}
@@ -637,7 +637,7 @@ func_expr_idents_last_untyped :
 	{
 		$$ = []*ast.ParamExpr{$1}
 	}
-	| func_expr_idents_not_empty comma_newlines func_expr_untyped_ident
+	| func_expr_idents_not_empty comma_opt_newlines func_expr_untyped_ident
 	{
 		$$ = append($1, $3)
 	}
@@ -647,7 +647,7 @@ func_expr_typed_idents :
 	{
 		$$ = []*ast.ParamExpr{$1}
 	}
-	| func_expr_idents_not_empty comma_newlines func_expr_typed_ident
+	| func_expr_idents_not_empty comma_opt_newlines func_expr_typed_ident
 	{
 		$$ = append($1, $3)
 	}
@@ -663,14 +663,14 @@ exprs :
 	{
 		$$ = []ast.Expr{$1}
 	}
-	| exprs comma_newlines expr
+	| exprs comma_opt_newlines expr
 	{
 		if len($1) == 0 {
 			yylex.Error("syntax error: unexpected ','")
 		}
 		$$ = append($1, $3)
 	}
-	| exprs comma_newlines expr_ident
+	| exprs comma_opt_newlines expr_ident
 	{
 		if len($1) == 0 {
 			yylex.Error("syntax error: unexpected ','")
@@ -751,12 +751,12 @@ expr_array :
 		$$ = &ast.ArrayExpr{}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
-	| '[' opt_newlines opt_exprs opt_comma_newlines ']'
+	| '[' opt_newlines opt_exprs opt_comma_opt_newlines ']'
 	{
 		$$ = &ast.ArrayExpr{Exprs: $3}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
-	| slice_count type_data '{' opt_newlines opt_exprs opt_comma_newlines '}'
+	| slice_count type_data '{' opt_newlines opt_exprs opt_comma_opt_newlines '}'
 	{
 		$$ = &ast.ArrayExpr{Exprs: $5, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
@@ -1166,7 +1166,7 @@ type_data_struct :
 	{
 		$$ = &ast.TypeStruct{Kind: ast.TypeStructType, StructNames: []string{$1.Lit}, StructTypes: []*ast.TypeStruct{$2}}
 	}
-	| type_data_struct comma_newlines IDENT type_data
+	| type_data_struct comma_opt_newlines IDENT type_data
 	{
 		if $1 == nil {
 			yylex.Error("syntax error: unexpected ','")
@@ -1209,7 +1209,7 @@ expr_map_content :
 	{
 		$$ = &ast.MapExpr{}
 	}
-	| opt_newlines expr_map_content_helper opt_comma_newlines
+	| opt_newlines expr_map_content_helper opt_comma_opt_newlines
 	{
 		$$ = $2
 	}
@@ -1219,7 +1219,7 @@ expr_map_content_helper :
 	{
 		$$ = &ast.MapExpr{Keys: []ast.Expr{$1[0]}, Values: []ast.Expr{$1[1]}}
 	}
-	| expr_map_content_helper comma_newlines expr_map_key_value
+	| expr_map_content_helper comma_opt_newlines expr_map_key_value
 	{
 		if $1.Keys == nil {
 			yylex.Error("syntax error: unexpected ','")
@@ -1281,7 +1281,7 @@ expr_idents :
 	{
 		$$ = []string{$1.Lit}
 	}
-	| expr_idents comma_newlines IDENT
+	| expr_idents comma_opt_newlines IDENT
 	{
 		$$ = append($1, $3.Lit)
 	}
@@ -1312,11 +1312,11 @@ newlines :
 
 newline : '\n'
 
-comma_newlines :
+comma_opt_newlines :
 	',' opt_newlines
 
-opt_comma_newlines :
-	comma_newlines
+opt_comma_opt_newlines :
+	comma_opt_newlines
 	| opt_newlines
 
 %%

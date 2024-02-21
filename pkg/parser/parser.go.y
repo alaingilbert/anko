@@ -58,7 +58,6 @@ import (
 %type<expr_nil_coalesce> expr_nil_coalesce
 %type<expr_array> expr_array
 %type<expr_paren> expr_paren
-%type<expr_item> expr_item
 %type<expr_unary> expr_unary
 %type<expr_binary> expr_binary
 %type<expr_idents> expr_idents
@@ -79,7 +78,7 @@ import (
 %type<expr_map_content> expr_map_content
 %type<expr_map_content_helper> expr_map_content_helper
 %type<expr_map_key_value> expr_map_key_value
-%type<expr_slice> expr_slice
+%type<expr_item_or_slice> expr_item_or_slice
 %type<expr_slice_helper1> expr_slice_helper1
 %type<expr_ident> expr_ident
 
@@ -124,7 +123,6 @@ import (
 	expr_opchan                     ast.Expr
 	expr_new                        ast.Expr
 	expr_array                      ast.Expr
-	expr_item                       ast.Expr
 	expr_paren                      ast.Expr
 	expr_nil_coalesce               ast.Expr
 	expr_ternary                    ast.Expr
@@ -157,8 +155,8 @@ import (
         type_data_struct                *ast.TypeStruct
         slice_count                     int
 	tok                             ast.Token
-	expr_slice                      ast.Expr
-	expr_slice_helper1              *ast.SliceExpr
+	expr_item_or_slice              ast.Expr
+	expr_slice_helper1              ast.Expr
 	expr_ident                      ast.Expr
 }
 
@@ -697,8 +695,7 @@ expr :
 	| expr_binary        { $$ = $1 }
 	| expr_call          { $$ = $1 }
 	| expr_anon_call     { $$ = $1 }
-	| expr_item          { $$ = $1 }
-	| expr_slice         { $$ = $1 }
+	| expr_item_or_slice { $$ = $1 }
 	| expr_len           { $$ = $1 }
 	| expr_dbg           { $$ = $1 }
 	| expr_new           { $$ = $1 }
@@ -730,18 +727,6 @@ expr_len :
 	LEN '(' expr ')'
 	{
 		$$ = &ast.LenExpr{Expr: $3}
-		$$.SetPosition($1.Position())
-	}
-
-expr_item :
-	expr_ident '[' expr ']'
-	{
-		$$ = &ast.ItemExpr{Value: $1, Index: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr '[' expr ']'
-	{
-		$$ = &ast.ItemExpr{Value: $1, Index: $3}
 		$$.SetPosition($1.Position())
 	}
 
@@ -1241,22 +1226,36 @@ expr_map_key_value :
 		$$ = []ast.Expr{$1, $3}
 	}
 
-expr_slice :
+expr_item_or_slice :
 	expr_ident expr_slice_helper1
 	{
-		$2.Value = $1
-		$$ = $2
+		if el, ok := $2.(*ast.SliceExpr); ok {
+			el.Value = $1
+			$$ = el
+		} else if el, ok := $2.(*ast.ItemExpr); ok {
+			el.Value = $1
+			$$ = el
+		}
 		$$.SetPosition($1.Position())
 	}
 	| expr expr_slice_helper1
 	{
-		$2.Value = $1
-		$$ = $2
+		if el, ok := $2.(*ast.SliceExpr); ok {
+			el.Value = $1
+			$$ = el
+		} else if el, ok := $2.(*ast.ItemExpr); ok {
+			el.Value = $1
+			$$ = el
+		}
                	$$.SetPosition($1.Position())
 	}
 
 expr_slice_helper1 :
-	'[' expr ':' expr ']'
+	'[' expr ']'
+	{
+		$$ = &ast.ItemExpr{Index: $2}
+	}
+	| '[' expr ':' expr ']'
 	{
 		$$ = &ast.SliceExpr{Begin: $2, End: $4}
 	}

@@ -406,9 +406,7 @@ stmt_for :
 	}
 	| FOR expr_idents IN expr '{' compstmt '}'
 	{
-		if len($2) < 1 {
-			yylex.Error("missing identifier")
-		} else if len($2) > 2 {
+		if len($2) > 2 {
 			yylex.Error("too many identifiers")
 		} else {
 			$$ = &ast.ForStmt{Vars: $2, Value: $4, Stmt: $6}

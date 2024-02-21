@@ -11,6 +11,7 @@ import (
 %type<stmts> stmts
 %type<stmt> stmt
 %type<stmt_var_or_lets> stmt_var_or_lets
+%type<opt_stmt_var_or_lets> opt_stmt_var_or_lets
 %type<stmt_var> stmt_var
 %type<stmt_lets> stmt_lets
 %type<stmt_typed_lets> stmt_typed_lets
@@ -41,6 +42,7 @@ import (
 %type<exprs> exprs
 %type<opt_exprs> opt_exprs
 %type<expr> expr
+%type<opt_expr> opt_expr
 %type<expr_member_or_ident> expr_member_or_ident
 %type<expr_member> expr_member
 %type<expr_call> expr_call
@@ -91,6 +93,7 @@ import (
 	compstmt                        ast.Stmt
 	stmts                           *ast.StmtsStmt
 	stmt_var_or_lets                ast.Stmt
+	opt_stmt_var_or_lets            ast.Stmt
 	stmt_var                        ast.Stmt
 	stmt_lets                       ast.Stmt
 	stmt_typed_lets                 ast.Stmt
@@ -120,6 +123,7 @@ import (
 	stmt_throw                      ast.Stmt
 	stmt_expr                       *ast.ExprStmt
 	expr                            ast.Expr
+	opt_expr                        ast.Expr
 	expr_dbg                        ast.Expr
 	expr_literals                   ast.Expr
 	expr_literals_helper            ast.Expr
@@ -176,14 +180,16 @@ import (
             OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG WALRUS
 
 /* lowest precedence */
-%right '=' PLUSEQ MINUSEQ MULEQ DIVEQ ANDEQ OREQ
+%left POW
+%right '=' PLUSEQ MINUSEQ DIVEQ MULEQ ANDEQ OREQ
 %right ':'
 %right OPCHAN
 %right '?' NILCOALESCE
 %left OROR
 %left ANDAND
 %left EQEQ NEQ '<' LE '>' GE
-%left '+' '-' '|' '^'
+%left '+'
+%left '-' '|' '^'
 %left '*' '/' '%' SHIFTLEFT SHIFTRIGHT '&'
 %right IN
 %right PLUSPLUS MINUSMINUS
@@ -330,6 +336,11 @@ stmt_try :
 		$$.SetPosition($1.Position())
 	}
 
+opt_stmt_var_or_lets :
+	/* nothing */
+	{ $$ = nil }
+	| stmt_var_or_lets { $$ = $1 }
+
 stmt_var_or_lets :
 	stmt_var          { $$ = $1 }
 	| stmt_typed_lets { $$ = $1 }
@@ -432,42 +443,7 @@ stmt_for :
 		$$ = &ast.LoopStmt{Expr: $2, Stmt: $4}
 		$$.SetPosition($1.Position())
 	}
-	| FOR ';' ';' '{' compstmt '}'
-	{
-		$$ = &ast.CForStmt{Stmt: $5}
-		$$.SetPosition($1.Position())
-	}
-	| FOR ';' ';' expr '{' compstmt '}'
-	{
-		$$ = &ast.CForStmt{Expr3: $4, Stmt: $6}
-		$$.SetPosition($1.Position())
-	}
-	| FOR ';' expr ';' '{' compstmt '}'
-	{
-		$$ = &ast.CForStmt{Expr2: $3, Stmt: $6}
-		$$.SetPosition($1.Position())
-	}
-	| FOR ';' expr ';' expr '{' compstmt '}'
-	{
-		$$ = &ast.CForStmt{Expr2: $3, Expr3: $5, Stmt: $7}
-		$$.SetPosition($1.Position())
-	}
-	| FOR stmt_var_or_lets ';' ';' '{' compstmt '}'
-	{
-		$$ = &ast.CForStmt{Stmt1: $2, Stmt: $6}
-		$$.SetPosition($1.Position())
-	}
-	| FOR stmt_var_or_lets ';' ';' expr '{' compstmt '}'
-	{
-		$$ = &ast.CForStmt{Stmt1: $2, Expr3: $5, Stmt: $7}
-		$$.SetPosition($1.Position())
-	}
-	| FOR stmt_var_or_lets ';' expr ';' '{' compstmt '}'
-	{
-		$$ = &ast.CForStmt{Stmt1: $2, Expr2: $4, Stmt: $7}
-		$$.SetPosition($1.Position())
-	}
-	| FOR stmt_var_or_lets ';' expr ';' expr '{' compstmt '}'
+	| FOR opt_stmt_var_or_lets ';' opt_expr ';' opt_expr '{' compstmt '}'
 	{
 		$$ = &ast.CForStmt{Stmt1: $2, Expr2: $4, Expr3: $6, Stmt: $8}
 		$$.SetPosition($1.Position())
@@ -696,6 +672,11 @@ exprs :
 		}
 		$$ = append($1, $3)
 	}
+
+opt_expr :
+	/* nothing */
+	{ $$ = nil }
+	| expr { $$ = $1 }
 
 expr :
 	expr_member_or_ident { $$ = $1 }

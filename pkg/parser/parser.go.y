@@ -885,14 +885,9 @@ expr_call_helper :
 	}
 
 expr_anon_call :
-	expr '(' exprs VARARG ')'
+	expr expr_call_helper
 	{
-		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3, VarArg: true}
-		$$.SetPosition($1.Position())
-	}
-	| expr '(' opt_exprs ')'
-	{
-		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3}
+		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $2.Exprs, VarArg: $2.VarArg}
 		$$.SetPosition($1.Position())
 	}
 

@@ -15,6 +15,7 @@ import (
 %type<stmt_lets> stmt_lets
 %type<stmt_typed_lets> stmt_typed_lets
 %type<stmt_try> stmt_try
+%type<stmt_defer> stmt_defer
 %type<stmt_if> stmt_if
 %type<stmt_for> stmt_for
 %type<stmt_switch> stmt_switch
@@ -51,6 +52,7 @@ import (
 	stmt_lets              ast.Stmt
 	stmt_typed_lets        ast.Stmt
 	stmt_try               ast.Stmt
+	stmt_defer             ast.Stmt
 	stmt_if                ast.Stmt
 	stmt_for               ast.Stmt
 	stmt_switch            ast.Stmt
@@ -212,7 +214,18 @@ stmt :
 		$$ = &ast.GoroutineStmt{Expr: &ast.AnonCallExpr{Expr: $2, SubExprs: $4, Go: true}}
 		$$.SetPosition($1.Position())
 	}
-	| DEFER IDENT '(' exprs VARARG ')'
+	| stmt_defer
+	{
+		$$ = $1
+	}
+	| expr
+	{
+		$$ = &ast.ExprStmt{Expr: $1}
+		$$.SetPosition($1.Position())
+	}
+
+stmt_defer :
+	DEFER IDENT '(' exprs VARARG ')'
 	{
 		$$ = &ast.DeferStmt{Expr: &ast.CallExpr{Name: $2.Lit, SubExprs: $4, VarArg: true, Defer: true}}
 		$$.SetPosition($2.Position())
@@ -230,11 +243,6 @@ stmt :
 	| DEFER expr '(' exprs ')'
 	{
 		$$ = &ast.DeferStmt{Expr: &ast.AnonCallExpr{Expr: $2, SubExprs: $4, Defer: true}}
-		$$.SetPosition($1.Position())
-	}
-	| expr
-	{
-		$$ = &ast.ExprStmt{Expr: $1}
 		$$.SetPosition($1.Position())
 	}
 

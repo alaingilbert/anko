@@ -433,14 +433,14 @@ stmt_for :
 		$$ = &ast.LoopStmt{Stmt: $3}
 		$$.SetPosition($1.Position())
 	}
-	| FOR expr_for_idents IN expr '{' compstmt '}'
-	{
-		$$ = &ast.ForStmt{Vars: $2, Value: $4, Stmt: $6}
-		$$.SetPosition($1.Position())
-	}
 	| FOR expr '{' compstmt '}'
 	{
 		$$ = &ast.LoopStmt{Expr: $2, Stmt: $4}
+		$$.SetPosition($1.Position())
+	}
+	| FOR expr_for_idents IN expr '{' compstmt '}'
+	{
+		$$ = &ast.ForStmt{Vars: $2, Value: $4, Stmt: $6}
 		$$.SetPosition($1.Position())
 	}
 	| FOR opt_stmt_var_or_lets ';' opt_expr ';' opt_expr '{' compstmt '}'

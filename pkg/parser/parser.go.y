@@ -75,6 +75,7 @@ import (
 %type<func_expr_untyped_ident> func_expr_untyped_ident
 %type<func_expr_typed_ident> func_expr_typed_ident
 %type<func_expr_idents_last_untyped> func_expr_idents_last_untyped
+%type<func_expr_args> func_expr_args
 %type<func_expr_typed_idents> func_expr_typed_idents
 %type<opt_func_return_expr_idents> opt_func_return_expr_idents
 %type<opt_func_return_expr_idents1> opt_func_return_expr_idents1
@@ -89,6 +90,7 @@ import (
 %type<expr_item_or_slice> expr_item_or_slice
 %type<expr_slice_helper1> expr_slice_helper1
 %type<expr_ident> expr_ident
+%type<opt_expr_ident> opt_expr_ident
 
 %union{
 	compstmt                        ast.Stmt
@@ -159,6 +161,7 @@ import (
 	func_expr_untyped_ident         *ast.ParamExpr
 	func_expr_typed_ident           *ast.ParamExpr
 	func_expr_idents_last_untyped   []*ast.ParamExpr
+	func_expr_args                  struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}
 	func_expr_typed_idents          []*ast.ParamExpr
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents1    []*ast.FuncReturnValuesExpr
@@ -173,7 +176,8 @@ import (
 	tok                             ast.Token
 	expr_item_or_slice              ast.Expr
 	expr_slice_helper1              ast.Expr
-	expr_ident                      ast.Expr
+	expr_ident                      *ast.IdentExpr
+	opt_expr_ident                  *ast.IdentExpr
 }
 
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR IN EQEQ NEQ GE LE OROR ANDAND NEW
@@ -853,6 +857,11 @@ expr_member :
 		$$.SetPosition($1.Position())
 	}
 
+opt_expr_ident :
+	/* nothing */
+	{ $$ = nil }
+	| expr_ident { $$ = $1 }
+
 expr_call :
 	IDENT expr_call_helper
 	{
@@ -1047,37 +1056,31 @@ op_comparison :
 	}
 
 expr_func :
-	FUNC '(' func_expr_idents ')' opt_func_return_expr_idents '{' compstmt '}'
+	FUNC opt_expr_ident '(' func_expr_args ')' opt_func_return_expr_idents '{' compstmt '}'
 	{
-		$$ = &ast.FuncExpr{Params: $3, Returns: $5, Stmt: $7}
+		f := &ast.FuncExpr{Params: $4.Params, Returns: $6, Stmt: $8, VarArg: $4.VarArg}
+		if $4.TypeData != nil {
+			f.Params[len(f.Params)-1].TypeData = $4.TypeData
+		}
+		if $2 != nil {
+			f.Name = $2.Lit
+		}
+		$$ = f
 		$$.SetPosition($1.Position())
 	}
-	| FUNC '(' func_expr_idents_last_untyped VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
+
+func_expr_args :
+	func_expr_idents_last_untyped VARARG type_data
 	{
-		$$ = &ast.FuncExpr{Params: $3, Returns: $6, Stmt: $8, VarArg: true}
-		$$.SetPosition($1.Position())
+		$$ = struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}{Params: $1, VarArg: true, TypeData: $3}
 	}
-	| FUNC '(' func_expr_idents_last_untyped VARARG type_data ')' opt_func_return_expr_idents '{' compstmt '}'
+	| func_expr_idents_last_untyped VARARG
 	{
-		$3[len($3)-1].TypeData = $5
-		$$ = &ast.FuncExpr{Params: $3, Returns: $7, Stmt: $9, VarArg: true}
-		$$.SetPosition($1.Position())
+		$$ = struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}{Params: $1, VarArg: true, TypeData: nil}
 	}
-	| FUNC IDENT '(' func_expr_idents ')' opt_func_return_expr_idents '{' compstmt '}'
+	| func_expr_idents
 	{
-		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $6, Stmt: $8}
-		$$.SetPosition($1.Position())
-	}
-	| FUNC IDENT '(' func_expr_idents_last_untyped VARARG ')' opt_func_return_expr_idents '{' compstmt '}'
-	{
-		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $7, Stmt: $9, VarArg: true}
-		$$.SetPosition($1.Position())
-	}
-	| FUNC IDENT '(' func_expr_idents_last_untyped VARARG type_data ')' opt_func_return_expr_idents '{' compstmt '}'
-	{
-		$4[len($4)-1].TypeData = $6
-		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $8, Stmt: $10, VarArg: true}
-		$$.SetPosition($1.Position())
+		$$ = struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}{Params: $1, VarArg: false, TypeData: nil}
 	}
 
 expr_make :

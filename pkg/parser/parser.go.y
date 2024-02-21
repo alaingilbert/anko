@@ -41,6 +41,7 @@ import (
 %type<stmt_throw> stmt_throw
 %type<exprs> exprs
 %type<opt_exprs> opt_exprs
+%type<comma_separated_expr> comma_separated_expr
 %type<expr> expr
 %type<opt_expr> opt_expr
 %type<expr_member_or_ident> expr_member_or_ident
@@ -150,6 +151,7 @@ import (
 	expr_make                       ast.Expr
 	exprs                           []ast.Expr
 	opt_exprs                       []ast.Expr
+	comma_separated_expr            []ast.Expr
 	expr_idents                     []string
 	expr_for_idents                 []string
 	func_expr_idents                []*ast.ParamExpr
@@ -738,15 +740,21 @@ expr_array :
 		$$ = &ast.ArrayExpr{}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
-	| '[' opt_newlines opt_exprs opt_comma_opt_newlines ']'
+	| '[' comma_separated_expr ']'
 	{
-		$$ = &ast.ArrayExpr{Exprs: $3}
+		$$ = &ast.ArrayExpr{Exprs: $2}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
-	| slice_count type_data '{' opt_newlines opt_exprs opt_comma_opt_newlines '}'
+	| slice_count type_data '{' comma_separated_expr '}'
 	{
-		$$ = &ast.ArrayExpr{Exprs: $5, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}}
+		$$ = &ast.ArrayExpr{Exprs: $4, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
+	}
+
+comma_separated_expr :
+	opt_newlines opt_exprs opt_comma_opt_newlines
+	{
+		$$ = $2
 	}
 
 expr_nil_coalesce :

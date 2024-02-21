@@ -583,16 +583,6 @@ stmt_switch_default :
 		$$ = $3
 	}
 
-expr_idents :
-	IDENT
-	{
-		$$ = []string{$1.Lit}
-	}
-	| expr_idents comma_newlines IDENT
-	{
-		$$ = append($1, $3.Lit)
-	}
-
 opt_func_return_expr_idents :
 	{
 		$$ = nil
@@ -1278,6 +1268,16 @@ expr_slice :
 	{
 		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
 		$$.SetPosition($1.Position())
+	}
+
+expr_idents :
+	IDENT
+	{
+		$$ = []string{$1.Lit}
+	}
+	| expr_idents comma_newlines IDENT
+	{
+		$$ = append($1, $3.Lit)
 	}
 
 expr_ident :

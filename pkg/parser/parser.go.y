@@ -1131,7 +1131,6 @@ expr_map :
 	}
 
 expr_map_content :
-	/* nothing */
 	opt_newlines
 	{
 		$$ = &ast.MapExpr{}

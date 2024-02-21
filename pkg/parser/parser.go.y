@@ -1233,11 +1233,11 @@ expr_ident :
 opt_term :
 	/* nothing */
 	| term
-	
+
 term :
-	';' newlines
+	';'
 	| newlines
-	| ';'
+	| ';' newlines
 
 opt_newlines : 
 	/* nothing */

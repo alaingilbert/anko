@@ -1145,13 +1145,13 @@ expr_map_content_helper :
 	{
 		$$ = &ast.MapExpr{Keys: []ast.Expr{$1[0]}, Values: []ast.Expr{$1[1]}}
 	}
-	| expr_map_content_helper ',' opt_newlines expr_map_key_value
+	| expr_map_content_helper comma_newlines expr_map_key_value
 	{
 		if $1.Keys == nil {
 			yylex.Error("syntax error: unexpected ','")
 		}
-		$$.Keys = append($$.Keys, $4[0])
-		$$.Values = append($$.Values, $4[1])
+		$$.Keys = append($$.Keys, $3[0])
+		$$.Values = append($$.Values, $3[1])
 	}
 
 expr_map_key_value :
@@ -1212,10 +1212,13 @@ newlines :
 
 newline : '\n'
 
-opt_comma_newlines : 
-	/* nothing */
-	| ',' newlines
-	| newlines
+comma_newlines :
+	',' newlines
 	| ','
+
+opt_comma_newlines :
+	/* nothing */
+	| comma_newlines
+	| newlines
 
 %%

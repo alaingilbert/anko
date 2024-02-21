@@ -60,6 +60,7 @@ import (
 %type<expr_paren> expr_paren
 %type<expr_unary> expr_unary
 %type<expr_binary> expr_binary
+%type<op_comparison> op_comparison
 %type<expr_idents> expr_idents
 %type<expr_for_idents> expr_for_idents
 %type<func_expr_idents> func_expr_idents
@@ -129,6 +130,7 @@ import (
 	expr_len                        ast.Expr
 	expr_unary                      ast.Expr
 	expr_binary                     ast.Expr
+	op_comparison                   ast.Expr
 	expr_member_or_ident            ast.Expr
 	expr_call                       *ast.CallExpr
 	expr_anon_call                  *ast.AnonCallExpr
@@ -958,36 +960,7 @@ expr_binary :
 		$$ = &ast.BinOpExpr{Lhs: $1, Operator: ">>", Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
-	| expr EQEQ expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "==", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr NEQ expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "!=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr '>' expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: ">", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr GE expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: ">=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr '<' expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "<", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr LE expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "<=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
+	| op_comparison { $$ = $1 }
 	| expr PLUSEQ expr
 	{
 		$$ = &ast.AssocExpr{Lhs: $1, Operator: "+=", Rhs: $3}
@@ -1046,6 +1019,38 @@ expr_binary :
 	| expr ANDAND expr
 	{
 		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "&&", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+
+op_comparison :
+	expr EQEQ expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "==", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr NEQ expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "!=", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr '>' expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: ">", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr GE expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: ">=", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr '<' expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "<", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr LE expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "<=", Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
 

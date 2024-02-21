@@ -915,12 +915,7 @@ expr_unary :
 		$$ = $2
 		$$.SetPosition($2.Position())
 	}
-	| '*' expr_ident %prec UNARY
-	{
-		$$ = &ast.DerefExpr{Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| '*' expr_member %prec UNARY
+	| '*' expr_member_or_ident %prec UNARY
 	{
 		$$ = &ast.DerefExpr{Expr: $2}
 		$$.SetPosition($2.Position())

@@ -18,6 +18,7 @@ import (
 %type<stmt_defer> stmt_defer
 %type<stmt_go> stmt_go
 %type<stmt_if> stmt_if
+%type<stmt_if_helper> stmt_if_helper
 %type<stmt_for> stmt_for
 %type<stmt_switch> stmt_switch
 %type<stmt_switch_cases> stmt_switch_cases
@@ -80,6 +81,7 @@ import (
 	stmt_defer                      ast.Stmt
 	stmt_go                         ast.Stmt
 	stmt_if                         ast.Stmt
+	stmt_if_helper                  ast.Stmt
 	stmt_for                        ast.Stmt
 	stmt_switch                     ast.Stmt
 	stmt_switch_cases               *ast.SwitchStmt
@@ -183,23 +185,19 @@ stmts :
 
 stmt :
 	stmt_var_or_lets { $$ = $1 }
-	| stmt_break { $$ = $1 }
-	| stmt_continue { $$ = $1 }
-	| stmt_return { $$ = $1 }
-	| stmt_throw { $$ = $1 }
-	| stmt_module { $$ = $1 }
-	| stmt_if
-	{
-		$$ = $1
-		$$.SetPosition($1.Position())
-	}
-	| stmt_for    { $$ = $1 }
-	| stmt_try    { $$ = $1 }
-	| stmt_switch { $$ = $1 }
-	| stmt_select { $$ = $1 }
-	| stmt_go     { $$ = $1 }
-	| stmt_defer  { $$ = $1 }
-	| stmt_expr   { $$ = $1 }
+	| stmt_break     { $$ = $1 }
+	| stmt_continue  { $$ = $1 }
+	| stmt_return    { $$ = $1 }
+	| stmt_throw     { $$ = $1 }
+	| stmt_module    { $$ = $1 }
+	| stmt_if        { $$ = $1 }
+	| stmt_for       { $$ = $1 }
+	| stmt_try       { $$ = $1 }
+	| stmt_switch    { $$ = $1 }
+	| stmt_select    { $$ = $1 }
+	| stmt_go        { $$ = $1 }
+	| stmt_defer     { $$ = $1 }
+	| stmt_expr      { $$ = $1 }
 
 stmt_break :
 	BREAK
@@ -352,17 +350,24 @@ stmt_lets :
 	}
 
 stmt_if :
+	stmt_if_helper
+	{
+		$$ = $1
+		$$.SetPosition($1.Position())
+	}
+
+stmt_if_helper :
 	IF expr '{' compstmt '}'
 	{
 		$$ = &ast.IfStmt{If: $2, Then: $4, Else: nil}
 		$$.SetPosition($1.Position())
 	}
-	| stmt_if ELSE IF expr '{' compstmt '}'
+	| stmt_if_helper ELSE IF expr '{' compstmt '}'
 	{
 		$1.(*ast.IfStmt).ElseIf = append($1.(*ast.IfStmt).ElseIf, &ast.IfStmt{If: $4, Then: $6})
 		$$.SetPosition($1.Position())
 	}
-	| stmt_if ELSE '{' compstmt '}'
+	| stmt_if_helper ELSE '{' compstmt '}'
 	{
 		$$.SetPosition($1.Position())
 		if $$.(*ast.IfStmt).Else != nil {

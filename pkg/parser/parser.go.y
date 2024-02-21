@@ -421,16 +421,14 @@ stmt_select_cases :
 	}
 	| stmt_select_cases stmt_select_case
 	{
-		body := $$
-		body.Cases = append(body.Cases, $2)
+		$$.Cases = append($$.Cases, $2)
 	}
 	| stmt_select_cases stmt_select_default
 	{
-		body := $$
-		if body.Default != nil {
+		if $$.Default != nil {
 		    yylex.Error("multiple default statement")
 		}
-		body.Default = $2
+		$$.Default = $2
 	}
 
 

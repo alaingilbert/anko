@@ -62,6 +62,7 @@ import (
 %type<expr_unary> expr_unary
 %type<expr_binary> expr_binary
 %type<expr_idents> expr_idents
+%type<expr_for_idents> expr_for_idents
 %type<func_expr_idents> func_expr_idents
 %type<func_expr_idents_not_empty> func_expr_idents_not_empty
 %type<func_expr_untyped_ident> func_expr_untyped_ident
@@ -137,6 +138,7 @@ import (
 	exprs                           []ast.Expr
 	opt_exprs                       []ast.Expr
 	expr_idents                     []string
+	expr_for_idents                 []string
 	func_expr_idents                []*ast.ParamExpr
 	func_expr_idents_not_empty      []*ast.ParamExpr
 	func_expr_untyped_ident         *ast.ParamExpr
@@ -404,14 +406,10 @@ stmt_for :
 		$$ = &ast.LoopStmt{Stmt: $3}
 		$$.SetPosition($1.Position())
 	}
-	| FOR expr_idents IN expr '{' compstmt '}'
+	| FOR expr_for_idents IN expr '{' compstmt '}'
 	{
-		if len($2) > 2 {
-			yylex.Error("too many identifiers")
-		} else {
-			$$ = &ast.ForStmt{Vars: $2, Value: $4, Stmt: $6}
-			$$.SetPosition($1.Position())
-		}
+		$$ = &ast.ForStmt{Vars: $2, Value: $4, Stmt: $6}
+		$$.SetPosition($1.Position())
 	}
 	| FOR expr '{' compstmt '}'
 	{
@@ -1266,6 +1264,16 @@ expr_slice :
 	{
 		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
 		$$.SetPosition($1.Position())
+	}
+
+expr_for_idents :
+	IDENT
+	{
+		$$ = []string{$1.Lit}
+	}
+	| IDENT ',' IDENT
+	{
+		$$ = []string{$1.Lit, $3.Lit}
 	}
 
 expr_idents :

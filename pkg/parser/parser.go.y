@@ -21,6 +21,7 @@ import (
 %type<stmt_for> stmt_for
 %type<stmt_switch> stmt_switch
 %type<stmt_switch_cases> stmt_switch_cases
+%type<stmt_switch_cases_helper> stmt_switch_cases_helper
 %type<stmt_switch_case> stmt_switch_case
 %type<stmt_switch_default> stmt_switch_default
 %type<stmt_select> stmt_select
@@ -71,6 +72,7 @@ import (
 	stmt_for                        ast.Stmt
 	stmt_switch                     ast.Stmt
 	stmt_switch_cases               ast.Stmt
+	stmt_switch_cases_helper        ast.Stmt
 	stmt_switch_case                ast.Stmt
 	stmt_switch_default             ast.Stmt
 	stmt_select                     ast.Stmt
@@ -474,7 +476,13 @@ stmt_switch_cases :
 	{
 		$$ = &ast.SwitchStmt{}
 	}
-	| stmt_switch_default
+	| stmt_switch_cases_helper
+	{
+		$$ = $1
+	}
+
+stmt_switch_cases_helper :
+	stmt_switch_default
 	{
 		$$ = &ast.SwitchStmt{Default: $1}
 	}
@@ -482,13 +490,13 @@ stmt_switch_cases :
 	{
 		$$ = &ast.SwitchStmt{Cases: []ast.Stmt{$1}}
 	}
-	| stmt_switch_cases stmt_switch_case
+	| stmt_switch_cases_helper stmt_switch_case
 	{
 		switchStmt := $1.(*ast.SwitchStmt)
 		switchStmt.Cases = append(switchStmt.Cases, $2)
 		$$ = switchStmt
 	}
-	| stmt_switch_cases stmt_switch_default
+	| stmt_switch_cases_helper stmt_switch_default
 	{
 		switchStmt := $1.(*ast.SwitchStmt)
 		if switchStmt.Default != nil {

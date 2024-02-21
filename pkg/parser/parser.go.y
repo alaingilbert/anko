@@ -29,6 +29,7 @@ import (
 %type<stmt_select_default> stmt_select_default
 %type<exprs> exprs
 %type<expr> expr
+%type<expr_member_or_ident> expr_member_or_ident
 %type<expr_func> expr_func
 %type<expr_make> expr_make
 %type<expr_dbg> expr_dbg
@@ -75,6 +76,7 @@ import (
 	expr_dbg               ast.Expr
 	expr_unary             ast.Expr
 	expr_binary            ast.Expr
+	expr_member_or_ident   ast.Expr
 	expr_func              ast.Expr
 	expr_make              ast.Expr
 	exprs                  []ast.Expr
@@ -609,7 +611,7 @@ exprs :
 	}
 
 expr :
-	expr_ident { $$ = $1 }
+	expr_member_or_ident { $$ = $1 }
 	| NUMBER
 	{
 		$$ = &ast.NumberExpr{Lit: $1.Lit}
@@ -646,15 +648,7 @@ expr :
 		$$ = &ast.NilCoalescingOpExpr{Lhs: $1, Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
-	| expr '.' IDENT
-	{
-		$$ = &ast.MemberExpr{Expr: $1, Name: $3.Lit}
-		$$.SetPosition($1.Position())
-	}
-	| expr_func
-	{
-		$$ = $1
-	}
+	| expr_func { $$ = $1 }
 	| '[' ']'
 	{
 		$$ = &ast.ArrayExpr{}
@@ -790,6 +784,14 @@ expr_dbg :
 	| DBG '(' type_data ')'
 	{
 		$$ = &ast.DbgExpr{TypeData: $3}
+		$$.SetPosition($1.Position())
+	}
+
+expr_member_or_ident :
+	expr_ident { $$ = $1 }
+	| expr '.' IDENT
+	{
+		$$ = &ast.MemberExpr{Expr: $1, Name: $3.Lit}
 		$$.SetPosition($1.Position())
 	}
 

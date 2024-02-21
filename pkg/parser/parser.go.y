@@ -19,7 +19,9 @@ import (
 %type<stmt_defer> stmt_defer
 %type<stmt_go> stmt_go
 %type<stmt_if> stmt_if
-%type<stmt_if_helper> stmt_if_helper
+%type<maybe_else> maybe_else
+%type<else_if_list> else_if_list
+%type<else_if> else_if
 %type<stmt_for> stmt_for
 %type<stmt_switch> stmt_switch
 %type<stmt_switch_cases> stmt_switch_cases
@@ -107,7 +109,9 @@ import (
 	stmt_defer                      ast.Stmt
 	stmt_go                         ast.Stmt
 	stmt_if                         ast.Stmt
-	stmt_if_helper                  ast.Stmt
+	maybe_else                      ast.Stmt
+	else_if_list                    []ast.Stmt
+	else_if                         ast.Stmt
 	stmt_for                        ast.Stmt
 	stmt_switch                     ast.Stmt
 	stmt_switch_cases               *ast.SwitchStmt
@@ -412,32 +416,35 @@ stmt_lets :
 	}
 
 stmt_if :
-	stmt_if_helper
+	IF expr '{' compstmt '}' else_if_list maybe_else
 	{
-		$$ = $1
+		$$ = &ast.IfStmt{If: $2, Then: $4, ElseIf: $6, Else: $7}
 		$$.SetPosition($1.Position())
 	}
 
-stmt_if_helper :
-	IF expr '{' compstmt '}'
+else_if_list :
+	/* nothing */
+	{ $$ = []ast.Stmt{} }
+	| else_if_list else_if
 	{
-		$$ = &ast.IfStmt{If: $2, Then: $4, Else: nil}
-		$$.SetPosition($1.Position())
+		$1 = append($1, $2)
+		$$ = $1
 	}
-	| stmt_if_helper ELSE IF expr '{' compstmt '}'
+
+else_if :
+	ELSE IF expr '{' compstmt '}'
 	{
-		$1.(*ast.IfStmt).ElseIf = append($1.(*ast.IfStmt).ElseIf, &ast.IfStmt{If: $4, Then: $6})
-		$$.SetPosition($1.Position())
+		$$ = &ast.IfStmt{If: $3, Then: $5}
 	}
-	| stmt_if_helper ELSE '{' compstmt '}'
+
+maybe_else :
+	/* nothing */
+	{ $$ = nil }
+	| ELSE '{' compstmt '}'
 	{
-		$$.SetPosition($1.Position())
-		if $$.(*ast.IfStmt).Else != nil {
-			yylex.Error("multiple else statement")
-		} else {
-			$$.(*ast.IfStmt).Else = $4
-		}
+		$$ = $3
 	}
+
 stmt_for :
 	FOR '{' compstmt '}'
 	{

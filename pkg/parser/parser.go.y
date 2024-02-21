@@ -55,6 +55,7 @@ import (
 %type<type_data_struct> type_data_struct
 %type<slice_count> slice_count
 %type<expr_map> expr_map
+%type<expr_map_content> expr_map_content
 %type<expr_map_key_value> expr_map_key_value
 %type<expr_slice> expr_slice
 %type<expr_ident> expr_ident
@@ -105,6 +106,7 @@ import (
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents1    []*ast.FuncReturnValuesExpr
 	expr_map                        *ast.MapExpr
+	expr_map_content                *ast.MapExpr
 	expr_map_key_value              []ast.Expr
 	type_data                       *ast.TypeStruct
         type_data_struct                *ast.TypeStruct
@@ -699,23 +701,7 @@ expr :
 		$$.SetPosition($1.Position())
 	}
 	| expr_make { $$ = $1 }
-	| MAP '{' opt_newlines expr_map opt_comma_newlines '}'
-	{
-		$4.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: &ast.TypeStruct{Name: "interface"}, SubType: &ast.TypeStruct{Name: "interface"}}
-		$$ = $4
-		$$.SetPosition($1.Position())
-	}
-	| MAP '[' type_data ']' type_data '{' opt_newlines expr_map opt_comma_newlines '}'
-	{
-		$8.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
-		$$ = $8
-		$$.SetPosition($1.Position())
-	}
-	| '{' opt_newlines expr_map opt_comma_newlines '}'
-	{
-		$$ = $3
-		$$.SetPosition($3.Position())
-	}
+	| expr_map { $$ = $1 }
 	| expr OPCHAN expr
 	{
 		$$ = &ast.ChanExpr{Lhs: $1, Rhs: $3}
@@ -1123,8 +1109,26 @@ slice_count :
 		$$ = $3 + 1
 	}
 
-
 expr_map :
+	MAP '{' opt_newlines expr_map_content opt_comma_newlines '}'
+	{
+		$4.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: &ast.TypeStruct{Name: "interface"}, SubType: &ast.TypeStruct{Name: "interface"}}
+		$$ = $4
+		$$.SetPosition($1.Position())
+	}
+	| MAP '[' type_data ']' type_data '{' opt_newlines expr_map_content opt_comma_newlines '}'
+	{
+		$8.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
+		$$ = $8
+		$$.SetPosition($1.Position())
+	}
+	| '{' opt_newlines expr_map_content opt_comma_newlines '}'
+	{
+		$$ = $3
+		$$.SetPosition($3.Position())
+	}
+
+expr_map_content :
 	/* nothing */
 	{
 		$$ = &ast.MapExpr{}
@@ -1133,7 +1137,7 @@ expr_map :
 	{
 		$$ = &ast.MapExpr{Keys: []ast.Expr{$1[0]}, Values: []ast.Expr{$1[1]}}
 	}
-	| expr_map ',' opt_newlines expr_map_key_value
+	| expr_map_content ',' opt_newlines expr_map_key_value
 	{
 		if $1.Keys == nil {
 			yylex.Error("syntax error: unexpected ','")

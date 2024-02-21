@@ -144,13 +144,8 @@ stmts :
 
 stmt :
 	/* nothing */
-	{
-		$$ = nil
-	}
-	| stmt_var_or_lets
-	{
-		$$ = $1
-	}
+	{ $$ = nil }
+	| stmt_var_or_lets { $$ = $1 }
 	| BREAK
 	{
 		$$ = &ast.BreakStmt{}
@@ -181,29 +176,12 @@ stmt :
 		$$ = $1
 		$$.SetPosition($1.Position())
 	}
-	| stmt_for {
-		$$ = $1
-	}
-	| stmt_try
-	{
-		$$ = $1
-	}
-	| stmt_switch
-	{
-		$$ = $1
-	}
-	| stmt_select
-	{
-		$$ = $1
-	}
-	| stmt_go
-	{
-		$$ = $1
-	}
-	| stmt_defer
-	{
-		$$ = $1
-	}
+	| stmt_for    { $$ = $1 }
+	| stmt_try    { $$ = $1 }
+	| stmt_switch { $$ = $1 }
+	| stmt_select { $$ = $1 }
+	| stmt_go     { $$ = $1 }
+	| stmt_defer  { $$ = $1 }
 	| expr
 	{
 		$$ = &ast.ExprStmt{Expr: $1}
@@ -277,18 +255,9 @@ stmt_try :
 	}
 
 stmt_var_or_lets :
-	stmt_var
-	{
-		$$ = $1
-	}
-	| stmt_typed_lets
-	{
-		$$ = $1
-	}
-	| stmt_lets
-	{
-		$$ = $1
-	}
+	stmt_var          { $$ = $1 }
+	| stmt_typed_lets { $$ = $1 }
+	| stmt_lets       { $$ = $1 }
 
 stmt_var :
 	VAR expr_idents '=' exprs
@@ -574,20 +543,11 @@ func_expr_idents :
 	{
 		$$ = []*ast.ParamExpr{}
 	}
-	| func_expr_idents_not_empty
-	{
-		$$ = $1
-	}
+	| func_expr_idents_not_empty { $$ = $1 }
 
 func_expr_idents_not_empty :
-	func_expr_idents_last_untyped
-	{
-		$$ = $1
-	}
-	| func_expr_typed_idents
-	{
-		$$ = $1
-	}
+	func_expr_idents_last_untyped { $$ = $1 }
+	| func_expr_typed_idents      { $$ = $1 }
 
 func_expr_untyped_ident :
 	IDENT
@@ -645,10 +605,7 @@ exprs :
 	}
 
 expr :
-	expr_ident
-	{
-		$$ = $1
-	}
+	expr_ident { $$ = $1 }
 	| NUMBER
 	{
 		$$ = &ast.NumberExpr{Lit: $1.Lit}

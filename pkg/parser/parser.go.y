@@ -347,9 +347,7 @@ stmt_typed_lets :
 		} else {
 			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
 		}
-		if len($1) > 0 {
-			$$.SetPosition($1[0].Position())
-		}
+		$$.SetPosition($1[0].Position())
 	}
 
 stmt_lets :
@@ -368,9 +366,7 @@ stmt_lets :
 		} else {
 			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3}
 		}
-		if len($1) > 0 {
-			$$.SetPosition($1[0].Position())
-		}
+		$$.SetPosition($1[0].Position())
 	}
 
 stmt_if :
@@ -1306,7 +1302,7 @@ opt_newlines :
 	/* nothing */
 	| newlines
 
-newlines : 
+newlines :
 	newline
 	| newlines newline
 

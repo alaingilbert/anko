@@ -1833,9 +1833,7 @@ yynewstate:
 			} else {
 				yyVAL.stmt_typed_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: true}
 			}
-			if len(yyS[yypt-2].exprs) > 0 {
-				yyVAL.stmt_typed_lets.SetPosition(yyS[yypt-2].exprs[0].Position())
-			}
+			yyVAL.stmt_typed_lets.SetPosition(yyS[yypt-2].exprs[0].Position())
 		}
 	case 40:
 		{
@@ -1852,9 +1850,7 @@ yynewstate:
 			} else {
 				yyVAL.stmt_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs}
 			}
-			if len(yyS[yypt-2].exprs) > 0 {
-				yyVAL.stmt_lets.SetPosition(yyS[yypt-2].exprs[0].Position())
-			}
+			yyVAL.stmt_lets.SetPosition(yyS[yypt-2].exprs[0].Position())
 		}
 	case 42:
 		{

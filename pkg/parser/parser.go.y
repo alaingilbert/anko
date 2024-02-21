@@ -473,6 +473,16 @@ stmt_for :
 		$$.SetPosition($1.Position())
 	}
 
+expr_for_idents :
+	IDENT
+	{
+		$$ = []string{$1.Lit}
+	}
+	| IDENT ',' IDENT
+	{
+		$$ = []string{$1.Lit, $3.Lit}
+	}
+
 stmt_select :
 	SELECT '{' stmt_select_content '}'
 	{
@@ -852,16 +862,6 @@ expr_literals :
 expr_member_or_ident :
 	expr_ident    { $$ = $1 }
 	| expr_member { $$ = $1 }
-
-expr_for_idents :
-	IDENT
-	{
-		$$ = []string{$1.Lit}
-	}
-	| IDENT ',' IDENT
-	{
-		$$ = []string{$1.Lit, $3.Lit}
-	}
 
 expr_ident :
 	IDENT

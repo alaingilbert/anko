@@ -80,6 +80,7 @@ import (
 %type<expr_map_content_helper> expr_map_content_helper
 %type<expr_map_key_value> expr_map_key_value
 %type<expr_slice> expr_slice
+%type<expr_slice_helper1> expr_slice_helper1
 %type<expr_ident> expr_ident
 
 %union{
@@ -157,6 +158,7 @@ import (
         slice_count                     int
 	tok                             ast.Token
 	expr_slice                      ast.Expr
+	expr_slice_helper1              *ast.SliceExpr
 	expr_ident                      ast.Expr
 }
 
@@ -1240,35 +1242,31 @@ expr_map_key_value :
 	}
 
 expr_slice :
-	expr_ident '[' expr ':' expr ']'
+	expr_ident expr_slice_helper1
 	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: $5}
+		$2.Value = $1
+		$$ = $2
 		$$.SetPosition($1.Position())
 	}
-	| expr_ident '[' expr ':' ']'
+	| expr expr_slice_helper1
 	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: nil}
-		$$.SetPosition($1.Position())
+		$2.Value = $1
+		$$ = $2
+               	$$.SetPosition($1.Position())
 	}
-	| expr_ident '[' ':' expr ']'
+
+expr_slice_helper1 :
+	'[' expr ':' expr ']'
 	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
-		$$.SetPosition($1.Position())
+		$$ = &ast.SliceExpr{Begin: $2, End: $4}
 	}
-	| expr '[' expr ':' expr ']'
+	| '[' expr ':' ']'
 	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: $5}
-		$$.SetPosition($1.Position())
+		$$ = &ast.SliceExpr{Begin: $2, End: nil}
 	}
-	| expr '[' expr ':' ']'
+	| '[' ':' expr ']'
 	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: $3, End: nil}
-		$$.SetPosition($1.Position())
-	}
-	| expr '[' ':' expr ']'
-	{
-		$$ = &ast.SliceExpr{Value: $1, Begin: nil, End: $4}
-		$$.SetPosition($1.Position())
+		$$ = &ast.SliceExpr{Begin: nil, End: $3}
 	}
 
 expr_for_idents :

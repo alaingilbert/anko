@@ -686,13 +686,6 @@ exprs :
 		}
 		$$ = append($1, $3)
 	}
-	| exprs comma_opt_newlines expr_ident
-	{
-		if len($1) == 0 {
-			yylex.Error("syntax error: unexpected ','")
-		}
-		$$ = append($1, $3)
-	}
 
 expr :
 	expr_member_or_ident { $$ = $1 }
@@ -1241,17 +1234,7 @@ expr_map_key_value :
 	}
 
 expr_item_or_slice :
-	expr_ident expr_slice_helper1
-	{
-		if el, ok := $2.(*ast.SliceExpr); ok {
-			el.Value = $1
-		} else if el, ok := $2.(*ast.ItemExpr); ok {
-			el.Value = $1
-		}
-		$$ = $2
-		$$.SetPosition($1.Position())
-	}
-	| expr expr_slice_helper1
+	expr expr_slice_helper1
 	{
 		if el, ok := $2.(*ast.SliceExpr); ok {
 			el.Value = $1

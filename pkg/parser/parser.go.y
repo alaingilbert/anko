@@ -146,16 +146,16 @@ compstmt :
 	{
 		$$ = nil
 	}
-	| stmts opt_term
+	| opt_term stmts opt_term
 	{
-		$$ = $1
+		$$ = $2
 	}
 
 stmts :
-	opt_term stmt
+	stmt
 	{
-		if $2 != nil {
-			$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$2}}
+		if $1 != nil {
+			$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$1}}
 		}
 		if l, ok := yylex.(*Lexer); ok {
 			l.stmt = $$

@@ -32,6 +32,7 @@ import (
 %type<expr_func> expr_func
 %type<expr_make> expr_make
 %type<expr_dbg> expr_dbg
+%type<expr_unary> expr_unary
 %type<expr_idents> expr_idents
 %type<func_expr_idents> func_expr_idents
 %type<func_expr_idents_not_empty> func_expr_idents_not_empty
@@ -71,6 +72,7 @@ import (
 	stmt                   ast.Stmt
 	expr                   ast.Expr
 	expr_dbg               ast.Expr
+	expr_unary             ast.Expr
 	expr_func              ast.Expr
 	expr_make              ast.Expr
 	exprs                  []ast.Expr
@@ -611,41 +613,7 @@ expr :
 		$$ = &ast.NumberExpr{Lit: $1.Lit}
 		$$.SetPosition($1.Position())
 	}
-	| '-' expr %prec UNARY
-	{
-		$$ = &ast.UnaryExpr{Operator: "-", Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| '!' expr %prec UNARY
-	{
-		$$ = &ast.UnaryExpr{Operator: "!", Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| '^' expr %prec UNARY
-	{
-		$$ = &ast.UnaryExpr{Operator: "^", Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| '&' expr_ident %prec UNARY
-	{
-		$$ = &ast.AddrExpr{Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| '&' expr '.' IDENT %prec UNARY
-	{
-		$$ = &ast.AddrExpr{Expr: &ast.MemberExpr{Expr: $2, Name: $4.Lit}}
-		$$.SetPosition($2.Position())
-	}
-	| '*' expr_ident %prec UNARY
-	{
-		$$ = &ast.DerefExpr{Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| '*' expr '.' IDENT %prec UNARY
-	{
-		$$ = &ast.DerefExpr{Expr: &ast.MemberExpr{Expr: $2, Name: $4.Lit}}
-		$$.SetPosition($2.Position())
-	}
+	| expr_unary { $$ = $1 }
 	| STRING
 	{
 		$$ = &ast.StringExpr{Lit: $1.Lit}
@@ -950,6 +918,43 @@ expr_dbg :
 	{
 		$$ = &ast.DbgExpr{TypeData: $3}
 		$$.SetPosition($1.Position())
+	}
+
+expr_unary :
+	'-' expr %prec UNARY
+	{
+		$$ = &ast.UnaryExpr{Operator: "-", Expr: $2}
+		$$.SetPosition($2.Position())
+	}
+	| '!' expr %prec UNARY
+	{
+		$$ = &ast.UnaryExpr{Operator: "!", Expr: $2}
+		$$.SetPosition($2.Position())
+	}
+	| '^' expr %prec UNARY
+	{
+		$$ = &ast.UnaryExpr{Operator: "^", Expr: $2}
+		$$.SetPosition($2.Position())
+	}
+	| '&' expr_ident %prec UNARY
+	{
+		$$ = &ast.AddrExpr{Expr: $2}
+		$$.SetPosition($2.Position())
+	}
+	| '&' expr '.' IDENT %prec UNARY
+	{
+		$$ = &ast.AddrExpr{Expr: &ast.MemberExpr{Expr: $2, Name: $4.Lit}}
+		$$.SetPosition($2.Position())
+	}
+	| '*' expr_ident %prec UNARY
+	{
+		$$ = &ast.DerefExpr{Expr: $2}
+		$$.SetPosition($2.Position())
+	}
+	| '*' expr '.' IDENT %prec UNARY
+	{
+		$$ = &ast.DerefExpr{Expr: &ast.MemberExpr{Expr: $2, Name: $4.Lit}}
+		$$.SetPosition($2.Position())
 	}
 
 expr_func :

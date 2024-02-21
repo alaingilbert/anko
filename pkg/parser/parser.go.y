@@ -99,7 +99,7 @@ import (
 %right UNARY
 
 %%
-start : stmts
+start : compstmt
 
 compstmt :
 	opt_term

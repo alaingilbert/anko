@@ -50,6 +50,7 @@ import (
 %type<expr_make> expr_make
 %type<expr_dbg> expr_dbg
 %type<expr_literals> expr_literals
+%type<expr_literals_helper> expr_literals_helper
 %type<expr_close> expr_close
 %type<expr_delete> expr_delete
 %type<expr_in> expr_in
@@ -121,6 +122,7 @@ import (
 	expr                            ast.Expr
 	expr_dbg                        ast.Expr
 	expr_literals                   ast.Expr
+	expr_literals_helper            ast.Expr
 	expr_close                      ast.Expr
 	expr_delete                     ast.Expr
 	expr_in                         ast.Expr
@@ -833,31 +835,18 @@ expr_close :
 	}
 
 expr_literals :
-	NUMBER
+	expr_literals_helper
 	{
-		$$ = &ast.NumberExpr{Lit: $1.Lit}
+		$$ = $1
 		$$.SetPosition($1.Position())
 	}
-	| STRING
-	{
-		$$ = &ast.StringExpr{Lit: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
-	| TRUE
-	{
-		$$ = &ast.ConstExpr{Value: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
-	| FALSE
-	{
-		$$ = &ast.ConstExpr{Value: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
-	| NIL
-	{
-		$$ = &ast.ConstExpr{Value: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
+
+expr_literals_helper :
+	NUMBER   { $$ = &ast.NumberExpr{Lit: $1.Lit} }
+	| STRING { $$ = &ast.StringExpr{Lit: $1.Lit} }
+	| TRUE   { $$ = &ast.ConstExpr{Value: $1.Lit} }
+	| FALSE  { $$ = &ast.ConstExpr{Value: $1.Lit} }
+	| NIL    { $$ = &ast.ConstExpr{Value: $1.Lit} }
 
 expr_member_or_ident :
 	expr_ident    { $$ = $1 }

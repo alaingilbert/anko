@@ -30,6 +30,7 @@ import (
 %type<stmt_select_cases_helper> stmt_select_cases_helper
 %type<stmt_select_case> stmt_select_case
 %type<stmt_select_default> stmt_select_default
+%type<stmt_expr> stmt_expr
 %type<exprs> exprs
 %type<opt_exprs> opt_exprs
 %type<expr> expr
@@ -86,6 +87,7 @@ import (
 	stmt_select_case                ast.Stmt
 	stmt_select_default             ast.Stmt
 	stmt                            ast.Stmt
+	stmt_expr                       *ast.ExprStmt
 	expr                            ast.Expr
 	expr_dbg                        ast.Expr
 	expr_literals                   ast.Expr
@@ -205,7 +207,10 @@ stmt :
 	| stmt_select { $$ = $1 }
 	| stmt_go     { $$ = $1 }
 	| stmt_defer  { $$ = $1 }
-	| expr
+	| stmt_expr   { $$ = $1 }
+
+stmt_expr :
+	expr
 	{
 		$$ = &ast.ExprStmt{Expr: $1}
 		$$.SetPosition($1.Position())

@@ -874,6 +874,13 @@ expr_call :
 		$$.SetPosition($1.Position())
 	}
 
+expr_anon_call :
+	expr expr_call_helper
+	{
+		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $2.Exprs, VarArg: $2.VarArg}
+		$$.SetPosition($1.Position())
+	}
+
 expr_call_helper :
 	'(' exprs VARARG ')'
 	{
@@ -882,13 +889,6 @@ expr_call_helper :
 	| '(' opt_exprs ')'
 	{
 		$$ = struct{Exprs []ast.Expr; VarArg bool}{Exprs: $2}
-	}
-
-expr_anon_call :
-	expr expr_call_helper
-	{
-		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $2.Exprs, VarArg: $2.VarArg}
-		$$.SetPosition($1.Position())
 	}
 
 expr_unary :

@@ -48,6 +48,11 @@ import (
 %type<expr_make> expr_make
 %type<expr_dbg> expr_dbg
 %type<expr_literals> expr_literals
+%type<expr_close> expr_close
+%type<expr_delete> expr_delete
+%type<expr_in> expr_in
+%type<expr_opchan> expr_opchan
+%type<expr_new> expr_new
 %type<expr_unary> expr_unary
 %type<expr_binary> expr_binary
 %type<expr_idents> expr_idents
@@ -105,6 +110,11 @@ import (
 	expr                            ast.Expr
 	expr_dbg                        ast.Expr
 	expr_literals                   ast.Expr
+	expr_close                      ast.Expr
+	expr_delete                     ast.Expr
+	expr_in                         ast.Expr
+	expr_opchan                     ast.Expr
+	expr_new                        ast.Expr
 	expr_unary                      ast.Expr
 	expr_binary                     ast.Expr
 	expr_member_or_ident            ast.Expr
@@ -729,48 +739,13 @@ expr :
 		$$.SetPosition($1.Position())
 	}
 	| expr_dbg { $$ = $1 }
-	| NEW '(' type_data ')'
-	{
-		if $3.Kind == ast.TypeDefault {
-			$3.Kind = ast.TypePtr
-			$$ = &ast.MakeExpr{TypeData: $3}
-		} else {
-			$$ = &ast.MakeExpr{TypeData: &ast.TypeStruct{Kind: ast.TypePtr, SubType: $3}}
-		}
-		$$.SetPosition($1.Position())
-	}
+	| expr_new { $$ = $1 }
 	| expr_make { $$ = $1 }
 	| expr_map { $$ = $1 }
-	| expr OPCHAN expr
-	{
-		$$ = &ast.ChanExpr{Lhs: $1, Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| OPCHAN expr
-	{
-		$$ = &ast.ChanExpr{Rhs: $2}
-		$$.SetPosition($2.Position())
-	}
-	| CLOSE '(' expr ')'
-	{
-		$$ = &ast.CloseExpr{WhatExpr: $3}
-		$$.SetPosition($1.Position())
-	}
-	| DELETE '(' expr ')'
-	{
-		$$ = &ast.DeleteExpr{WhatExpr: $3}
-		$$.SetPosition($1.Position())
-	}
-	| DELETE '(' expr ',' expr ')'
-	{
-		$$ = &ast.DeleteExpr{WhatExpr: $3, KeyExpr: $5}
-		$$.SetPosition($1.Position())
-	}
-	| expr IN expr
-	{
-		$$ = &ast.IncludeExpr{ItemExpr: $1, ListExpr: &ast.SliceExpr{Value: $3, Begin: nil, End: nil}}
-		$$.SetPosition($1.Position())
-	}
+	| expr_opchan { $$ = $1 }
+	| expr_close { $$ = $1 }
+	| expr_delete { $$ = $1 }
+	| expr_in { $$ = $1 }
 
 expr_dbg :
 	DBG '(' ')'
@@ -786,6 +761,56 @@ expr_dbg :
 	| DBG '(' type_data ')'
 	{
 		$$ = &ast.DbgExpr{TypeData: $3}
+		$$.SetPosition($1.Position())
+	}
+
+expr_new :
+	NEW '(' type_data ')'
+	{
+		if $3.Kind == ast.TypeDefault {
+			$3.Kind = ast.TypePtr
+			$$ = &ast.MakeExpr{TypeData: $3}
+		} else {
+			$$ = &ast.MakeExpr{TypeData: &ast.TypeStruct{Kind: ast.TypePtr, SubType: $3}}
+		}
+		$$.SetPosition($1.Position())
+	}
+
+expr_opchan :
+	expr OPCHAN expr
+	{
+		$$ = &ast.ChanExpr{Lhs: $1, Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| OPCHAN expr
+	{
+		$$ = &ast.ChanExpr{Rhs: $2}
+		$$.SetPosition($2.Position())
+	}
+
+expr_in :
+	expr IN expr
+	{
+		$$ = &ast.IncludeExpr{ItemExpr: $1, ListExpr: &ast.SliceExpr{Value: $3, Begin: nil, End: nil}}
+		$$.SetPosition($1.Position())
+	}
+
+expr_delete :
+	DELETE '(' expr ')'
+	{
+		$$ = &ast.DeleteExpr{WhatExpr: $3}
+		$$.SetPosition($1.Position())
+	}
+	| DELETE '(' expr ',' expr ')'
+	{
+		$$ = &ast.DeleteExpr{WhatExpr: $3, KeyExpr: $5}
+		$$.SetPosition($1.Position())
+	}
+
+expr_close :
+	CLOSE '(' expr ')'
+	{
+		$$ = &ast.CloseExpr{WhatExpr: $3}
 		$$.SetPosition($1.Position())
 	}
 

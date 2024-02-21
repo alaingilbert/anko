@@ -30,6 +30,7 @@ import (
 %type<exprs> exprs
 %type<expr> expr
 %type<expr_member_or_ident> expr_member_or_ident
+%type<expr_call> expr_call
 %type<expr_func> expr_func
 %type<expr_make> expr_make
 %type<expr_dbg> expr_dbg
@@ -77,6 +78,7 @@ import (
 	expr_unary             ast.Expr
 	expr_binary            ast.Expr
 	expr_member_or_ident   ast.Expr
+	expr_call              ast.Expr
 	expr_func              ast.Expr
 	expr_make              ast.Expr
 	exprs                  []ast.Expr
@@ -670,26 +672,7 @@ expr :
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
 	| expr_binary { $$ = $1 }
-	| IDENT '(' exprs VARARG ')'
-	{
-		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $3, VarArg: true}
-		$$.SetPosition($1.Position())
-	}
-	| IDENT '(' exprs ')'
-	{
-		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr '(' exprs VARARG ')'
-	{
-		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3, VarArg: true}
-		$$.SetPosition($1.Position())
-	}
-	| expr '(' exprs ')'
-	{
-		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3}
-		$$.SetPosition($1.Position())
-	}
+	| expr_call { $$ = $1 }
 	| expr_ident '[' expr ']'
 	{
 		$$ = &ast.ItemExpr{Value: $1, Index: $3}
@@ -792,6 +775,28 @@ expr_member_or_ident :
 	| expr '.' IDENT
 	{
 		$$ = &ast.MemberExpr{Expr: $1, Name: $3.Lit}
+		$$.SetPosition($1.Position())
+	}
+
+expr_call :
+	IDENT '(' exprs VARARG ')'
+	{
+		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $3, VarArg: true}
+		$$.SetPosition($1.Position())
+	}
+	| IDENT '(' exprs ')'
+	{
+		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr '(' exprs VARARG ')'
+	{
+		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3, VarArg: true}
+		$$.SetPosition($1.Position())
+	}
+	| expr '(' exprs ')'
+	{
+		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3}
 		$$.SetPosition($1.Position())
 	}
 

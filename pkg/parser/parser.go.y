@@ -51,6 +51,7 @@ import (
 %type<func_expr_typed_idents> func_expr_typed_idents
 %type<opt_func_return_expr_idents> opt_func_return_expr_idents
 %type<opt_func_return_expr_idents1> opt_func_return_expr_idents1
+%type<opt_func_return_expr_idents2> opt_func_return_expr_idents2
 %type<type_data> type_data
 %type<type_data_struct> type_data_struct
 %type<slice_count> slice_count
@@ -106,6 +107,7 @@ import (
 	func_expr_typed_idents          []*ast.ParamExpr
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents1    []*ast.FuncReturnValuesExpr
+	opt_func_return_expr_idents2    []*ast.FuncReturnValuesExpr
 	expr_map                        *ast.MapExpr
 	expr_map_content                *ast.MapExpr
 	expr_map_content_helper         *ast.MapExpr
@@ -553,15 +555,18 @@ opt_func_return_expr_idents1 :
 	{
 		$$ = []*ast.FuncReturnValuesExpr{}
 	}
-	| type_data
+	| opt_func_return_expr_idents2
+	{
+		$$ = $1
+	}
+
+opt_func_return_expr_idents2 :
+	type_data
 	{
 		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $1}}
 	}
-	| opt_func_return_expr_idents1 comma_newlines type_data
+	| opt_func_return_expr_idents2 comma_newlines type_data
 	{
-		if len($1) == 0 {
-			yylex.Error("syntax error: unexpected ','")
-		}
 		$$ = append($1, &ast.FuncReturnValuesExpr{TypeData: $3})
 	}
 

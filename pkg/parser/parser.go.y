@@ -191,6 +191,8 @@ import (
 /* highest precedence */
 /* https://golang.org/ref/spec#Expression */
 
+%start    start
+
 %%
 start : compstmt
 

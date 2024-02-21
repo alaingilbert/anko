@@ -66,8 +66,9 @@ import (
 %type<expr_paren> expr_paren
 %type<expr_unary> expr_unary
 %type<bin_op> bin_op
+%type<op_assoc> op_assoc
+%type<op_assoc1> op_assoc1
 %type<expr_binary> expr_binary
-%type<op_comparison> op_comparison
 %type<expr_assoc> expr_assoc
 %type<expr_idents> expr_idents
 %type<expr_for_idents> expr_for_idents
@@ -143,7 +144,6 @@ import (
 	expr_len                        ast.Expr
 	expr_unary                      ast.Expr
 	expr_binary                     ast.Expr
-	op_comparison                   ast.Expr
 	expr_assoc                      ast.Expr
 	expr_member_or_ident            ast.Expr
 	expr_member                     ast.Expr
@@ -176,6 +176,8 @@ import (
         slice_count                     int
 	tok                             ast.Token
 	bin_op                          string
+	op_assoc                        string
+	op_assoc1                       string
 	expr_item_or_slice              ast.Expr
 	expr_slice_helper1              ast.Expr
 	expr_ident                      *ast.IdentExpr
@@ -938,38 +940,30 @@ expr_binary :
 		$$ = &ast.BinOpExpr{Lhs: $1, Operator: $2, Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
-	| op_comparison { $$ = $1 }
+	| expr EQEQ expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "==", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr op_assoc1 expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: $2, Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
 	| expr_assoc { $$ = $1 }
 
+op_assoc :
+	PLUSEQ    { $$ = "+=" }
+	| MINUSEQ { $$ = "-=" }
+	| MULEQ   { $$ = "*=" }
+	| DIVEQ   { $$ = "/=" }
+	| ANDEQ   { $$ = "&=" }
+	| OREQ    { $$ = "|=" }
+
 expr_assoc :
-	expr PLUSEQ expr
+	expr op_assoc expr
 	{
-		$$ = &ast.AssocExpr{Lhs: $1, Operator: "+=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr MINUSEQ expr
-	{
-		$$ = &ast.AssocExpr{Lhs: $1, Operator: "-=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr MULEQ expr
-	{
-		$$ = &ast.AssocExpr{Lhs: $1, Operator: "*=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr DIVEQ expr
-	{
-		$$ = &ast.AssocExpr{Lhs: $1, Operator: "/=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr ANDEQ expr
-	{
-		$$ = &ast.AssocExpr{Lhs: $1, Operator: "&=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr OREQ expr
-	{
-		$$ = &ast.AssocExpr{Lhs: $1, Operator: "|=", Rhs: $3}
+		$$ = &ast.AssocExpr{Lhs: $1, Operator: $2, Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
 	| expr PLUSPLUS
@@ -983,37 +977,12 @@ expr_assoc :
 		$$.SetPosition($1.Position())
 	}
 
-op_comparison :
-	expr EQEQ expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "==", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr NEQ expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "!=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr '>' expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: ">", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr GE expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: ">=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr '<' expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "<", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr LE expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "<=", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
+op_assoc1 :
+	NEQ     { $$ = "!=" }
+	| '>'   { $$ = ">" }
+	| GE    { $$ = ">=" }
+	| '<'   { $$ = "<" }
+	| LE    { $$ = "<=" }
 
 expr_func :
 	FUNC opt_expr_ident '(' func_expr_args ')' opt_func_return_expr_idents '{' compstmt '}'

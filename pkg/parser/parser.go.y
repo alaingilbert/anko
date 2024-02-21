@@ -496,18 +496,12 @@ stmt_switch_default :
 	}
 
 expr_idents :
-	{
-		$$ = []string{}
-	}
-	| IDENT
+	IDENT
 	{
 		$$ = []string{$1.Lit}
 	}
 	| expr_idents ',' opt_newlines IDENT
 	{
-		if len($1) == 0 {
-			yylex.Error("syntax error: unexpected ','")
-		}
 		$$ = append($1, $4.Lit)
 	}
 

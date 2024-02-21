@@ -350,7 +350,7 @@ a  =  1;
 
 		// one variable many values
 		{Script: `, b = 1, 2`, ParseError: fmt.Errorf("syntax error: unexpected ','"), RunOutput: int64(2), Output: map[string]any{"b": int64(1)}, Name: ""},
-		{Script: `var , b = 1, 2`, ParseError: fmt.Errorf("syntax error: unexpected ','"), RunOutput: int64(2), Output: map[string]any{"b": int64(1)}, Name: ""},
+		{Script: `var , b = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `a,  = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `var a,  = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 

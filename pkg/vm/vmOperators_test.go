@@ -698,7 +698,7 @@ func TestForLoop(t *testing.T) {
 		// {Script: `for a, b = 1, 2; nil; nil { return }`},
 
 		{Script: `for var a = 1; nil; nil { return }`},
-		{Script: `for var a = 1, 2; nil; nil { return }`},
+		{Script: `for var a = 1, 2; nil; nil { return }`, ParseError: fmt.Errorf("unexpected ','")},
 		{Script: `for var a, b = 1; nil; nil { return }`},
 		{Script: `for var a, b = 1, 2; nil; nil { return }`},
 

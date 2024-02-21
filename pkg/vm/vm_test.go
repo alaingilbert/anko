@@ -355,11 +355,12 @@ a  =  1;
 		{Script: `var a,  = 1, 2`, ParseError: fmt.Errorf("unexpected '='"), Name: ""},
 
 		// TOFIX: should not error?
-		{Script: `a = 1, 2`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
-		{Script: `var a = 1, 2`, RunOutput: int64(2), Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `a = 1, 2`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(2), Name: ""},
+		{Script: `var a = 1, 2`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(2), Output: map[string]any{"a": int64(1)}, Name: ""},
 		// TOFIX: should not error?
-		{Script: `a = 1, 2, 3`, ParseError: fmt.Errorf("unexpected ','"), Name: ""},
-		{Script: `var a = 1, 2, 3`, RunOutput: int64(3), Output: map[string]any{"a": int64(1)}, Name: ""},
+		{Script: `a = 1, 2, 3`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(3), Name: ""},
+		{Script: `a, b, c, d = 1, 2, 3, 4, 5, 6`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(6), Name: ""},
+		{Script: `var a = 1, 2, 3`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(3), Output: map[string]any{"a": int64(1)}, Name: ""},
 
 		// two variables many values
 		{Script: `a, b  = 1,`, ParseError: fmt.Errorf("unexpected $end"), Name: ""},
@@ -380,18 +381,18 @@ a  =  1;
 		{Script: `var a, b = 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
 		{Script: `a, b = 1, 2`, RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
 		{Script: `var a, b = 1, 2`, RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
-		{Script: `a, b = 1, 2, 3`, RunOutput: int64(3), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
-		{Script: `var a, b = 1, 2, 3`, RunOutput: int64(3), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
+		{Script: `a, b = 1, 2, 3`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(3), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
+		{Script: `var a, b = 1, 2, 3`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(3), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
 
 		// three variables many values
 		{Script: `a, b, c = 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
 		{Script: `var a, b, c = 1`, RunOutput: int64(1), Output: map[string]any{"a": int64(1)}, Name: ""},
-		{Script: `a, b, c = 1, 2`, RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
-		{Script: `var a, b, c = 1, 2`, RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
+		{Script: `a, b, c = 1, 2`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
+		{Script: `var a, b, c = 1, 2`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(2), Output: map[string]any{"a": int64(1), "b": int64(2)}, Name: ""},
 		{Script: `a, b, c = 1, 2, 3`, RunOutput: int64(3), Output: map[string]any{"a": int64(1), "b": int64(2), "c": int64(3)}, Name: ""},
 		{Script: `var a, b, c = 1, 2, 3`, RunOutput: int64(3), Output: map[string]any{"a": int64(1), "b": int64(2), "c": int64(3)}, Name: ""},
-		{Script: `a, b, c = 1, 2, 3, 4`, RunOutput: int64(4), Output: map[string]any{"a": int64(1), "b": int64(2), "c": int64(3)}, Name: ""},
-		{Script: `var a, b, c = 1, 2, 3, 4`, RunOutput: int64(4), Output: map[string]any{"a": int64(1), "b": int64(2), "c": int64(3)}, Name: ""},
+		{Script: `a, b, c = 1, 2, 3, 4`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(4), Output: map[string]any{"a": int64(1), "b": int64(2), "c": int64(3)}, Name: ""},
+		{Script: `var a, b, c = 1, 2, 3, 4`, ParseError: fmt.Errorf("unexpected ','"), RunOutput: int64(4), Output: map[string]any{"a": int64(1), "b": int64(2), "c": int64(3)}, Name: ""},
 
 		// scope
 		{Script: `func(){ a = 1 }(); a`, RunError: envPkg.NewUndefinedSymbolErr("a"), Name: ""},

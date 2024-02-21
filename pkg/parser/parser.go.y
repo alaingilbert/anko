@@ -165,6 +165,7 @@ import (
             CONTINUE PLUSPLUS MINUSMINUS POW SHIFTLEFT SHIFTRIGHT SWITCH SELECT CASE DEFAULT GO DEFER CHAN MAKE
             OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG WALRUS
 
+/* lowest precedence */
 %right '=' PLUSEQ MINUSEQ MULEQ DIVEQ ANDEQ OREQ
 %right ':'
 %right OPCHAN
@@ -177,6 +178,8 @@ import (
 %right IN
 %right PLUSPLUS MINUSMINUS
 %right UNARY
+/* highest precedence */
+/* https://golang.org/ref/spec#Expression */
 
 %%
 start : compstmt

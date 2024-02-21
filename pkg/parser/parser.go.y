@@ -31,6 +31,7 @@ import (
 %type<expr> expr
 %type<expr_member_or_ident> expr_member_or_ident
 %type<expr_call> expr_call
+%type<anon_expr_call> anon_expr_call
 %type<expr_func> expr_func
 %type<expr_make> expr_make
 %type<expr_dbg> expr_dbg
@@ -78,7 +79,8 @@ import (
 	expr_unary             ast.Expr
 	expr_binary            ast.Expr
 	expr_member_or_ident   ast.Expr
-	expr_call              ast.Expr
+	expr_call              *ast.CallExpr
+	anon_expr_call         *ast.AnonCallExpr
 	expr_func              ast.Expr
 	expr_make              ast.Expr
 	exprs                  []ast.Expr
@@ -203,24 +205,18 @@ stmt :
 	}
 
 stmt_go :
-	GO IDENT '(' exprs VARARG ')'
+	GO expr_call
 	{
-		$$ = &ast.GoroutineStmt{Expr: &ast.CallExpr{Name: $2.Lit, SubExprs: $4, VarArg: true, Go: true}}
-		$$.SetPosition($2.Position())
+		callExpr := $2
+		callExpr.Go = true
+		$$ = &ast.GoroutineStmt{Expr: callExpr}
+		$$.SetPosition($1.Position())
 	}
-	| GO IDENT '(' exprs ')'
+	| GO anon_expr_call
 	{
-		$$ = &ast.GoroutineStmt{Expr: &ast.CallExpr{Name: $2.Lit, SubExprs: $4, Go: true}}
-		$$.SetPosition($2.Position())
-	}
-	| GO expr '(' exprs VARARG ')'
-	{
-		$$ = &ast.GoroutineStmt{Expr: &ast.AnonCallExpr{Expr: $2, SubExprs: $4, VarArg: true, Go: true}}
-		$$.SetPosition($2.Position())
-	}
-	| GO expr '(' exprs ')'
-	{
-		$$ = &ast.GoroutineStmt{Expr: &ast.AnonCallExpr{Expr: $2, SubExprs: $4, Go: true}}
+		anonCallExpr := $2
+		anonCallExpr.Go = true
+		$$ = &ast.GoroutineStmt{Expr: anonCallExpr}
 		$$.SetPosition($1.Position())
 	}
 
@@ -673,6 +669,7 @@ expr :
 	}
 	| expr_binary { $$ = $1 }
 	| expr_call { $$ = $1 }
+	| anon_expr_call { $$ = $1 }
 	| expr_ident '[' expr ']'
 	{
 		$$ = &ast.ItemExpr{Value: $1, Index: $3}
@@ -789,7 +786,9 @@ expr_call :
 		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $3}
 		$$.SetPosition($1.Position())
 	}
-	| expr '(' exprs VARARG ')'
+
+anon_expr_call :
+	expr '(' exprs VARARG ')'
 	{
 		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3, VarArg: true}
 		$$.SetPosition($1.Position())

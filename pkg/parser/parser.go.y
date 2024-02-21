@@ -1302,7 +1302,7 @@ term :
 	| newlines
 	| ';' newlines
 
-opt_newlines : 
+opt_newlines :
 	/* nothing */
 	| newlines
 

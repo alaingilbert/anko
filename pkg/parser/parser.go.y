@@ -44,6 +44,7 @@ import (
 %type<expr_member_or_ident> expr_member_or_ident
 %type<expr_member> expr_member
 %type<expr_call> expr_call
+%type<expr_call_helper> expr_call_helper
 %type<expr_anon_call> expr_anon_call
 %type<expr_func> expr_func
 %type<expr_make> expr_make
@@ -137,6 +138,7 @@ import (
 	expr_member_or_ident            ast.Expr
 	expr_member                     ast.Expr
 	expr_call                       *ast.CallExpr
+	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
 	expr_anon_call                  *ast.AnonCallExpr
 	expr_func                       ast.Expr
 	expr_make                       ast.Expr
@@ -866,15 +868,20 @@ expr_member :
 	}
 
 expr_call :
-	IDENT '(' exprs VARARG ')'
+	IDENT expr_call_helper
 	{
-		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $3, VarArg: true}
+		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $2.Exprs, VarArg: $2.VarArg}
 		$$.SetPosition($1.Position())
 	}
-	| IDENT '(' opt_exprs ')'
+
+expr_call_helper :
+	'(' exprs VARARG ')'
 	{
-		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $3}
-		$$.SetPosition($1.Position())
+		$$ = struct{Exprs []ast.Expr; VarArg bool}{Exprs: $2, VarArg: true}
+	}
+	| '(' opt_exprs ')'
+	{
+		$$ = struct{Exprs []ast.Expr; VarArg bool}{Exprs: $2}
 	}
 
 expr_anon_call :

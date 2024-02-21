@@ -31,7 +31,7 @@ import (
 %type<expr> expr
 %type<expr_member_or_ident> expr_member_or_ident
 %type<expr_call> expr_call
-%type<anon_expr_call> anon_expr_call
+%type<expr_anon_call> expr_anon_call
 %type<expr_func> expr_func
 %type<expr_make> expr_make
 %type<expr_dbg> expr_dbg
@@ -80,7 +80,7 @@ import (
 	expr_binary            ast.Expr
 	expr_member_or_ident   ast.Expr
 	expr_call              *ast.CallExpr
-	anon_expr_call         *ast.AnonCallExpr
+	expr_anon_call         *ast.AnonCallExpr
 	expr_func              ast.Expr
 	expr_make              ast.Expr
 	exprs                  []ast.Expr
@@ -212,7 +212,7 @@ stmt_go :
 		$$ = &ast.GoroutineStmt{Expr: callExpr}
 		$$.SetPosition($1.Position())
 	}
-	| GO anon_expr_call
+	| GO expr_anon_call
 	{
 		anonCallExpr := $2
 		anonCallExpr.Go = true
@@ -221,25 +221,19 @@ stmt_go :
 	}
 
 stmt_defer :
-	DEFER IDENT '(' exprs VARARG ')'
+	DEFER expr_call
 	{
-		$$ = &ast.DeferStmt{Expr: &ast.CallExpr{Name: $2.Lit, SubExprs: $4, VarArg: true, Defer: true}}
+		callExpr := $2
+        	callExpr.Defer = true
+		$$ = &ast.DeferStmt{Expr: callExpr}
 		$$.SetPosition($2.Position())
 	}
-	| DEFER IDENT '(' exprs ')'
+	| DEFER expr_anon_call
 	{
-		$$ = &ast.DeferStmt{Expr: &ast.CallExpr{Name: $2.Lit, SubExprs: $4, Defer: true}}
+		anonCallExpr := $2
+		anonCallExpr.Defer = true
+		$$ = &ast.DeferStmt{Expr: anonCallExpr}
 		$$.SetPosition($2.Position())
-	}
-	| DEFER expr '(' exprs VARARG ')'
-	{
-		$$ = &ast.DeferStmt{Expr: &ast.AnonCallExpr{Expr: $2, SubExprs: $4, VarArg: true, Defer: true}}
-		$$.SetPosition($2.Position())
-	}
-	| DEFER expr '(' exprs ')'
-	{
-		$$ = &ast.DeferStmt{Expr: &ast.AnonCallExpr{Expr: $2, SubExprs: $4, Defer: true}}
-		$$.SetPosition($1.Position())
 	}
 
 stmt_try :
@@ -669,7 +663,7 @@ expr :
 	}
 	| expr_binary { $$ = $1 }
 	| expr_call { $$ = $1 }
-	| anon_expr_call { $$ = $1 }
+	| expr_anon_call { $$ = $1 }
 	| expr_ident '[' expr ']'
 	{
 		$$ = &ast.ItemExpr{Value: $1, Index: $3}
@@ -787,7 +781,7 @@ expr_call :
 		$$.SetPosition($1.Position())
 	}
 
-anon_expr_call :
+expr_anon_call :
 	expr '(' exprs VARARG ')'
 	{
 		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3, VarArg: true}

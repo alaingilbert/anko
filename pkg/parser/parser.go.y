@@ -177,9 +177,7 @@ stmts :
 	}
 
 stmt :
-	/* nothing */
-	{ $$ = nil }
-	| stmt_var_or_lets { $$ = $1 }
+	stmt_var_or_lets { $$ = $1 }
 	| BREAK
 	{
 		$$ = &ast.BreakStmt{}

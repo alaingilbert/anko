@@ -72,7 +72,7 @@ import (
 	stmt_switch_case                ast.Stmt
 	stmt_switch_default             ast.Stmt
 	stmt_select                     ast.Stmt
-	stmt_select_cases               ast.Stmt
+	stmt_select_cases               *ast.SelectBodyStmt
 	stmt_select_case                ast.Stmt
 	stmt_select_default             ast.Stmt
 	stmt                            ast.Stmt
@@ -421,12 +421,12 @@ stmt_select_cases :
 	}
 	| stmt_select_cases stmt_select_case
 	{
-		body := $$.(*ast.SelectBodyStmt)
+		body := $$
 		body.Cases = append(body.Cases, $2)
 	}
 	| stmt_select_cases stmt_select_default
 	{
-		body := $$.(*ast.SelectBodyStmt)
+		body := $$
 		if body.Default != nil {
 		    yylex.Error("multiple default statement")
 		}

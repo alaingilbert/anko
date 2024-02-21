@@ -30,7 +30,7 @@ type yySymType struct {
 	stmt_switch_case              ast.Stmt
 	stmt_switch_default           ast.Stmt
 	stmt_select                   ast.Stmt
-	stmt_select_cases             ast.Stmt
+	stmt_select_cases             *ast.SelectBodyStmt
 	stmt_select_case              ast.Stmt
 	stmt_select_default           ast.Stmt
 	stmt                          ast.Stmt
@@ -1798,14 +1798,14 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line parser.go.y:423
 		{
-			body := yyVAL.stmt_select_cases.(*ast.SelectBodyStmt)
+			body := yyVAL.stmt_select_cases
 			body.Cases = append(body.Cases, yyDollar[2].stmt_select_case)
 		}
 	case 56:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line parser.go.y:428
 		{
-			body := yyVAL.stmt_select_cases.(*ast.SelectBodyStmt)
+			body := yyVAL.stmt_select_cases
 			if body.Default != nil {
 				yylex.Error("multiple default statement")
 			}

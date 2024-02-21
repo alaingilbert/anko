@@ -1549,25 +1549,17 @@ yynewstate:
 		}
 	case 4:
 		{
-			if yyS[yypt-0].stmt != nil {
-				yyVAL.stmts = &ast.StmtsStmt{Stmts: []ast.Stmt{yyS[yypt-0].stmt}}
-			}
+			yyVAL.stmts = &ast.StmtsStmt{Stmts: []ast.Stmt{yyS[yypt-0].stmt}}
 			if l, ok := yylex.(*Lexer); ok {
 				l.stmt = yyVAL.stmts
 			}
 		}
 	case 5:
 		{
-			if yyS[yypt-0].stmt != nil {
-				if yyS[yypt-2].stmts == nil {
-					yyVAL.stmts = &ast.StmtsStmt{Stmts: []ast.Stmt{yyS[yypt-0].stmt}}
-				} else {
-					stmts := yyS[yypt-2].stmts.(*ast.StmtsStmt)
-					stmts.Stmts = append(stmts.Stmts, yyS[yypt-0].stmt)
-				}
-				if l, ok := yylex.(*Lexer); ok {
-					l.stmt = yyVAL.stmts
-				}
+			stmts := yyS[yypt-2].stmts.(*ast.StmtsStmt)
+			stmts.Stmts = append(stmts.Stmts, yyS[yypt-0].stmt)
+			if l, ok := yylex.(*Lexer); ok {
+				l.stmt = yyVAL.stmts
 			}
 		}
 	case 6:

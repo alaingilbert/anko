@@ -154,25 +154,17 @@ compstmt :
 stmts :
 	stmt
 	{
-		if $1 != nil {
-			$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$1}}
-		}
+		$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$1}}
 		if l, ok := yylex.(*Lexer); ok {
 			l.stmt = $$
 		}
 	}
 	| stmts term stmt
 	{
-		if $3 != nil {
-			if $1 == nil {
-				$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$3}}
-			} else {
-				stmts := $1.(*ast.StmtsStmt)
-				stmts.Stmts = append(stmts.Stmts, $3)
-			}
-			if l, ok := yylex.(*Lexer); ok {
-				l.stmt = $$
-			}
+		stmts := $1.(*ast.StmtsStmt)
+		stmts.Stmts = append(stmts.Stmts, $3)
+		if l, ok := yylex.(*Lexer); ok {
+			l.stmt = $$
 		}
 	}
 

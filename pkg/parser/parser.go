@@ -1743,30 +1743,26 @@ yynewstate:
 		}
 	case 26:
 		{
-			callExpr := yyS[yypt-0].expr_call
-			callExpr.Go = true
-			yyVAL.stmt_go = &ast.GoroutineStmt{Expr: callExpr}
+			yyS[yypt-0].expr_call.Go = true
+			yyVAL.stmt_go = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr_call}
 			yyVAL.stmt_go.SetPosition(yyS[yypt-1].tok.Position())
 		}
 	case 27:
 		{
-			anonCallExpr := yyS[yypt-0].expr_anon_call
-			anonCallExpr.Go = true
-			yyVAL.stmt_go = &ast.GoroutineStmt{Expr: anonCallExpr}
+			yyS[yypt-0].expr_anon_call.Go = true
+			yyVAL.stmt_go = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr_anon_call}
 			yyVAL.stmt_go.SetPosition(yyS[yypt-1].tok.Position())
 		}
 	case 28:
 		{
-			callExpr := yyS[yypt-0].expr_call
-			callExpr.Defer = true
-			yyVAL.stmt_defer = &ast.DeferStmt{Expr: callExpr}
+			yyS[yypt-0].expr_call.Defer = true
+			yyVAL.stmt_defer = &ast.DeferStmt{Expr: yyS[yypt-0].expr_call}
 			yyVAL.stmt_defer.SetPosition(yyS[yypt-0].expr_call.Position())
 		}
 	case 29:
 		{
-			anonCallExpr := yyS[yypt-0].expr_anon_call
-			anonCallExpr.Defer = true
-			yyVAL.stmt_defer = &ast.DeferStmt{Expr: anonCallExpr}
+			yyS[yypt-0].expr_anon_call.Defer = true
+			yyVAL.stmt_defer = &ast.DeferStmt{Expr: yyS[yypt-0].expr_anon_call}
 			yyVAL.stmt_defer.SetPosition(yyS[yypt-0].expr_anon_call.Position())
 		}
 	case 30:

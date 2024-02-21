@@ -281,32 +281,28 @@ stmt_expr :
 stmt_go :
 	GO expr_call
 	{
-		callExpr := $2
-		callExpr.Go = true
-		$$ = &ast.GoroutineStmt{Expr: callExpr}
+		$2.Go = true
+		$$ = &ast.GoroutineStmt{Expr: $2}
 		$$.SetPosition($1.Position())
 	}
 	| GO expr_anon_call
 	{
-		anonCallExpr := $2
-		anonCallExpr.Go = true
-		$$ = &ast.GoroutineStmt{Expr: anonCallExpr}
+		$2.Go = true
+		$$ = &ast.GoroutineStmt{Expr: $2}
 		$$.SetPosition($1.Position())
 	}
 
 stmt_defer :
 	DEFER expr_call
 	{
-		callExpr := $2
-        	callExpr.Defer = true
-		$$ = &ast.DeferStmt{Expr: callExpr}
+        	$2.Defer = true
+		$$ = &ast.DeferStmt{Expr: $2}
 		$$.SetPosition($2.Position())
 	}
 	| DEFER expr_anon_call
 	{
-		anonCallExpr := $2
-		anonCallExpr.Defer = true
-		$$ = &ast.DeferStmt{Expr: anonCallExpr}
+		$2.Defer = true
+		$$ = &ast.DeferStmt{Expr: $2}
 		$$.SetPosition($2.Position())
 	}
 

@@ -455,10 +455,10 @@ stmt_select_case :
 	}
 
 stmt_select_default :
-    DEFAULT ':' compstmt
-    {
-        $$ = $3
-    }
+	DEFAULT ':' compstmt
+	{
+		$$ = $3
+	}
 
 stmt_switch :
 	SWITCH expr '{' opt_newlines stmt_switch_cases opt_newlines '}'

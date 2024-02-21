@@ -28,6 +28,7 @@ import (
 %type<stmt_select_case> stmt_select_case
 %type<stmt_select_default> stmt_select_default
 %type<exprs> exprs
+%type<opt_exprs> opt_exprs
 %type<expr> expr
 %type<expr_member_or_ident> expr_member_or_ident
 %type<expr_call> expr_call
@@ -84,6 +85,7 @@ import (
 	expr_func              ast.Expr
 	expr_make              ast.Expr
 	exprs                  []ast.Expr
+	opt_exprs              []ast.Expr
 	expr_idents            []string
 	func_expr_idents         []*ast.ParamExpr
 	func_expr_idents_not_empty []*ast.ParamExpr
@@ -172,7 +174,7 @@ stmt :
 		$$ = &ast.ContinueStmt{}
 		$$.SetPosition($1.Position())
 	}
-	| RETURN exprs
+	| RETURN opt_exprs
 	{
 		$$ = &ast.ReturnStmt{Exprs: $2}
 		$$.SetPosition($1.Position())
@@ -487,7 +489,7 @@ stmt_switch_case :
 		$$ = &ast.SwitchCaseStmt{Exprs: []ast.Expr{$2}, Stmt: $4}
 		$$.SetPosition($1.Position())
 	}
-	| CASE exprs ':' compstmt
+	| CASE opt_exprs ':' compstmt
 	{
 		$$ = &ast.SwitchCaseStmt{Exprs: $2, Stmt: $4}
 		$$.SetPosition($1.Position())
@@ -579,11 +581,14 @@ func_expr_typed_idents :
 		$$ = append($1, $4)
 	}
 
-exprs :
+opt_exprs :
 	{
 		$$ = nil
 	}
-	| expr
+	| exprs { $$ = $1 }
+
+exprs :
+	expr
 	{
 		$$ = []ast.Expr{$1}
 	}
@@ -646,12 +651,12 @@ expr :
 		$$ = &ast.ArrayExpr{}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
-	| '[' opt_newlines exprs opt_comma_newlines ']'
+	| '[' opt_newlines opt_exprs opt_comma_newlines ']'
 	{
 		$$ = &ast.ArrayExpr{Exprs: $3}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
-	| slice_count type_data '{' opt_newlines exprs opt_comma_newlines '}'
+	| slice_count type_data '{' opt_newlines opt_exprs opt_comma_newlines '}'
 	{
 		$$ = &ast.ArrayExpr{Exprs: $5, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
@@ -775,7 +780,7 @@ expr_call :
 		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $3, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
-	| IDENT '(' exprs ')'
+	| IDENT '(' opt_exprs ')'
 	{
 		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $3}
 		$$.SetPosition($1.Position())
@@ -787,7 +792,7 @@ expr_anon_call :
 		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3, VarArg: true}
 		$$.SetPosition($1.Position())
 	}
-	| expr '(' exprs ')'
+	| expr '(' opt_exprs ')'
 	{
 		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $3}
 		$$.SetPosition($1.Position())

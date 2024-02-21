@@ -349,7 +349,7 @@ a  =  1;
 `, RunOutput: int64(1), Name: ""},
 
 		// one variable many values
-		{Script: `, b = 1, 2`, ParseError: fmt.Errorf("syntax error: unexpected ','"), RunOutput: int64(2), Output: map[string]any{"b": int64(1)}, Name: ""},
+		{Script: `, b = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `var , b = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `a,  = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `var a,  = 1, 2`, ParseError: fmt.Errorf("syntax error"), Name: ""},
@@ -364,8 +364,8 @@ a  =  1;
 		// two variables many values
 		{Script: `a, b  = 1,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `var a, b  = 1,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
-		{Script: `a, b  = ,1`, ParseError: fmt.Errorf("syntax error: unexpected ','"), RunOutput: int64(1), Name: ""},
-		{Script: `var a, b  = ,1`, ParseError: fmt.Errorf("syntax error: unexpected ','"), RunOutput: int64(1), Name: ""},
+		{Script: `a, b  = ,1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
+		{Script: `var a, b  = ,1`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `a, b  = 1,,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `var a, b  = 1,,`, ParseError: fmt.Errorf("syntax error"), Name: ""},
 		{Script: `a, b  = ,1,`, ParseError: fmt.Errorf("syntax error"), Name: ""},

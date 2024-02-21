@@ -1231,22 +1231,20 @@ expr_item_or_slice :
 	{
 		if el, ok := $2.(*ast.SliceExpr); ok {
 			el.Value = $1
-			$$ = el
 		} else if el, ok := $2.(*ast.ItemExpr); ok {
 			el.Value = $1
-			$$ = el
 		}
+		$$ = $2
 		$$.SetPosition($1.Position())
 	}
 	| expr expr_slice_helper1
 	{
 		if el, ok := $2.(*ast.SliceExpr); ok {
 			el.Value = $1
-			$$ = el
 		} else if el, ok := $2.(*ast.ItemExpr); ok {
 			el.Value = $1
-			$$ = el
 		}
+		$$ = $2
                	$$.SetPosition($1.Position())
 	}
 

@@ -2677,22 +2677,20 @@ yynewstate:
 		{
 			if el, ok := yyS[yypt-0].expr_slice_helper1.(*ast.SliceExpr); ok {
 				el.Value = yyS[yypt-1].expr_ident
-				yyVAL.expr_item_or_slice = el
 			} else if el, ok := yyS[yypt-0].expr_slice_helper1.(*ast.ItemExpr); ok {
 				el.Value = yyS[yypt-1].expr_ident
-				yyVAL.expr_item_or_slice = el
 			}
+			yyVAL.expr_item_or_slice = yyS[yypt-0].expr_slice_helper1
 			yyVAL.expr_item_or_slice.SetPosition(yyS[yypt-1].expr_ident.Position())
 		}
 	case 210:
 		{
 			if el, ok := yyS[yypt-0].expr_slice_helper1.(*ast.SliceExpr); ok {
 				el.Value = yyS[yypt-1].expr
-				yyVAL.expr_item_or_slice = el
 			} else if el, ok := yyS[yypt-0].expr_slice_helper1.(*ast.ItemExpr); ok {
 				el.Value = yyS[yypt-1].expr
-				yyVAL.expr_item_or_slice = el
 			}
+			yyVAL.expr_item_or_slice = yyS[yypt-0].expr_slice_helper1
 			yyVAL.expr_item_or_slice.SetPosition(yyS[yypt-1].expr.Position())
 		}
 	case 211:

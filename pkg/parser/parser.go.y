@@ -55,6 +55,7 @@ import (
 %type<type_data_struct> type_data_struct
 %type<slice_count> slice_count
 %type<expr_map> expr_map
+%type<expr_map_key_value> expr_map_key_value
 %type<expr_slice> expr_slice
 %type<expr_ident> expr_ident
 
@@ -104,6 +105,7 @@ import (
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents1    []*ast.FuncReturnValuesExpr
 	expr_map                        *ast.MapExpr
+	expr_map_key_value              []ast.Expr
 	type_data                       *ast.TypeStruct
         type_data_struct                *ast.TypeStruct
         slice_count                     int
@@ -1127,17 +1129,23 @@ expr_map :
 	{
 		$$ = &ast.MapExpr{}
 	}
-	| expr ':' expr
+	| expr_map_key_value
 	{
-		$$ = &ast.MapExpr{Keys: []ast.Expr{$1}, Values: []ast.Expr{$3}}
+		$$ = &ast.MapExpr{Keys: []ast.Expr{$1[0]}, Values: []ast.Expr{$1[1]}}
 	}
-	| expr_map ',' opt_newlines expr ':' expr
+	| expr_map ',' opt_newlines expr_map_key_value
 	{
 		if $1.Keys == nil {
 			yylex.Error("syntax error: unexpected ','")
 		}
-		$$.Keys = append($$.Keys, $4)
-		$$.Values = append($$.Values, $6)
+		$$.Keys = append($$.Keys, $4[0])
+		$$.Values = append($$.Values, $4[1])
+	}
+
+expr_map_key_value :
+	expr ':' expr
+	{
+		$$ = []ast.Expr{$1, $3}
 	}
 
 expr_slice :

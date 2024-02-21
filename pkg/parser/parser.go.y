@@ -64,7 +64,7 @@ import (
 
 %union{
 	compstmt                        ast.Stmt
-	stmts                           ast.Stmt
+	stmts                           *ast.StmtsStmt
 	stmt_var_or_lets                ast.Stmt
 	stmt_var                        ast.Stmt
 	stmt_lets                       ast.Stmt
@@ -161,8 +161,7 @@ stmts :
 	}
 	| stmts term stmt
 	{
-		stmts := $1.(*ast.StmtsStmt)
-		stmts.Stmts = append(stmts.Stmts, $3)
+		$1.Stmts = append($1.Stmts, $3)
 		if l, ok := yylex.(*Lexer); ok {
 			l.stmt = $$
 		}

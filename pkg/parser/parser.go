@@ -11,7 +11,7 @@ import (
 type yySymType struct {
 	yys                           int
 	compstmt                      ast.Stmt
-	stmts                         ast.Stmt
+	stmts                         *ast.StmtsStmt
 	stmt_var_or_lets              ast.Stmt
 	stmt_var                      ast.Stmt
 	stmt_lets                     ast.Stmt
@@ -1556,8 +1556,7 @@ yynewstate:
 		}
 	case 5:
 		{
-			stmts := yyS[yypt-2].stmts.(*ast.StmtsStmt)
-			stmts.Stmts = append(stmts.Stmts, yyS[yypt-0].stmt)
+			yyS[yypt-2].stmts.Stmts = append(yyS[yypt-2].stmts.Stmts, yyS[yypt-0].stmt)
 			if l, ok := yylex.(*Lexer); ok {
 				l.stmt = yyVAL.stmts
 			}

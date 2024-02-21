@@ -1928,7 +1928,7 @@ yynewstate:
 		}
 	case 74:
 		{
-			yyVAL.opt_func_return_expr_idents = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: yyS[yypt-0].type_data}}
+			yyVAL.opt_func_return_expr_idents = []*ast.FuncReturnValuesExpr{{TypeData: yyS[yypt-0].type_data}}
 		}
 	case 75:
 		{
@@ -1944,7 +1944,7 @@ yynewstate:
 		}
 	case 78:
 		{
-			yyVAL.opt_func_return_expr_idents2 = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: yyS[yypt-0].type_data}}
+			yyVAL.opt_func_return_expr_idents2 = []*ast.FuncReturnValuesExpr{{TypeData: yyS[yypt-0].type_data}}
 		}
 	case 79:
 		{

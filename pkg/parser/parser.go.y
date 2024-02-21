@@ -532,9 +532,9 @@ expr_idents :
 	{
 		$$ = []string{$1.Lit}
 	}
-	| expr_idents ',' opt_newlines IDENT
+	| expr_idents comma_newlines IDENT
 	{
-		$$ = append($1, $4.Lit)
+		$$ = append($1, $3.Lit)
 	}
 
 opt_func_return_expr_idents :
@@ -557,12 +557,12 @@ opt_func_return_expr_idents1 :
 	{
 		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $1}}
 	}
-	| opt_func_return_expr_idents1 ',' opt_newlines type_data
+	| opt_func_return_expr_idents1 comma_newlines type_data
 	{
 		if len($1) == 0 {
 			yylex.Error("syntax error: unexpected ','")
 		}
-		$$ = append($1, &ast.FuncReturnValuesExpr{TypeData: $4})
+		$$ = append($1, &ast.FuncReturnValuesExpr{TypeData: $3})
 	}
 
 func_expr_idents :
@@ -592,9 +592,9 @@ func_expr_idents_last_untyped :
 	{
 		$$ = []*ast.ParamExpr{$1}
 	}
-	| func_expr_idents_not_empty ',' opt_newlines func_expr_untyped_ident
+	| func_expr_idents_not_empty comma_newlines func_expr_untyped_ident
 	{
-		$$ = append($1, $4)
+		$$ = append($1, $3)
 	}
 
 func_expr_typed_idents :
@@ -602,9 +602,9 @@ func_expr_typed_idents :
 	{
 		$$ = []*ast.ParamExpr{$1}
 	}
-	| func_expr_idents_not_empty ',' opt_newlines func_expr_typed_ident
+	| func_expr_idents_not_empty comma_newlines func_expr_typed_ident
 	{
-		$$ = append($1, $4)
+		$$ = append($1, $3)
 	}
 
 opt_exprs :
@@ -618,19 +618,19 @@ exprs :
 	{
 		$$ = []ast.Expr{$1}
 	}
-	| exprs ',' opt_newlines expr
+	| exprs comma_newlines expr
 	{
 		if len($1) == 0 {
 			yylex.Error("syntax error: unexpected ','")
 		}
-		$$ = append($1, $4)
+		$$ = append($1, $3)
 	}
-	| exprs ',' opt_newlines expr_ident
+	| exprs comma_newlines expr_ident
 	{
 		if len($1) == 0 {
 			yylex.Error("syntax error: unexpected ','")
 		}
-		$$ = append($1, $4)
+		$$ = append($1, $3)
 	}
 
 expr :
@@ -1092,13 +1092,13 @@ type_data_struct :
 	{
 		$$ = &ast.TypeStruct{Kind: ast.TypeStructType, StructNames: []string{$1.Lit}, StructTypes: []*ast.TypeStruct{$2}}
 	}
-	| type_data_struct ',' opt_newlines IDENT type_data
+	| type_data_struct comma_newlines IDENT type_data
 	{
 		if $1 == nil {
 			yylex.Error("syntax error: unexpected ','")
 		}
-		$$.StructNames = append($$.StructNames, $4.Lit)
-		$$.StructTypes = append($$.StructTypes, $5)
+		$$.StructNames = append($$.StructNames, $3.Lit)
+		$$.StructTypes = append($$.StructTypes, $4)
 	}
 
 slice_count :

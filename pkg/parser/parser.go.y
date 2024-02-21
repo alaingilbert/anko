@@ -32,6 +32,11 @@ import (
 %type<stmt_select_case> stmt_select_case
 %type<stmt_select_default> stmt_select_default
 %type<stmt_expr> stmt_expr
+%type<stmt_module> stmt_module
+%type<stmt_break> stmt_break
+%type<stmt_return> stmt_return
+%type<stmt_continue> stmt_continue
+%type<stmt_throw> stmt_throw
 %type<exprs> exprs
 %type<opt_exprs> opt_exprs
 %type<expr> expr
@@ -89,6 +94,11 @@ import (
 	stmt_select_case                ast.Stmt
 	stmt_select_default             ast.Stmt
 	stmt                            ast.Stmt
+	stmt_module                     ast.Stmt
+	stmt_break                      ast.Stmt
+	stmt_return                     ast.Stmt
+	stmt_continue                   ast.Stmt
+	stmt_throw                      ast.Stmt
 	stmt_expr                       *ast.ExprStmt
 	expr                            ast.Expr
 	expr_dbg                        ast.Expr
@@ -173,31 +183,11 @@ stmts :
 
 stmt :
 	stmt_var_or_lets { $$ = $1 }
-	| BREAK
-	{
-		$$ = &ast.BreakStmt{}
-		$$.SetPosition($1.Position())
-	}
-	| CONTINUE
-	{
-		$$ = &ast.ContinueStmt{}
-		$$.SetPosition($1.Position())
-	}
-	| RETURN opt_exprs
-	{
-		$$ = &ast.ReturnStmt{Exprs: $2}
-		$$.SetPosition($1.Position())
-	}
-	| THROW expr
-	{
-		$$ = &ast.ThrowStmt{Expr: $2}
-		$$.SetPosition($1.Position())
-	}
-	| MODULE IDENT '{' compstmt '}'
-	{
-		$$ = &ast.ModuleStmt{Name: $2.Lit, Stmt: $4}
-		$$.SetPosition($1.Position())
-	}
+	| stmt_break { $$ = $1 }
+	| stmt_continue { $$ = $1 }
+	| stmt_return { $$ = $1 }
+	| stmt_throw { $$ = $1 }
+	| stmt_module { $$ = $1 }
 	| stmt_if
 	{
 		$$ = $1
@@ -210,6 +200,41 @@ stmt :
 	| stmt_go     { $$ = $1 }
 	| stmt_defer  { $$ = $1 }
 	| stmt_expr   { $$ = $1 }
+
+stmt_break :
+	BREAK
+	{
+		$$ = &ast.BreakStmt{}
+		$$.SetPosition($1.Position())
+	}
+
+stmt_continue :
+	CONTINUE
+	{
+		$$ = &ast.ContinueStmt{}
+		$$.SetPosition($1.Position())
+	}
+
+stmt_return :
+	RETURN opt_exprs
+	{
+		$$ = &ast.ReturnStmt{Exprs: $2}
+		$$.SetPosition($1.Position())
+	}
+
+stmt_throw :
+	THROW expr
+	{
+		$$ = &ast.ThrowStmt{Expr: $2}
+		$$.SetPosition($1.Position())
+	}
+
+stmt_module :
+	MODULE IDENT '{' compstmt '}'
+	{
+		$$ = &ast.ModuleStmt{Name: $2.Lit, Stmt: $4}
+		$$.SetPosition($1.Position())
+	}
 
 stmt_expr :
 	expr

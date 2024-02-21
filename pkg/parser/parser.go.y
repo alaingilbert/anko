@@ -30,6 +30,7 @@ import (
 %type<exprs> exprs
 %type<expr> expr
 %type<expr_func> expr_func
+%type<expr_make> expr_make
 %type<expr_dbg> expr_dbg
 %type<expr_idents> expr_idents
 %type<func_expr_idents> func_expr_idents
@@ -71,6 +72,7 @@ import (
 	expr                   ast.Expr
 	expr_dbg               ast.Expr
 	expr_func              ast.Expr
+	expr_make              ast.Expr
 	exprs                  []ast.Expr
 	expr_idents            []string
 	func_expr_idents         []*ast.ParamExpr
@@ -884,26 +886,7 @@ expr :
 		}
 		$$.SetPosition($1.Position())
 	}
-	| MAKE '(' type_data ')'
-	{
-		$$ = &ast.MakeExpr{TypeData: $3}
-		$$.SetPosition($1.Position())
-	}
-	| MAKE '(' type_data ',' expr ')'
-	{
-		$$ = &ast.MakeExpr{TypeData: $3, LenExpr: $5}
-		$$.SetPosition($1.Position())
-	}
-	| MAKE '(' type_data ',' expr ',' expr ')'
-	{
-		$$ = &ast.MakeExpr{TypeData: $3, LenExpr: $5, CapExpr: $7}
-		$$.SetPosition($1.Position())
-	}
-	| MAKE '(' TYPE IDENT ',' expr ')'
-	{
-		$$ = &ast.MakeTypeExpr{Name: $4.Lit, Type: $6}
-		$$.SetPosition($1.Position())
-	}
+	| expr_make { $$ = $1 }
 	| MAP '{' opt_newlines expr_map opt_comma_newlines '}'
 	{
 		$4.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: &ast.TypeStruct{Name: "interface"}, SubType: &ast.TypeStruct{Name: "interface"}}
@@ -1000,6 +983,28 @@ expr_func :
 	{
 		$4[len($4)-1].TypeData = $6
 		$$ = &ast.FuncExpr{Name: $2.Lit, Params: $4, Returns: $8, Stmt: $10, VarArg: true}
+		$$.SetPosition($1.Position())
+	}
+
+expr_make :
+	MAKE '(' type_data ')'
+	{
+		$$ = &ast.MakeExpr{TypeData: $3}
+		$$.SetPosition($1.Position())
+	}
+	| MAKE '(' type_data ',' expr ')'
+	{
+		$$ = &ast.MakeExpr{TypeData: $3, LenExpr: $5}
+		$$.SetPosition($1.Position())
+	}
+	| MAKE '(' type_data ',' expr ',' expr ')'
+	{
+		$$ = &ast.MakeExpr{TypeData: $3, LenExpr: $5, CapExpr: $7}
+		$$.SetPosition($1.Position())
+	}
+	| MAKE '(' TYPE IDENT ',' expr ')'
+	{
+		$$ = &ast.MakeTypeExpr{Name: $4.Lit, Type: $6}
 		$$.SetPosition($1.Position())
 	}
 

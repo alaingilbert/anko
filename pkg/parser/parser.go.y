@@ -36,6 +36,7 @@ import (
 %type<expr_func> expr_func
 %type<expr_make> expr_make
 %type<expr_dbg> expr_dbg
+%type<expr_literals> expr_literals
 %type<expr_unary> expr_unary
 %type<expr_binary> expr_binary
 %type<expr_idents> expr_idents
@@ -77,6 +78,7 @@ import (
 	stmt                            ast.Stmt
 	expr                            ast.Expr
 	expr_dbg                        ast.Expr
+	expr_literals                   ast.Expr
 	expr_unary                      ast.Expr
 	expr_binary                     ast.Expr
 	expr_member_or_ident            ast.Expr
@@ -609,32 +611,8 @@ exprs :
 
 expr :
 	expr_member_or_ident { $$ = $1 }
-	| NUMBER
-	{
-		$$ = &ast.NumberExpr{Lit: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
+	| expr_literals { $$ = $1 }
 	| expr_unary { $$ = $1 }
-	| STRING
-	{
-		$$ = &ast.StringExpr{Lit: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
-	| TRUE
-	{
-		$$ = &ast.ConstExpr{Value: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
-	| FALSE
-	{
-		$$ = &ast.ConstExpr{Value: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
-	| NIL
-	{
-		$$ = &ast.ConstExpr{Value: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
 	| expr '?' expr ':' expr
 	{
 		$$ = &ast.TernaryOpExpr{Expr: $1, Lhs: $3, Rhs: $5}
@@ -763,6 +741,33 @@ expr_dbg :
 	| DBG '(' type_data ')'
 	{
 		$$ = &ast.DbgExpr{TypeData: $3}
+		$$.SetPosition($1.Position())
+	}
+
+expr_literals :
+	NUMBER
+	{
+		$$ = &ast.NumberExpr{Lit: $1.Lit}
+		$$.SetPosition($1.Position())
+	}
+	| STRING
+	{
+		$$ = &ast.StringExpr{Lit: $1.Lit}
+		$$.SetPosition($1.Position())
+	}
+	| TRUE
+	{
+		$$ = &ast.ConstExpr{Value: $1.Lit}
+		$$.SetPosition($1.Position())
+	}
+	| FALSE
+	{
+		$$ = &ast.ConstExpr{Value: $1.Lit}
+		$$.SetPosition($1.Position())
+	}
+	| NIL
+	{
+		$$ = &ast.ConstExpr{Value: $1.Lit}
 		$$.SetPosition($1.Position())
 	}
 

@@ -1131,17 +1131,18 @@ expr_map :
 	}
 
 expr_map_content :
-	opt_newlines expr_map_content_helper opt_comma_newlines
+	/* nothing */
+	opt_newlines
+	{
+		$$ = &ast.MapExpr{}
+	}
+	| opt_newlines expr_map_content_helper opt_comma_newlines
 	{
 		$$ = $2
 	}
 
 expr_map_content_helper :
-	/* nothing */
-	{
-		$$ = &ast.MapExpr{}
-	}
-	| expr_map_key_value
+	expr_map_key_value
 	{
 		$$ = &ast.MapExpr{Keys: []ast.Expr{$1[0]}, Values: []ast.Expr{$1[1]}}
 	}

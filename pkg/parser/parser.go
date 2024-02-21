@@ -225,7 +225,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.go.y:1222
+//line parser.go.y:1223
 
 //line yacctab:1
 var yyExca = [...]int16{
@@ -238,9 +238,6 @@ var yyExca = [...]int16{
 	-1, 24,
 	79, 91,
 	-2, 20,
-	-1, 119,
-	79, 209,
-	-2, 204,
 	-1, 124,
 	16, 71,
 	79, 71,
@@ -319,16 +316,10 @@ var yyExca = [...]int16{
 	83, 140,
 	86, 140,
 	-2, 129,
-	-1, 213,
-	79, 210,
-	-2, 207,
 	-1, 260,
 	81, 178,
 	84, 178,
 	-2, 203,
-	-1, 285,
-	79, 209,
-	-2, 204,
 	-1, 317,
 	1, 93,
 	8, 93,
@@ -376,15 +367,6 @@ var yyExca = [...]int16{
 	83, 141,
 	86, 141,
 	-2, 130,
-	-1, 354,
-	79, 209,
-	-2, 204,
-	-1, 356,
-	79, 209,
-	-2, 204,
-	-1, 405,
-	79, 209,
-	-2, 204,
 }
 
 const yyPrivate = 57344
@@ -868,7 +850,7 @@ var yyR1 = [...]int8{
 	35, 35, 35, 35, 35, 35, 35, 35, 30, 30,
 	30, 30, 30, 30, 31, 31, 31, 31, 45, 45,
 	45, 45, 45, 45, 45, 46, 46, 47, 47, 48,
-	48, 48, 49, 50, 50, 50, 51, 52, 52, 52,
+	48, 48, 49, 49, 50, 50, 51, 52, 52, 52,
 	52, 52, 52, 53, 55, 55, 56, 56, 56, 57,
 	57, 60, 60, 61, 59, 58, 58,
 }
@@ -893,7 +875,7 @@ var yyR2 = [...]int8{
 	3, 3, 2, 2, 3, 3, 3, 3, 8, 9,
 	10, 9, 10, 11, 4, 6, 8, 7, 1, 3,
 	2, 2, 5, 2, 6, 2, 5, 2, 3, 4,
-	8, 3, 3, 0, 1, 3, 3, 6, 5, 5,
+	8, 3, 1, 3, 1, 3, 3, 6, 5, 5,
 	6, 5, 5, 1, 0, 1, 2, 1, 1, 0,
 	1, 1, 2, 1, 2, 1, 1,
 }
@@ -964,36 +946,36 @@ var yyDef = [...]int16{
 	11, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 89, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 162, 163, 0, 0, 0, 0, 0, -2,
+	0, 0, 162, 163, 0, 0, 0, 0, 0, 204,
 	0, 91, 0, 0, -2, 204, 0, 209, -2, -2,
 	0, -2, -2, -2, 89, 210, 0, 178, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 116, 0,
 	0, 0, 71, 0, 0, 209, 135, 136, 137, -2,
 	0, -2, 0, 79, 0, 89, 0, 0, 209, 0,
-	0, 193, 5, 204, 0, 204, 33, 35, 0, 98,
+	0, 192, 5, 204, 0, 204, 33, 35, 0, 98,
 	0, 0, 115, 120, 130, 90, 0, 142, 143, 144,
 	145, 146, 147, 148, 149, 150, 151, 152, 153, 154,
 	155, 156, 157, 158, 159, 160, 161, 164, 165, 166,
-	167, 204, 0, -2, 0, 209, 204, 0, 0, 0,
+	167, 204, 0, 207, 0, 209, 204, 0, 0, 0,
 	0, 209, 52, 188, 209, 209, 0, 180, 181, 0,
 	183, 209, 187, 103, 0, 0, 0, 0, 0, 0,
 	0, 34, 36, 0, 0, 0, 0, 81, 80, 85,
 	82, 83, 87, 79, 90, 0, 121, 0, 0, 0,
 	-2, 0, 0, 0, 0, 0, 0, 191, 209, 194,
 	0, 0, 0, 0, 0, 108, 0, 0, 0, 134,
-	0, 40, 0, 0, 0, -2, 0, 0, 0, 0,
+	0, 40, 0, 0, 0, 204, 0, 0, 0, 0,
 	0, 62, 209, 53, 54, 57, 58, 0, 6, 0,
 	215, 216, 209, 89, 179, 0, 0, 107, 0, 0,
 	110, 112, 117, 118, 0, 32, 92, -2, -2, -2,
 	73, 0, 209, 84, 0, 81, 0, 132, 122, 123,
-	181, 0, 174, 0, 0, 189, 0, 192, 215, 0,
+	181, 0, 174, 0, 0, 189, 0, 193, 215, 0,
 	12, 204, 39, 97, 0, 201, 202, 133, 37, 204,
-	72, 42, 0, 204, -2, 0, -2, 0, 0, 0,
+	72, 42, 0, 204, 204, 0, 204, 0, 0, 0,
 	209, 63, 64, 65, 0, 89, 0, 55, 56, 204,
 	0, 101, 214, 209, 0, 209, 0, 0, 198, 199,
 	0, 0, 74, 76, 73, 0, 0, 73, 0, 131,
 	0, 0, 0, 0, 195, 196, 0, 200, 0, 43,
-	0, 0, 204, 0, 204, -2, 0, 0, 204, 0,
+	0, 0, 204, 0, 204, 204, 0, 0, 204, 0,
 	66, 67, 204, 91, 0, 51, 60, 204, 0, 182,
 	0, 209, 185, 197, 119, 204, 0, 77, 0, 73,
 	86, 88, 0, 73, 0, 0, 175, 0, 0, 209,
@@ -2739,26 +2721,26 @@ yydefault:
 			yyVAL.expr_map.SetPosition(yyDollar[2].expr_map_content.Position())
 		}
 	case 192:
+		yyDollar = yyS[yypt-1 : yypt+1]
+//line parser.go.y:1136
+		{
+			yyVAL.expr_map_content = &ast.MapExpr{}
+		}
+	case 193:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:1135
+//line parser.go.y:1140
 		{
 			yyVAL.expr_map_content = yyDollar[2].expr_map_content_helper
 		}
-	case 193:
-		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.go.y:1141
-		{
-			yyVAL.expr_map_content_helper = &ast.MapExpr{}
-		}
 	case 194:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.go.y:1145
+//line parser.go.y:1146
 		{
 			yyVAL.expr_map_content_helper = &ast.MapExpr{Keys: []ast.Expr{yyDollar[1].expr_map_key_value[0]}, Values: []ast.Expr{yyDollar[1].expr_map_key_value[1]}}
 		}
 	case 195:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:1149
+//line parser.go.y:1150
 		{
 			if yyDollar[1].expr_map_content_helper.Keys == nil {
 				yylex.Error("syntax error: unexpected ','")
@@ -2768,49 +2750,49 @@ yydefault:
 		}
 	case 196:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line parser.go.y:1159
+//line parser.go.y:1160
 		{
 			yyVAL.expr_map_key_value = []ast.Expr{yyDollar[1].expr, yyDollar[3].expr}
 		}
 	case 197:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line parser.go.y:1165
+//line parser.go.y:1166
 		{
 			yyVAL.expr_slice = &ast.SliceExpr{Value: yyDollar[1].expr_ident, Begin: yyDollar[3].expr, End: yyDollar[5].expr}
 		}
 	case 198:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.go.y:1169
+//line parser.go.y:1170
 		{
 			yyVAL.expr_slice = &ast.SliceExpr{Value: yyDollar[1].expr_ident, Begin: yyDollar[3].expr, End: nil}
 		}
 	case 199:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.go.y:1173
+//line parser.go.y:1174
 		{
 			yyVAL.expr_slice = &ast.SliceExpr{Value: yyDollar[1].expr_ident, Begin: nil, End: yyDollar[4].expr}
 		}
 	case 200:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line parser.go.y:1177
+//line parser.go.y:1178
 		{
 			yyVAL.expr_slice = &ast.SliceExpr{Value: yyDollar[1].expr, Begin: yyDollar[3].expr, End: yyDollar[5].expr}
 		}
 	case 201:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.go.y:1181
+//line parser.go.y:1182
 		{
 			yyVAL.expr_slice = &ast.SliceExpr{Value: yyDollar[1].expr, Begin: yyDollar[3].expr, End: nil}
 		}
 	case 202:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.go.y:1185
+//line parser.go.y:1186
 		{
 			yyVAL.expr_slice = &ast.SliceExpr{Value: yyDollar[1].expr, Begin: nil, End: yyDollar[4].expr}
 		}
 	case 203:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line parser.go.y:1191
+//line parser.go.y:1192
 		{
 			yyVAL.expr_ident = &ast.IdentExpr{Lit: yyDollar[1].tok.Lit}
 			yyVAL.expr_ident.SetPosition(yyDollar[1].tok.Position())

@@ -26,6 +26,7 @@ import (
 %type<stmt_switch_default> stmt_switch_default
 %type<stmt_select> stmt_select
 %type<stmt_select_body> stmt_select_body
+%type<stmt_select_content> stmt_select_content
 %type<stmt_select_cases> stmt_select_cases
 %type<stmt_select_cases_helper> stmt_select_cases_helper
 %type<stmt_select_case> stmt_select_case
@@ -82,6 +83,7 @@ import (
 	stmt_switch_default             ast.Stmt
 	stmt_select                     ast.Stmt
 	stmt_select_body                *ast.SelectBodyStmt
+	stmt_select_content             *ast.SelectBodyStmt
 	stmt_select_cases               *ast.SelectBodyStmt
 	stmt_select_cases_helper        *ast.SelectBodyStmt
 	stmt_select_case                ast.Stmt
@@ -408,10 +410,16 @@ stmt_for :
 	}
 
 stmt_select :
-	SELECT '{' opt_newlines stmt_select_cases opt_newlines '}'
+	SELECT '{' stmt_select_content '}'
 	{
-		$$ = &ast.SelectStmt{Body: $4}
+		$$ = &ast.SelectStmt{Body: $3}
 		$$.SetPosition($1.Position())
+	}
+
+stmt_select_content :
+	opt_newlines stmt_select_cases opt_newlines
+	{
+		$$ = $2
 	}
 
 stmt_select_cases :

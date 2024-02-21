@@ -333,13 +333,11 @@ stmt_var :
 			} else {
 				$$ = &ast.VarStmt{Names: $2, Exprs: $4}
 			}
-		} else if len($2) == len($4) {
-			$$ = &ast.VarStmt{Names: $2, Exprs: $4}
-		} else if len($4) == 1 && len($2) > len($4) {
-			$$ = &ast.VarStmt{Names: $2, Exprs: $4}
 		} else {
 			$$ = &ast.VarStmt{Names: $2, Exprs: $4}
-			yylex.Error("unexpected ','")
+			if len($2) != len($4) && !(len($4) == 1 && len($2) > len($4)) {
+				yylex.Error("unexpected ','")
+			}
 		}
 		$$.SetPosition($1.Position())
 	}
@@ -353,13 +351,11 @@ stmt_typed_lets :
 			} else {
 				$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
 			}
-		} else if len($1) == len($3) {
-			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
-		} else if len($3) == 1 && len($1) > len($3) {
-			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
 		} else {
 			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
-			yylex.Error("unexpected ','")
+			if len($1) != len($3) && !(len($3) == 1 && len($1) > len($3)) {
+				yylex.Error("unexpected ','")
+			}
 		}
 		$$.SetPosition($1[0].Position())
 	}
@@ -373,13 +369,11 @@ stmt_lets :
 			} else {
 				$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3}
 			}
-		} else if len($1) == len($3) {
-			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3}
-		} else if len($3) == 1 && len($1) > len($3) {
-			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3}
 		} else {
 			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3}
-			yylex.Error("unexpected ','")
+			if len($1) != len($3) && !(len($3) == 1 && len($1) > len($3)) {
+				yylex.Error("unexpected ','")
+			}
 		}
 		$$.SetPosition($1[0].Position())
 	}

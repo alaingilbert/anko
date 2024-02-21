@@ -1814,13 +1814,11 @@ yynewstate:
 				} else {
 					yyVAL.stmt_var = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
 				}
-			} else if len(yyS[yypt-2].expr_idents) == len(yyS[yypt-0].exprs) {
-				yyVAL.stmt_var = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
-			} else if len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].expr_idents) > len(yyS[yypt-0].exprs) {
-				yyVAL.stmt_var = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
 			} else {
 				yyVAL.stmt_var = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
-				yylex.Error("unexpected ','")
+				if len(yyS[yypt-2].expr_idents) != len(yyS[yypt-0].exprs) && !(len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].expr_idents) > len(yyS[yypt-0].exprs)) {
+					yylex.Error("unexpected ','")
+				}
 			}
 			yyVAL.stmt_var.SetPosition(yyS[yypt-3].tok.Position())
 		}
@@ -1832,13 +1830,11 @@ yynewstate:
 				} else {
 					yyVAL.stmt_typed_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: true}
 				}
-			} else if len(yyS[yypt-2].exprs) == len(yyS[yypt-0].exprs) {
-				yyVAL.stmt_typed_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: true}
-			} else if len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].exprs) > len(yyS[yypt-0].exprs) {
-				yyVAL.stmt_typed_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: true}
 			} else {
 				yyVAL.stmt_typed_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: true}
-				yylex.Error("unexpected ','")
+				if len(yyS[yypt-2].exprs) != len(yyS[yypt-0].exprs) && !(len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].exprs) > len(yyS[yypt-0].exprs)) {
+					yylex.Error("unexpected ','")
+				}
 			}
 			yyVAL.stmt_typed_lets.SetPosition(yyS[yypt-2].exprs[0].Position())
 		}
@@ -1850,13 +1846,11 @@ yynewstate:
 				} else {
 					yyVAL.stmt_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs}
 				}
-			} else if len(yyS[yypt-2].exprs) == len(yyS[yypt-0].exprs) {
-				yyVAL.stmt_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs}
-			} else if len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].exprs) > len(yyS[yypt-0].exprs) {
-				yyVAL.stmt_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs}
 			} else {
 				yyVAL.stmt_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs}
-				yylex.Error("unexpected ','")
+				if len(yyS[yypt-2].exprs) != len(yyS[yypt-0].exprs) && !(len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].exprs) > len(yyS[yypt-0].exprs)) {
+					yylex.Error("unexpected ','")
+				}
 			}
 			yyVAL.stmt_lets.SetPosition(yyS[yypt-2].exprs[0].Position())
 		}

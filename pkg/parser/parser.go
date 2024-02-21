@@ -73,7 +73,7 @@ type yySymType struct {
 	expr_make                     ast.Expr
 	exprs                         []ast.Expr
 	opt_exprs                     []ast.Expr
-	comma_separated_expr          []ast.Expr
+	comma_separated_exprs         []ast.Expr
 	expr_idents                   []string
 	expr_for_idents               []string
 	func_expr_idents              []*ast.ParamExpr
@@ -351,7 +351,7 @@ var (
 		57482: 139, // stmt_switch (3x)
 		57487: 140, // stmt_throw (3x)
 		57488: 141, // stmt_try (3x)
-		57407: 142, // comma_separated_expr (2x)
+		57407: 142, // comma_separated_exprs (2x)
 		57432: 143, // expr_map_key_value (2x)
 		57373: 144, // FINALLY (2x)
 		57443: 145, // func_expr_idents (2x)
@@ -530,7 +530,7 @@ var (
 		"stmt_switch",
 		"stmt_throw",
 		"stmt_try",
-		"comma_separated_expr",
+		"comma_separated_exprs",
 		"expr_map_key_value",
 		"FINALLY",
 		"func_expr_idents",
@@ -2191,21 +2191,21 @@ yynewstate:
 		}
 	case 123:
 		{
-			yyVAL.expr_array = &ast.ArrayExpr{Exprs: yyS[yypt-1].comma_separated_expr}
+			yyVAL.expr_array = &ast.ArrayExpr{Exprs: yyS[yypt-1].comma_separated_exprs}
 			if l, ok := yylex.(*Lexer); ok {
 				yyVAL.expr_array.SetPosition(l.pos)
 			}
 		}
 	case 124:
 		{
-			yyVAL.expr_array = &ast.ArrayExpr{Exprs: yyS[yypt-1].comma_separated_expr, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: yyS[yypt-3].type_data, Dimensions: yyS[yypt-4].slice_count}}
+			yyVAL.expr_array = &ast.ArrayExpr{Exprs: yyS[yypt-1].comma_separated_exprs, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: yyS[yypt-3].type_data, Dimensions: yyS[yypt-4].slice_count}}
 			if l, ok := yylex.(*Lexer); ok {
 				yyVAL.expr_array.SetPosition(l.pos)
 			}
 		}
 	case 125:
 		{
-			yyVAL.comma_separated_expr = yyS[yypt-1].opt_exprs
+			yyVAL.comma_separated_exprs = yyS[yypt-1].opt_exprs
 		}
 	case 126:
 		{

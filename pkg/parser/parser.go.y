@@ -24,7 +24,9 @@ import (
 %type<stmt_switch_case> stmt_switch_case
 %type<stmt_switch_default> stmt_switch_default
 %type<stmt_select> stmt_select
+%type<stmt_select_body> stmt_select_body
 %type<stmt_select_cases> stmt_select_cases
+%type<stmt_select_cases_helper> stmt_select_cases_helper
 %type<stmt_select_case> stmt_select_case
 %type<stmt_select_default> stmt_select_default
 %type<exprs> exprs
@@ -72,7 +74,9 @@ import (
 	stmt_switch_case                ast.Stmt
 	stmt_switch_default             ast.Stmt
 	stmt_select                     ast.Stmt
+	stmt_select_body                *ast.SelectBodyStmt
 	stmt_select_cases               *ast.SelectBodyStmt
+	stmt_select_cases_helper        *ast.SelectBodyStmt
 	stmt_select_case                ast.Stmt
 	stmt_select_default             ast.Stmt
 	stmt                            ast.Stmt
@@ -411,19 +415,21 @@ stmt_select_cases :
 	{
 		$$ = &ast.SelectBodyStmt{}
 	}
-	| stmt_select_default
+	| stmt_select_cases_helper
 	{
-		$$ = &ast.SelectBodyStmt{Default: $1}
+		$$ = $1
 	}
-	| stmt_select_case
+
+stmt_select_cases_helper :
+	stmt_select_body
 	{
-		$$ = &ast.SelectBodyStmt{Cases: []ast.Stmt{$1}}
+		$$ = $1
 	}
-	| stmt_select_cases stmt_select_case
+	| stmt_select_cases_helper stmt_select_case
 	{
 		$$.Cases = append($$.Cases, $2)
 	}
-	| stmt_select_cases stmt_select_default
+	| stmt_select_cases_helper stmt_select_default
 	{
 		if $$.Default != nil {
 		    yylex.Error("multiple default statement")
@@ -431,6 +437,15 @@ stmt_select_cases :
 		$$.Default = $2
 	}
 
+stmt_select_body :
+	stmt_select_default
+	{
+		$$ = &ast.SelectBodyStmt{Default: $1}
+	}
+	| stmt_select_case
+	{
+		$$ = &ast.SelectBodyStmt{Cases: []ast.Stmt{$1}}
+	}
 
 stmt_select_case :
 	CASE stmt ':' compstmt

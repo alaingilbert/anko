@@ -14,6 +14,7 @@ import (
 %type<stmt_var> stmt_var
 %type<stmt_lets> stmt_lets
 %type<stmt_typed_lets> stmt_typed_lets
+%type<stmt_try> stmt_try
 %type<stmt_if> stmt_if
 %type<stmt_for> stmt_for
 %type<stmt_switch> stmt_switch
@@ -49,6 +50,7 @@ import (
 	stmt_var               ast.Stmt
 	stmt_lets              ast.Stmt
 	stmt_typed_lets        ast.Stmt
+	stmt_try               ast.Stmt
 	stmt_if                ast.Stmt
 	stmt_for               ast.Stmt
 	stmt_switch            ast.Stmt
@@ -178,25 +180,9 @@ stmt :
 	| stmt_for {
 		$$ = $1
 	}
-	| TRY '{' compstmt '}' CATCH IDENT '{' compstmt '}' FINALLY '{' compstmt '}'
+	| stmt_try
 	{
-		$$ = &ast.TryStmt{Try: $3, Var: $6.Lit, Catch: $8, Finally: $12}
-		$$.SetPosition($1.Position())
-	}
-	| TRY '{' compstmt '}' CATCH '{' compstmt '}' FINALLY '{' compstmt '}'
-	{
-		$$ = &ast.TryStmt{Try: $3, Catch: $7, Finally: $11}
-		$$.SetPosition($1.Position())
-	}
-	| TRY '{' compstmt '}' CATCH IDENT '{' compstmt '}'
-	{
-		$$ = &ast.TryStmt{Try: $3, Var: $6.Lit, Catch: $8}
-		$$.SetPosition($1.Position())
-	}
-	| TRY '{' compstmt '}' CATCH '{' compstmt '}'
-	{
-		$$ = &ast.TryStmt{Try: $3, Catch: $7}
-		$$.SetPosition($1.Position())
+		$$ = $1
 	}
 	| stmt_switch
 	{
@@ -249,6 +235,28 @@ stmt :
 	| expr
 	{
 		$$ = &ast.ExprStmt{Expr: $1}
+		$$.SetPosition($1.Position())
+	}
+
+stmt_try :
+	TRY '{' compstmt '}' CATCH IDENT '{' compstmt '}' FINALLY '{' compstmt '}'
+	{
+		$$ = &ast.TryStmt{Try: $3, Var: $6.Lit, Catch: $8, Finally: $12}
+		$$.SetPosition($1.Position())
+	}
+	| TRY '{' compstmt '}' CATCH '{' compstmt '}' FINALLY '{' compstmt '}'
+	{
+		$$ = &ast.TryStmt{Try: $3, Catch: $7, Finally: $11}
+		$$.SetPosition($1.Position())
+	}
+	| TRY '{' compstmt '}' CATCH IDENT '{' compstmt '}'
+	{
+		$$ = &ast.TryStmt{Try: $3, Var: $6.Lit, Catch: $8}
+		$$.SetPosition($1.Position())
+	}
+	| TRY '{' compstmt '}' CATCH '{' compstmt '}'
+	{
+		$$ = &ast.TryStmt{Try: $3, Catch: $7}
 		$$.SetPosition($1.Position())
 	}
 

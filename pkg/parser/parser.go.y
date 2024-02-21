@@ -1213,12 +1213,10 @@ newlines :
 newline : '\n'
 
 comma_newlines :
-	',' newlines
-	| ','
+	',' opt_newlines
 
 opt_comma_newlines :
-	/* nothing */
-	| comma_newlines
-	| newlines
+	comma_newlines
+	| opt_newlines
 
 %%

@@ -61,6 +61,7 @@ import (
 %type<expr_unary> expr_unary
 %type<expr_binary> expr_binary
 %type<op_comparison> op_comparison
+%type<expr_assoc> expr_assoc
 %type<expr_idents> expr_idents
 %type<expr_for_idents> expr_for_idents
 %type<func_expr_idents> func_expr_idents
@@ -131,6 +132,7 @@ import (
 	expr_unary                      ast.Expr
 	expr_binary                     ast.Expr
 	op_comparison                   ast.Expr
+	expr_assoc                      ast.Expr
 	expr_member_or_ident            ast.Expr
 	expr_call                       *ast.CallExpr
 	expr_anon_call                  *ast.AnonCallExpr
@@ -961,7 +963,30 @@ expr_binary :
 		$$.SetPosition($1.Position())
 	}
 	| op_comparison { $$ = $1 }
-	| expr PLUSEQ expr
+	| expr_assoc { $$ = $1 }
+	| expr '|' expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "|", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr OROR expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "||", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr '&' expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "&", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr ANDAND expr
+	{
+		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "&&", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+
+expr_assoc :
+	expr PLUSEQ expr
 	{
 		$$ = &ast.AssocExpr{Lhs: $1, Operator: "+=", Rhs: $3}
 		$$.SetPosition($1.Position())
@@ -999,26 +1024,6 @@ expr_binary :
 	| expr MINUSMINUS
 	{
 		$$ = &ast.AssocExpr{Lhs: $1, Operator: "--"}
-		$$.SetPosition($1.Position())
-	}
-	| expr '|' expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "|", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr OROR expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "||", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr '&' expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "&", Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr ANDAND expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "&&", Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
 

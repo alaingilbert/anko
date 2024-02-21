@@ -905,14 +905,13 @@ expr_unary :
 		$$ = &ast.UnaryExpr{Operator: "^", Expr: $2}
 		$$.SetPosition($2.Position())
 	}
-	| '&' expr_ident %prec UNARY
+	| '&' expr_member_or_ident %prec UNARY
 	{
-		$$ = &ast.AddrExpr{Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| '&' expr_member %prec UNARY
-	{
-		$$ = $2
+		if el, ok := $2.(*ast.IdentExpr); ok {
+			$$ = &ast.AddrExpr{Expr: el}
+		} else if el, ok := $2.(*ast.MemberExpr); ok {
+			$$ = el
+		}
 		$$.SetPosition($2.Position())
 	}
 	| '*' expr_member_or_ident %prec UNARY

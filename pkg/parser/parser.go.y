@@ -42,6 +42,7 @@ import (
 %type<opt_exprs> opt_exprs
 %type<expr> expr
 %type<expr_member_or_ident> expr_member_or_ident
+%type<expr_member> expr_member
 %type<expr_call> expr_call
 %type<expr_anon_call> expr_anon_call
 %type<expr_func> expr_func
@@ -134,6 +135,7 @@ import (
 	op_comparison                   ast.Expr
 	expr_assoc                      ast.Expr
 	expr_member_or_ident            ast.Expr
+	expr_member                     ast.Expr
 	expr_call                       *ast.CallExpr
 	expr_anon_call                  *ast.AnonCallExpr
 	expr_func                       ast.Expr
@@ -853,8 +855,11 @@ expr_literals :
 	}
 
 expr_member_or_ident :
-	expr_ident { $$ = $1 }
-	| expr '.' IDENT
+	expr_ident    { $$ = $1 }
+	| expr_member { $$ = $1 }
+
+expr_member :
+	expr '.' IDENT
 	{
 		$$ = &ast.MemberExpr{Expr: $1, Name: $3.Lit}
 		$$.SetPosition($1.Position())
@@ -905,9 +910,9 @@ expr_unary :
 		$$ = &ast.AddrExpr{Expr: $2}
 		$$.SetPosition($2.Position())
 	}
-	| '&' expr '.' IDENT %prec UNARY
+	| '&' expr_member %prec UNARY
 	{
-		$$ = &ast.AddrExpr{Expr: &ast.MemberExpr{Expr: $2, Name: $4.Lit}}
+		$$ = $2
 		$$.SetPosition($2.Position())
 	}
 	| '*' expr_ident %prec UNARY
@@ -915,9 +920,9 @@ expr_unary :
 		$$ = &ast.DerefExpr{Expr: $2}
 		$$.SetPosition($2.Position())
 	}
-	| '*' expr '.' IDENT %prec UNARY
+	| '*' expr_member %prec UNARY
 	{
-		$$ = &ast.DerefExpr{Expr: &ast.MemberExpr{Expr: $2, Name: $4.Lit}}
+		$$ = &ast.DerefExpr{Expr: $2}
 		$$.SetPosition($2.Position())
 	}
 

@@ -95,6 +95,7 @@ import (
 %type<type_data> type_data
 %type<type_data_struct> type_data_struct
 %type<slice_count> slice_count
+%type<typed_slice_count> typed_slice_count
 %type<expr_map_content> expr_map_content
 %type<expr_map_content_helper> expr_map_content_helper
 %type<expr_map_key_value> expr_map_key_value
@@ -152,6 +153,7 @@ import (
 	expr_map_key_value              []ast.Expr
 	type_data                       *ast.TypeStruct
         type_data_struct                *ast.TypeStruct
+        typed_slice_count               *ast.TypeStruct
         slice_count                     int
 	tok                             ast.Token
 	bin_op                          string
@@ -728,9 +730,9 @@ expr_array :
 		$$ = &ast.ArrayExpr{Exprs: $2}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
-	| slice_count type_data '{' comma_separated_exprs '}'
+	| typed_slice_count '{' comma_separated_exprs '}'
 	{
-		$$ = &ast.ArrayExpr{Exprs: $4, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}}
+		$$ = &ast.ArrayExpr{Exprs: $3, TypeData: $1}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
 
@@ -1028,15 +1030,9 @@ type_data :
 			$$ = &ast.TypeStruct{Kind: ast.TypePtr, SubType: $2}
 		}
 	}
-	| slice_count type_data
+	| typed_slice_count
 	{
-		if $2.Kind == ast.TypeDefault {
-			$2.Kind = ast.TypeSlice
-			$2.Dimensions = $1
-			$$ = $2
-		} else {
-			$$ = &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}
-		}
+		$$ = $1
 	}
 	| MAP '[' type_data ']' type_data
 	{
@@ -1068,6 +1064,18 @@ type_data_struct :
 		}
 		$$.StructNames = append($$.StructNames, $3.Lit)
 		$$.StructTypes = append($$.StructTypes, $4)
+	}
+
+typed_slice_count :
+	slice_count type_data
+	{
+		if $2.Kind == ast.TypeDefault {
+			$2.Kind = ast.TypeSlice
+			$2.Dimensions = $1
+			$$ = $2
+		} else {
+			$$ = &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2, Dimensions: $1}
+		}
 	}
 
 slice_count :

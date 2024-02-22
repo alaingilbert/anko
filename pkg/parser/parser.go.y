@@ -9,39 +9,41 @@ import (
 
 %type<compstmt> compstmt
 %type<stmts> stmts
+
 %type<stmt> stmt
-%type<stmt_var_or_lets> stmt_var_or_lets
+%type<stmt> stmt_var_or_lets
+%type<stmt> stmt_var
+%type<stmt> stmt_lets
+%type<stmt> stmt_try
+%type<stmt> stmt_defer
+%type<stmt> stmt_go
+%type<stmt> stmt_if
+%type<stmt> stmt_for
+%type<stmt> stmt_switch
+%type<stmt> stmt_select
+%type<stmt> stmt_expr
+%type<stmt> stmt_module
+%type<stmt> stmt_break
+%type<stmt> stmt_return
+%type<stmt> stmt_continue
+%type<stmt> stmt_throw
+
 %type<opt_stmt_var_or_lets> opt_stmt_var_or_lets
-%type<stmt_var> stmt_var
-%type<stmt_lets> stmt_lets
 %type<stmt_typed_lets> stmt_typed_lets
-%type<stmt_try> stmt_try
 %type<opt_finally> opt_finally
-%type<stmt_defer> stmt_defer
-%type<stmt_go> stmt_go
-%type<stmt_if> stmt_if
 %type<maybe_else> maybe_else
 %type<else_if_list> else_if_list
 %type<else_if> else_if
-%type<stmt_for> stmt_for
-%type<stmt_switch> stmt_switch
 %type<stmt_switch_cases> stmt_switch_cases
 %type<stmt_switch_cases_helper> stmt_switch_cases_helper
 %type<stmt_switch_case> stmt_switch_case
 %type<stmt_switch_default> stmt_switch_default
-%type<stmt_select> stmt_select
 %type<stmt_select_body> stmt_select_body
 %type<stmt_select_content> stmt_select_content
 %type<stmt_select_cases> stmt_select_cases
 %type<stmt_select_cases_helper> stmt_select_cases_helper
 %type<stmt_select_case> stmt_select_case
 %type<stmt_select_default> stmt_select_default
-%type<stmt_expr> stmt_expr
-%type<stmt_module> stmt_module
-%type<stmt_break> stmt_break
-%type<stmt_return> stmt_return
-%type<stmt_continue> stmt_continue
-%type<stmt_throw> stmt_throw
 %type<exprs> exprs
 %type<opt_exprs> opt_exprs
 %type<comma_separated_exprs> comma_separated_exprs
@@ -246,20 +248,20 @@ stmts :
 	}
 
 stmt :
-	stmt_var_or_lets { $$ = $1 }
-	| stmt_break     { $$ = $1 }
-	| stmt_continue  { $$ = $1 }
-	| stmt_return    { $$ = $1 }
-	| stmt_throw     { $$ = $1 }
-	| stmt_module    { $$ = $1 }
-	| stmt_if        { $$ = $1 }
-	| stmt_for       { $$ = $1 }
-	| stmt_try       { $$ = $1 }
-	| stmt_switch    { $$ = $1 }
-	| stmt_select    { $$ = $1 }
-	| stmt_go        { $$ = $1 }
-	| stmt_defer     { $$ = $1 }
-	| stmt_expr      { $$ = $1 }
+	stmt_var_or_lets
+	| stmt_break
+	| stmt_continue
+	| stmt_return
+	| stmt_throw
+	| stmt_module
+	| stmt_if
+	| stmt_for
+	| stmt_try
+	| stmt_switch
+	| stmt_select
+	| stmt_go
+	| stmt_defer
+	| stmt_expr
 
 stmt_break :
 	BREAK

@@ -1600,120 +1600,64 @@ yynewstate:
 				l.stmt = yyVAL.stmts
 			}
 		}
-	case 6:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_var_or_lets
-		}
-	case 7:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_break
-		}
-	case 8:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_continue
-		}
-	case 9:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_return
-		}
-	case 10:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_throw
-		}
-	case 11:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_module
-		}
-	case 12:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_if
-		}
-	case 13:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_for
-		}
-	case 14:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_try
-		}
-	case 15:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_switch
-		}
-	case 16:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_select
-		}
-	case 17:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_go
-		}
-	case 18:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_defer
-		}
-	case 19:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt_expr
-		}
 	case 20:
 		{
-			yyVAL.stmt_break = &ast.BreakStmt{}
-			yyVAL.stmt_break.SetPosition(yyS[yypt-0].tok.Position())
+			yyVAL.stmt = &ast.BreakStmt{}
+			yyVAL.stmt.SetPosition(yyS[yypt-0].tok.Position())
 		}
 	case 21:
 		{
-			yyVAL.stmt_continue = &ast.ContinueStmt{}
-			yyVAL.stmt_continue.SetPosition(yyS[yypt-0].tok.Position())
+			yyVAL.stmt = &ast.ContinueStmt{}
+			yyVAL.stmt.SetPosition(yyS[yypt-0].tok.Position())
 		}
 	case 22:
 		{
-			yyVAL.stmt_return = &ast.ReturnStmt{Exprs: yyS[yypt-0].opt_exprs}
-			yyVAL.stmt_return.SetPosition(yyS[yypt-1].tok.Position())
+			yyVAL.stmt = &ast.ReturnStmt{Exprs: yyS[yypt-0].opt_exprs}
+			yyVAL.stmt.SetPosition(yyS[yypt-1].tok.Position())
 		}
 	case 23:
 		{
-			yyVAL.stmt_throw = &ast.ThrowStmt{Expr: yyS[yypt-0].expr}
-			yyVAL.stmt_throw.SetPosition(yyS[yypt-1].tok.Position())
+			yyVAL.stmt = &ast.ThrowStmt{Expr: yyS[yypt-0].expr}
+			yyVAL.stmt.SetPosition(yyS[yypt-1].tok.Position())
 		}
 	case 24:
 		{
-			yyVAL.stmt_module = &ast.ModuleStmt{Name: yyS[yypt-3].tok.Lit, Stmt: yyS[yypt-1].compstmt}
-			yyVAL.stmt_module.SetPosition(yyS[yypt-4].tok.Position())
+			yyVAL.stmt = &ast.ModuleStmt{Name: yyS[yypt-3].tok.Lit, Stmt: yyS[yypt-1].compstmt}
+			yyVAL.stmt.SetPosition(yyS[yypt-4].tok.Position())
 		}
 	case 25:
 		{
-			yyVAL.stmt_expr = &ast.ExprStmt{Expr: yyS[yypt-0].expr}
-			yyVAL.stmt_expr.SetPosition(yyS[yypt-0].expr.Position())
+			yyVAL.stmt = &ast.ExprStmt{Expr: yyS[yypt-0].expr}
+			yyVAL.stmt.SetPosition(yyS[yypt-0].expr.Position())
 		}
 	case 26:
 		{
 			yyS[yypt-0].expr_call.Go = true
-			yyVAL.stmt_go = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr_call}
-			yyVAL.stmt_go.SetPosition(yyS[yypt-1].tok.Position())
+			yyVAL.stmt = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr_call}
+			yyVAL.stmt.SetPosition(yyS[yypt-1].tok.Position())
 		}
 	case 27:
 		{
 			yyS[yypt-0].expr_anon_call.Go = true
-			yyVAL.stmt_go = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr_anon_call}
-			yyVAL.stmt_go.SetPosition(yyS[yypt-1].tok.Position())
+			yyVAL.stmt = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr_anon_call}
+			yyVAL.stmt.SetPosition(yyS[yypt-1].tok.Position())
 		}
 	case 28:
 		{
 			yyS[yypt-0].expr_call.Defer = true
-			yyVAL.stmt_defer = &ast.DeferStmt{Expr: yyS[yypt-0].expr_call}
-			yyVAL.stmt_defer.SetPosition(yyS[yypt-0].expr_call.Position())
+			yyVAL.stmt = &ast.DeferStmt{Expr: yyS[yypt-0].expr_call}
+			yyVAL.stmt.SetPosition(yyS[yypt-0].expr_call.Position())
 		}
 	case 29:
 		{
 			yyS[yypt-0].expr_anon_call.Defer = true
-			yyVAL.stmt_defer = &ast.DeferStmt{Expr: yyS[yypt-0].expr_anon_call}
-			yyVAL.stmt_defer.SetPosition(yyS[yypt-0].expr_anon_call.Position())
+			yyVAL.stmt = &ast.DeferStmt{Expr: yyS[yypt-0].expr_anon_call}
+			yyVAL.stmt.SetPosition(yyS[yypt-0].expr_anon_call.Position())
 		}
 	case 30:
 		{
-			yyVAL.stmt_try = &ast.TryStmt{Try: yyS[yypt-7].compstmt, Var: yyS[yypt-4].opt_expr_ident.Lit, Catch: yyS[yypt-2].compstmt, Finally: yyS[yypt-0].opt_finally}
-			yyVAL.stmt_try.SetPosition(yyS[yypt-9].tok.Position())
+			yyVAL.stmt = &ast.TryStmt{Try: yyS[yypt-7].compstmt, Var: yyS[yypt-4].opt_expr_ident.Lit, Catch: yyS[yypt-2].compstmt, Finally: yyS[yypt-0].opt_finally}
+			yyVAL.stmt.SetPosition(yyS[yypt-9].tok.Position())
 		}
 	case 31:
 		{
@@ -1729,35 +1673,35 @@ yynewstate:
 		}
 	case 34:
 		{
-			yyVAL.opt_stmt_var_or_lets = yyS[yypt-0].stmt_var_or_lets
+			yyVAL.opt_stmt_var_or_lets = yyS[yypt-0].stmt
 		}
 	case 35:
 		{
-			yyVAL.stmt_var_or_lets = yyS[yypt-0].stmt_var
+			yyVAL.stmt = yyS[yypt-0].stmt
 		}
 	case 36:
 		{
-			yyVAL.stmt_var_or_lets = yyS[yypt-0].stmt_typed_lets
+			yyVAL.stmt = yyS[yypt-0].stmt_typed_lets
 		}
 	case 37:
 		{
-			yyVAL.stmt_var_or_lets = yyS[yypt-0].stmt_lets
+			yyVAL.stmt = yyS[yypt-0].stmt
 		}
 	case 38:
 		{
 			if len(yyS[yypt-2].expr_idents) == 2 && len(yyS[yypt-0].exprs) == 1 {
 				if _, ok := yyS[yypt-0].exprs[0].(*ast.ItemExpr); ok {
-					yyVAL.stmt_var = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
+					yyVAL.stmt = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
 				} else {
-					yyVAL.stmt_var = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
+					yyVAL.stmt = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
 				}
 			} else {
-				yyVAL.stmt_var = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
+				yyVAL.stmt = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
 				if len(yyS[yypt-2].expr_idents) != len(yyS[yypt-0].exprs) && !(len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].expr_idents) > len(yyS[yypt-0].exprs)) {
 					yylex.Error("unexpected ','")
 				}
 			}
-			yyVAL.stmt_var.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.stmt.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 39:
 		{
@@ -1779,22 +1723,22 @@ yynewstate:
 		{
 			if len(yyS[yypt-2].exprs) == 2 && len(yyS[yypt-0].exprs) == 1 {
 				if _, ok := yyS[yypt-0].exprs[0].(*ast.ItemExpr); ok {
-					yyVAL.stmt_lets = &ast.LetMapItemStmt{Lhss: yyS[yypt-2].exprs, Rhs: yyS[yypt-0].exprs[0]}
+					yyVAL.stmt = &ast.LetMapItemStmt{Lhss: yyS[yypt-2].exprs, Rhs: yyS[yypt-0].exprs[0]}
 				} else {
-					yyVAL.stmt_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs}
+					yyVAL.stmt = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs}
 				}
 			} else {
-				yyVAL.stmt_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs}
+				yyVAL.stmt = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs}
 				if len(yyS[yypt-2].exprs) != len(yyS[yypt-0].exprs) && !(len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].exprs) > len(yyS[yypt-0].exprs)) {
 					yylex.Error("unexpected ','")
 				}
 			}
-			yyVAL.stmt_lets.SetPosition(yyS[yypt-2].exprs[0].Position())
+			yyVAL.stmt.SetPosition(yyS[yypt-2].exprs[0].Position())
 		}
 	case 41:
 		{
-			yyVAL.stmt_if = &ast.IfStmt{If: yyS[yypt-5].expr, Then: yyS[yypt-3].compstmt, ElseIf: yyS[yypt-1].else_if_list, Else: yyS[yypt-0].maybe_else}
-			yyVAL.stmt_if.SetPosition(yyS[yypt-6].tok.Position())
+			yyVAL.stmt = &ast.IfStmt{If: yyS[yypt-5].expr, Then: yyS[yypt-3].compstmt, ElseIf: yyS[yypt-1].else_if_list, Else: yyS[yypt-0].maybe_else}
+			yyVAL.stmt.SetPosition(yyS[yypt-6].tok.Position())
 		}
 	case 42:
 		{
@@ -1819,23 +1763,23 @@ yynewstate:
 		}
 	case 47:
 		{
-			yyVAL.stmt_for = &ast.LoopStmt{Stmt: yyS[yypt-1].compstmt}
-			yyVAL.stmt_for.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.stmt = &ast.LoopStmt{Stmt: yyS[yypt-1].compstmt}
+			yyVAL.stmt.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 48:
 		{
-			yyVAL.stmt_for = &ast.LoopStmt{Expr: yyS[yypt-3].expr, Stmt: yyS[yypt-1].compstmt}
-			yyVAL.stmt_for.SetPosition(yyS[yypt-4].tok.Position())
+			yyVAL.stmt = &ast.LoopStmt{Expr: yyS[yypt-3].expr, Stmt: yyS[yypt-1].compstmt}
+			yyVAL.stmt.SetPosition(yyS[yypt-4].tok.Position())
 		}
 	case 49:
 		{
-			yyVAL.stmt_for = &ast.ForStmt{Vars: yyS[yypt-5].expr_for_idents, Value: yyS[yypt-3].expr, Stmt: yyS[yypt-1].compstmt}
-			yyVAL.stmt_for.SetPosition(yyS[yypt-6].tok.Position())
+			yyVAL.stmt = &ast.ForStmt{Vars: yyS[yypt-5].expr_for_idents, Value: yyS[yypt-3].expr, Stmt: yyS[yypt-1].compstmt}
+			yyVAL.stmt.SetPosition(yyS[yypt-6].tok.Position())
 		}
 	case 50:
 		{
-			yyVAL.stmt_for = &ast.CForStmt{Stmt1: yyS[yypt-7].opt_stmt_var_or_lets, Expr2: yyS[yypt-5].opt_expr, Expr3: yyS[yypt-3].opt_expr, Stmt: yyS[yypt-1].compstmt}
-			yyVAL.stmt_for.SetPosition(yyS[yypt-8].tok.Position())
+			yyVAL.stmt = &ast.CForStmt{Stmt1: yyS[yypt-7].opt_stmt_var_or_lets, Expr2: yyS[yypt-5].opt_expr, Expr3: yyS[yypt-3].opt_expr, Stmt: yyS[yypt-1].compstmt}
+			yyVAL.stmt.SetPosition(yyS[yypt-8].tok.Position())
 		}
 	case 51:
 		{
@@ -1847,8 +1791,8 @@ yynewstate:
 		}
 	case 53:
 		{
-			yyVAL.stmt_select = &ast.SelectStmt{Body: yyS[yypt-1].stmt_select_content}
-			yyVAL.stmt_select.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.stmt = &ast.SelectStmt{Body: yyS[yypt-1].stmt_select_content}
+			yyVAL.stmt.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 54:
 		{
@@ -1897,8 +1841,8 @@ yynewstate:
 	case 64:
 		{
 			yyS[yypt-2].stmt_switch_cases.Expr = yyS[yypt-5].expr
-			yyVAL.stmt_switch = yyS[yypt-2].stmt_switch_cases
-			yyVAL.stmt_switch.SetPosition(yyS[yypt-6].tok.Position())
+			yyVAL.stmt = yyS[yypt-2].stmt_switch_cases
+			yyVAL.stmt.SetPosition(yyS[yypt-6].tok.Position())
 		}
 	case 65:
 		{

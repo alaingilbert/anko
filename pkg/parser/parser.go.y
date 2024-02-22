@@ -194,22 +194,19 @@ compstmt :
 	| opt_term stmts opt_term
 	{
 		$$ = $2
+		if l, ok := yylex.(*Lexer); ok {
+			l.stmt = $$
+		}
 	}
 
 stmts :
 	stmt
 	{
 		$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$1}}
-		if l, ok := yylex.(*Lexer); ok {
-			l.stmt = $$
-		}
 	}
 	| stmts term stmt
 	{
 		$1.Stmts = append($1.Stmts, $3)
-		if l, ok := yylex.(*Lexer); ok {
-			l.stmt = $$
-		}
 	}
 
 stmt :

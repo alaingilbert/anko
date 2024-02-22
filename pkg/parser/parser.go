@@ -1548,20 +1548,17 @@ yynewstate:
 	case 3:
 		{
 			yyVAL.compstmt = yyS[yypt-1].stmts
+			if l, ok := yylex.(*Lexer); ok {
+				l.stmt = yyVAL.compstmt
+			}
 		}
 	case 4:
 		{
 			yyVAL.stmts = &ast.StmtsStmt{Stmts: []ast.Stmt{yyS[yypt-0].stmt}}
-			if l, ok := yylex.(*Lexer); ok {
-				l.stmt = yyVAL.stmts
-			}
 		}
 	case 5:
 		{
 			yyS[yypt-2].stmts.Stmts = append(yyS[yypt-2].stmts.Stmts, yyS[yypt-0].stmt)
-			if l, ok := yylex.(*Lexer); ok {
-				l.stmt = yyVAL.stmts
-			}
 		}
 	case 20:
 		{

@@ -1068,6 +1068,8 @@ func TestExistenceOfKeyInMaps(t *testing.T) {
 		{Script: `a = {"b":"b"}; b.c, ok = a["b"]`, RunError: envPkg.NewUndefinedSymbolErr("b"), Name: ""},
 		{Script: `a = {"b":"b"}; v, b.c = a["b"]`, RunError: envPkg.NewUndefinedSymbolErr("b"), Name: ""},
 
+		{Script: `a = {"b":"b"}; var v, ok = a["a"]`, RunOutput: nil, Output: map[string]any{"a": map[any]any{"b": "b"}, "v": nil, "ok": false}, Name: ""},
+		{Script: `a = {"b":"b"}; v, ok := a["a"]`, RunOutput: nil, Output: map[string]any{"a": map[any]any{"b": "b"}, "v": nil, "ok": false}, Name: ""},
 		{Script: `a = {"b":"b"}; v, ok = a["a"]`, RunOutput: nil, Output: map[string]any{"a": map[any]any{"b": "b"}, "v": nil, "ok": false}, Name: ""},
 		{Script: `a = {"b":"b"}; v, ok = a["b"]`, RunOutput: "b", Output: map[string]any{"a": map[any]any{"b": "b"}, "v": "b", "ok": true}, Name: ""},
 		{Script: `a = {"b":"b", "c":"c"}; v, ok = a["a"]`, RunOutput: nil, Output: map[string]any{"a": map[any]any{"b": "b", "c": "c"}, "v": nil, "ok": false}, Name: ""},

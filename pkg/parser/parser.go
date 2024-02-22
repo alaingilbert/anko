@@ -1626,17 +1626,18 @@ yynewstate:
 		}
 	case 56:
 		{
+			isItem := false
 			if len(yyS[yypt-2].expr_idents) == 2 && len(yyS[yypt-0].exprs) == 1 {
 				if _, ok := yyS[yypt-0].exprs[0].(*ast.ItemExpr); ok {
+					isItem = true
 					arr := []ast.Expr{}
 					for _, el := range yyS[yypt-2].expr_idents {
 						arr = append(arr, &ast.IdentExpr{Lit: el})
 					}
 					yyVAL.stmt = &ast.LetMapItemStmt{Lhss: arr, Rhs: yyS[yypt-0].exprs[0]}
-				} else {
-					yyVAL.stmt = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
 				}
-			} else {
+			}
+			if !isItem {
 				yyVAL.stmt = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
 				if len(yyS[yypt-2].expr_idents) != len(yyS[yypt-0].exprs) && !(len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].expr_idents) > len(yyS[yypt-0].exprs)) {
 					yylex.Error("unexpected ','")
@@ -1646,13 +1647,14 @@ yynewstate:
 		}
 	case 57:
 		{
+			isItem := false
 			if len(yyS[yypt-2].exprs) == 2 && len(yyS[yypt-0].exprs) == 1 {
 				if _, ok := yyS[yypt-0].exprs[0].(*ast.ItemExpr); ok {
+					isItem = true
 					yyVAL.stmt = &ast.LetMapItemStmt{Lhss: yyS[yypt-2].exprs, Rhs: yyS[yypt-0].exprs[0]}
-				} else {
-					yyVAL.stmt = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: yyS[yypt-1].op_lets}
 				}
-			} else {
+			}
+			if !isItem {
 				yyVAL.stmt = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: yyS[yypt-1].op_lets}
 				if len(yyS[yypt-2].exprs) != len(yyS[yypt-0].exprs) && !(len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].exprs) > len(yyS[yypt-0].exprs)) {
 					yylex.Error("unexpected ','")

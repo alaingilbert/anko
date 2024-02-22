@@ -320,17 +320,18 @@ stmt_var_or_lets :
 stmt_var :
 	VAR expr_idents '=' exprs
 	{
+		isItem := false
 		if len($2) == 2 && len($4) == 1 {
 			if _, ok := $4[0].(*ast.ItemExpr); ok {
+				isItem = true
 				arr := []ast.Expr{}
 				for _, el := range $2 {
 					arr = append(arr, &ast.IdentExpr{Lit: el})
 				}
 				$$ = &ast.LetMapItemStmt{Lhss: arr, Rhs: $4[0]}
-			} else {
-				$$ = &ast.VarStmt{Names: $2, Exprs: $4}
 			}
-		} else {
+		}
+		if !isItem {
 			$$ = &ast.VarStmt{Names: $2, Exprs: $4}
 			if len($2) != len($4) && !(len($4) == 1 && len($2) > len($4)) {
 				yylex.Error("unexpected ','")
@@ -342,13 +343,14 @@ stmt_var :
 stmt_lets :
 	exprs op_lets exprs
 	{
+		isItem := false
 		if len($1) == 2 && len($3) == 1 {
 			if _, ok := $3[0].(*ast.ItemExpr); ok {
+				isItem = true
 				$$ = &ast.LetMapItemStmt{Lhss: $1, Rhs: $3[0]}
-			} else {
-				$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: $2}
 			}
-		} else {
+		}
+		if !isItem {
 			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: $2}
 			if len($1) != len($3) && !(len($3) == 1 && len($1) > len($3)) {
 				yylex.Error("unexpected ','")

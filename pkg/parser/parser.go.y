@@ -16,6 +16,7 @@ import (
 %type<stmt_lets> stmt_lets
 %type<stmt_typed_lets> stmt_typed_lets
 %type<stmt_try> stmt_try
+%type<opt_finally> opt_finally
 %type<stmt_defer> stmt_defer
 %type<stmt_go> stmt_go
 %type<stmt_if> stmt_if
@@ -106,6 +107,7 @@ import (
 	stmt_lets                       ast.Stmt
 	stmt_typed_lets                 ast.Stmt
 	stmt_try                        ast.Stmt
+	opt_finally                     ast.Stmt
 	stmt_defer                      ast.Stmt
 	stmt_go                         ast.Stmt
 	stmt_if                         ast.Stmt
@@ -330,25 +332,18 @@ stmt_defer :
 	}
 
 stmt_try :
-	TRY '{' compstmt '}' CATCH IDENT '{' compstmt '}' FINALLY '{' compstmt '}'
+	TRY '{' compstmt '}' CATCH opt_expr_ident '{' compstmt '}' opt_finally
 	{
-		$$ = &ast.TryStmt{Try: $3, Var: $6.Lit, Catch: $8, Finally: $12}
+		$$ = &ast.TryStmt{Try: $3, Var: $6.Lit, Catch: $8, Finally: $10}
 		$$.SetPosition($1.Position())
 	}
-	| TRY '{' compstmt '}' CATCH '{' compstmt '}' FINALLY '{' compstmt '}'
+
+opt_finally :
+	/* nothing */
+	{ $$ = nil }
+	| FINALLY '{' compstmt '}'
 	{
-		$$ = &ast.TryStmt{Try: $3, Catch: $7, Finally: $11}
-		$$.SetPosition($1.Position())
-	}
-	| TRY '{' compstmt '}' CATCH IDENT '{' compstmt '}'
-	{
-		$$ = &ast.TryStmt{Try: $3, Var: $6.Lit, Catch: $8}
-		$$.SetPosition($1.Position())
-	}
-	| TRY '{' compstmt '}' CATCH '{' compstmt '}'
-	{
-		$$ = &ast.TryStmt{Try: $3, Catch: $7}
-		$$.SetPosition($1.Position())
+		$$ = $3
 	}
 
 opt_stmt_var_or_lets :

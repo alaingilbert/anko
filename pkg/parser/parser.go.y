@@ -47,34 +47,38 @@ import (
 %type<exprs> exprs
 %type<opt_exprs> opt_exprs
 %type<comma_separated_exprs> comma_separated_exprs
+
 %type<expr> expr
+%type<expr> expr_member_or_ident
+%type<expr> expr_literals
+%type<expr> expr_unary
+%type<expr> expr_ternary
+%type<expr> expr_nil_coalesce
+%type<expr> expr_func
+%type<expr> expr_array
+%type<expr> expr_paren
+%type<expr> expr_binary
+%type<expr> expr_call
+%type<expr> expr_anon_call
+%type<expr> expr_item_or_slice
+%type<expr> expr_len
+%type<expr> expr_dbg
+%type<expr> expr_new
+%type<expr> expr_make
+%type<expr> expr_map
+%type<expr> expr_opchan
+%type<expr> expr_close
+%type<expr> expr_delete
+%type<expr> expr_in
+
 %type<opt_expr> opt_expr
-%type<expr_member_or_ident> expr_member_or_ident
 %type<expr_member> expr_member
-%type<expr_call> expr_call
 %type<expr_call_helper> expr_call_helper
-%type<expr_anon_call> expr_anon_call
-%type<expr_func> expr_func
-%type<expr_make> expr_make
-%type<expr_dbg> expr_dbg
-%type<expr_literals> expr_literals
 %type<expr_literals_helper> expr_literals_helper
-%type<expr_close> expr_close
-%type<expr_delete> expr_delete
-%type<expr_in> expr_in
-%type<expr_opchan> expr_opchan
-%type<expr_new> expr_new
-%type<expr_len> expr_len
-%type<expr_ternary> expr_ternary
-%type<expr_nil_coalesce> expr_nil_coalesce
-%type<expr_array> expr_array
-%type<expr_paren> expr_paren
-%type<expr_unary> expr_unary
 %type<unary_op> unary_op
 %type<bin_op> bin_op
 %type<op_assoc> op_assoc
 %type<op_assoc1> op_assoc1
-%type<expr_binary> expr_binary
 %type<expr_assoc> expr_assoc
 %type<expr_idents> expr_idents
 %type<expr_for_idents> expr_for_idents
@@ -91,11 +95,9 @@ import (
 %type<type_data> type_data
 %type<type_data_struct> type_data_struct
 %type<slice_count> slice_count
-%type<expr_map> expr_map
 %type<expr_map_content> expr_map_content
 %type<expr_map_content_helper> expr_map_content_helper
 %type<expr_map_key_value> expr_map_key_value
-%type<expr_item_or_slice> expr_item_or_slice
 %type<expr_slice_helper1> expr_slice_helper1
 %type<expr_ident> expr_ident
 %type<opt_expr_ident> opt_expr_ident
@@ -103,26 +105,16 @@ import (
 %union{
 	compstmt                        ast.Stmt
 	stmts                           *ast.StmtsStmt
-	stmt_var_or_lets                ast.Stmt
 	opt_stmt_var_or_lets            ast.Stmt
-	stmt_var                        ast.Stmt
-	stmt_lets                       ast.Stmt
 	stmt_typed_lets                 ast.Stmt
-	stmt_try                        ast.Stmt
 	opt_finally                     ast.Stmt
-	stmt_defer                      ast.Stmt
-	stmt_go                         ast.Stmt
-	stmt_if                         ast.Stmt
 	maybe_else                      ast.Stmt
 	else_if_list                    []ast.Stmt
 	else_if                         ast.Stmt
-	stmt_for                        ast.Stmt
-	stmt_switch                     ast.Stmt
 	stmt_switch_cases               *ast.SwitchStmt
 	stmt_switch_cases_helper        *ast.SwitchStmt
 	stmt_switch_case                ast.Stmt
 	stmt_switch_default             ast.Stmt
-	stmt_select                     ast.Stmt
 	stmt_select_body                *ast.SelectBodyStmt
 	stmt_select_content             *ast.SelectBodyStmt
 	stmt_select_cases               *ast.SelectBodyStmt
@@ -130,38 +122,13 @@ import (
 	stmt_select_case                ast.Stmt
 	stmt_select_default             ast.Stmt
 	stmt                            ast.Stmt
-	stmt_module                     ast.Stmt
-	stmt_break                      ast.Stmt
-	stmt_return                     ast.Stmt
-	stmt_continue                   ast.Stmt
-	stmt_throw                      ast.Stmt
-	stmt_expr                       *ast.ExprStmt
 	expr                            ast.Expr
 	opt_expr                        ast.Expr
-	expr_dbg                        ast.Expr
-	expr_literals                   ast.Expr
 	expr_literals_helper            ast.Expr
-	expr_close                      ast.Expr
-	expr_delete                     ast.Expr
-	expr_in                         ast.Expr
-	expr_opchan                     ast.Expr
-	expr_new                        ast.Expr
-	expr_array                      ast.Expr
-	expr_paren                      ast.Expr
-	expr_nil_coalesce               ast.Expr
-	expr_ternary                    ast.Expr
-	expr_len                        ast.Expr
-	expr_unary                      ast.Expr
 	unary_op                        string
-	expr_binary                     ast.Expr
 	expr_assoc                      ast.Expr
-	expr_member_or_ident            ast.Expr
 	expr_member                     ast.Expr
-	expr_call                       *ast.CallExpr
 	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
-	expr_anon_call                  *ast.AnonCallExpr
-	expr_func                       ast.Expr
-	expr_make                       ast.Expr
 	exprs                           []ast.Expr
 	opt_exprs                       []ast.Expr
 	comma_separated_exprs           []ast.Expr
@@ -177,7 +144,6 @@ import (
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents1    []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents2    []*ast.FuncReturnValuesExpr
-	expr_map                        *ast.MapExpr
 	expr_map_content                *ast.MapExpr
 	expr_map_content_helper         *ast.MapExpr
 	expr_map_key_value              []ast.Expr
@@ -188,7 +154,6 @@ import (
 	bin_op                          string
 	op_assoc                        string
 	op_assoc1                       string
-	expr_item_or_slice              ast.Expr
 	expr_slice_helper1              ast.Expr
 	expr_ident                      *ast.IdentExpr
 	opt_expr_ident                  *ast.IdentExpr
@@ -308,13 +273,13 @@ stmt_expr :
 stmt_go :
 	GO expr_call
 	{
-		$2.Go = true
+		$2.(*ast.CallExpr).Go = true
 		$$ = &ast.GoroutineStmt{Expr: $2}
 		$$.SetPosition($1.Position())
 	}
 	| GO expr_anon_call
 	{
-		$2.Go = true
+		$2.(*ast.AnonCallExpr).Go = true
 		$$ = &ast.GoroutineStmt{Expr: $2}
 		$$.SetPosition($1.Position())
 	}
@@ -322,13 +287,13 @@ stmt_go :
 stmt_defer :
 	DEFER expr_call
 	{
-        	$2.Defer = true
+        	$2.(*ast.CallExpr).Defer = true
 		$$ = &ast.DeferStmt{Expr: $2}
 		$$.SetPosition($2.Position())
 	}
 	| DEFER expr_anon_call
 	{
-		$2.Defer = true
+		$2.(*ast.AnonCallExpr).Defer = true
 		$$ = &ast.DeferStmt{Expr: $2}
 		$$.SetPosition($2.Position())
 	}
@@ -694,27 +659,27 @@ opt_expr :
 	| expr { $$ = $1 }
 
 expr :
-	expr_member_or_ident { $$ = $1 }
-	| expr_literals      { $$ = $1 }
-	| expr_unary         { $$ = $1 }
-	| expr_ternary       { $$ = $1 }
-	| expr_nil_coalesce  { $$ = $1 }
-	| expr_func          { $$ = $1 }
-	| expr_array         { $$ = $1 }
-	| expr_paren         { $$ = $1 }
-	| expr_binary        { $$ = $1 }
-	| expr_call          { $$ = $1 }
-	| expr_anon_call     { $$ = $1 }
-	| expr_item_or_slice { $$ = $1 }
-	| expr_len           { $$ = $1 }
-	| expr_dbg           { $$ = $1 }
-	| expr_new           { $$ = $1 }
-	| expr_make          { $$ = $1 }
-	| expr_map           { $$ = $1 }
-	| expr_opchan        { $$ = $1 }
-	| expr_close         { $$ = $1 }
-	| expr_delete        { $$ = $1 }
-	| expr_in            { $$ = $1 }
+	expr_member_or_ident
+	| expr_literals
+	| expr_unary
+	| expr_ternary
+	| expr_nil_coalesce
+	| expr_func
+	| expr_array
+	| expr_paren
+	| expr_binary
+	| expr_call
+	| expr_anon_call
+	| expr_item_or_slice
+	| expr_len
+	| expr_dbg
+	| expr_new
+	| expr_make
+	| expr_map
+	| expr_opchan
+	| expr_close
+	| expr_delete
+	| expr_in
 
 expr_dbg :
 	DBG '(' ')'

@@ -12,26 +12,16 @@ type yySymType struct {
 	yys                      int
 	compstmt                 ast.Stmt
 	stmts                    *ast.StmtsStmt
-	stmt_var_or_lets         ast.Stmt
 	opt_stmt_var_or_lets     ast.Stmt
-	stmt_var                 ast.Stmt
-	stmt_lets                ast.Stmt
 	stmt_typed_lets          ast.Stmt
-	stmt_try                 ast.Stmt
 	opt_finally              ast.Stmt
-	stmt_defer               ast.Stmt
-	stmt_go                  ast.Stmt
-	stmt_if                  ast.Stmt
 	maybe_else               ast.Stmt
 	else_if_list             []ast.Stmt
 	else_if                  ast.Stmt
-	stmt_for                 ast.Stmt
-	stmt_switch              ast.Stmt
 	stmt_switch_cases        *ast.SwitchStmt
 	stmt_switch_cases_helper *ast.SwitchStmt
 	stmt_switch_case         ast.Stmt
 	stmt_switch_default      ast.Stmt
-	stmt_select              ast.Stmt
 	stmt_select_body         *ast.SelectBodyStmt
 	stmt_select_content      *ast.SelectBodyStmt
 	stmt_select_cases        *ast.SelectBodyStmt
@@ -39,41 +29,16 @@ type yySymType struct {
 	stmt_select_case         ast.Stmt
 	stmt_select_default      ast.Stmt
 	stmt                     ast.Stmt
-	stmt_module              ast.Stmt
-	stmt_break               ast.Stmt
-	stmt_return              ast.Stmt
-	stmt_continue            ast.Stmt
-	stmt_throw               ast.Stmt
-	stmt_expr                *ast.ExprStmt
 	expr                     ast.Expr
 	opt_expr                 ast.Expr
-	expr_dbg                 ast.Expr
-	expr_literals            ast.Expr
 	expr_literals_helper     ast.Expr
-	expr_close               ast.Expr
-	expr_delete              ast.Expr
-	expr_in                  ast.Expr
-	expr_opchan              ast.Expr
-	expr_new                 ast.Expr
-	expr_array               ast.Expr
-	expr_paren               ast.Expr
-	expr_nil_coalesce        ast.Expr
-	expr_ternary             ast.Expr
-	expr_len                 ast.Expr
-	expr_unary               ast.Expr
 	unary_op                 string
-	expr_binary              ast.Expr
 	expr_assoc               ast.Expr
-	expr_member_or_ident     ast.Expr
 	expr_member              ast.Expr
-	expr_call                *ast.CallExpr
 	expr_call_helper         struct {
 		Exprs  []ast.Expr
 		VarArg bool
 	}
-	expr_anon_call                *ast.AnonCallExpr
-	expr_func                     ast.Expr
-	expr_make                     ast.Expr
 	exprs                         []ast.Expr
 	opt_exprs                     []ast.Expr
 	comma_separated_exprs         []ast.Expr
@@ -93,7 +58,6 @@ type yySymType struct {
 	opt_func_return_expr_idents  []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents1 []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents2 []*ast.FuncReturnValuesExpr
-	expr_map                     *ast.MapExpr
 	expr_map_content             *ast.MapExpr
 	expr_map_content_helper      *ast.MapExpr
 	expr_map_key_value           []ast.Expr
@@ -104,7 +68,6 @@ type yySymType struct {
 	bin_op                       string
 	op_assoc                     string
 	op_assoc1                    string
-	expr_item_or_slice           ast.Expr
 	expr_slice_helper1           ast.Expr
 	expr_ident                   *ast.IdentExpr
 	opt_expr_ident               *ast.IdentExpr
@@ -1632,27 +1595,27 @@ yynewstate:
 		}
 	case 26:
 		{
-			yyS[yypt-0].expr_call.Go = true
-			yyVAL.stmt = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr_call}
+			yyS[yypt-0].expr.(*ast.CallExpr).Go = true
+			yyVAL.stmt = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr}
 			yyVAL.stmt.SetPosition(yyS[yypt-1].tok.Position())
 		}
 	case 27:
 		{
-			yyS[yypt-0].expr_anon_call.Go = true
-			yyVAL.stmt = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr_anon_call}
+			yyS[yypt-0].expr.(*ast.AnonCallExpr).Go = true
+			yyVAL.stmt = &ast.GoroutineStmt{Expr: yyS[yypt-0].expr}
 			yyVAL.stmt.SetPosition(yyS[yypt-1].tok.Position())
 		}
 	case 28:
 		{
-			yyS[yypt-0].expr_call.Defer = true
-			yyVAL.stmt = &ast.DeferStmt{Expr: yyS[yypt-0].expr_call}
-			yyVAL.stmt.SetPosition(yyS[yypt-0].expr_call.Position())
+			yyS[yypt-0].expr.(*ast.CallExpr).Defer = true
+			yyVAL.stmt = &ast.DeferStmt{Expr: yyS[yypt-0].expr}
+			yyVAL.stmt.SetPosition(yyS[yypt-0].expr.Position())
 		}
 	case 29:
 		{
-			yyS[yypt-0].expr_anon_call.Defer = true
-			yyVAL.stmt = &ast.DeferStmt{Expr: yyS[yypt-0].expr_anon_call}
-			yyVAL.stmt.SetPosition(yyS[yypt-0].expr_anon_call.Position())
+			yyS[yypt-0].expr.(*ast.AnonCallExpr).Defer = true
+			yyVAL.stmt = &ast.DeferStmt{Expr: yyS[yypt-0].expr}
+			yyVAL.stmt.SetPosition(yyS[yypt-0].expr.Position())
 		}
 	case 30:
 		{
@@ -1981,136 +1944,52 @@ yynewstate:
 		{
 			yyVAL.opt_expr = yyS[yypt-0].expr
 		}
-	case 97:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_member_or_ident
-		}
-	case 98:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_literals
-		}
-	case 99:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_unary
-		}
-	case 100:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_ternary
-		}
-	case 101:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_nil_coalesce
-		}
-	case 102:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_func
-		}
-	case 103:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_array
-		}
-	case 104:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_paren
-		}
-	case 105:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_binary
-		}
-	case 106:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_call
-		}
-	case 107:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_anon_call
-		}
-	case 108:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_item_or_slice
-		}
-	case 109:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_len
-		}
-	case 110:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_dbg
-		}
-	case 111:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_new
-		}
-	case 112:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_make
-		}
-	case 113:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_map
-		}
-	case 114:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_opchan
-		}
-	case 115:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_close
-		}
-	case 116:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_delete
-		}
-	case 117:
-		{
-			yyVAL.expr = yyS[yypt-0].expr_in
-		}
 	case 118:
 		{
-			yyVAL.expr_dbg = &ast.DbgExpr{}
-			yyVAL.expr_dbg.SetPosition(yyS[yypt-2].tok.Position())
+			yyVAL.expr = &ast.DbgExpr{}
+			yyVAL.expr.SetPosition(yyS[yypt-2].tok.Position())
 		}
 	case 119:
 		{
-			yyVAL.expr_dbg = &ast.DbgExpr{Expr: yyS[yypt-1].expr}
-			yyVAL.expr_dbg.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.expr = &ast.DbgExpr{Expr: yyS[yypt-1].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 120:
 		{
-			yyVAL.expr_dbg = &ast.DbgExpr{TypeData: yyS[yypt-1].type_data}
-			yyVAL.expr_dbg.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.expr = &ast.DbgExpr{TypeData: yyS[yypt-1].type_data}
+			yyVAL.expr.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 121:
 		{
-			yyVAL.expr_len = &ast.LenExpr{Expr: yyS[yypt-1].expr}
-			yyVAL.expr_len.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.expr = &ast.LenExpr{Expr: yyS[yypt-1].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 122:
 		{
-			yyVAL.expr_paren = &ast.ParenExpr{SubExpr: yyS[yypt-1].expr}
+			yyVAL.expr = &ast.ParenExpr{SubExpr: yyS[yypt-1].expr}
 			if l, ok := yylex.(*Lexer); ok {
-				yyVAL.expr_paren.SetPosition(l.pos)
+				yyVAL.expr.SetPosition(l.pos)
 			}
 		}
 	case 123:
 		{
-			yyVAL.expr_array = &ast.ArrayExpr{}
+			yyVAL.expr = &ast.ArrayExpr{}
 			if l, ok := yylex.(*Lexer); ok {
-				yyVAL.expr_array.SetPosition(l.pos)
+				yyVAL.expr.SetPosition(l.pos)
 			}
 		}
 	case 124:
 		{
-			yyVAL.expr_array = &ast.ArrayExpr{Exprs: yyS[yypt-1].comma_separated_exprs}
+			yyVAL.expr = &ast.ArrayExpr{Exprs: yyS[yypt-1].comma_separated_exprs}
 			if l, ok := yylex.(*Lexer); ok {
-				yyVAL.expr_array.SetPosition(l.pos)
+				yyVAL.expr.SetPosition(l.pos)
 			}
 		}
 	case 125:
 		{
-			yyVAL.expr_array = &ast.ArrayExpr{Exprs: yyS[yypt-1].comma_separated_exprs, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: yyS[yypt-3].type_data, Dimensions: yyS[yypt-4].slice_count}}
+			yyVAL.expr = &ast.ArrayExpr{Exprs: yyS[yypt-1].comma_separated_exprs, TypeData: &ast.TypeStruct{Kind: ast.TypeSlice, SubType: yyS[yypt-3].type_data, Dimensions: yyS[yypt-4].slice_count}}
 			if l, ok := yylex.(*Lexer); ok {
-				yyVAL.expr_array.SetPosition(l.pos)
+				yyVAL.expr.SetPosition(l.pos)
 			}
 		}
 	case 126:
@@ -2119,58 +1998,58 @@ yynewstate:
 		}
 	case 127:
 		{
-			yyVAL.expr_nil_coalesce = &ast.NilCoalescingOpExpr{Lhs: yyS[yypt-2].expr, Rhs: yyS[yypt-0].expr}
-			yyVAL.expr_nil_coalesce.SetPosition(yyS[yypt-2].expr.Position())
+			yyVAL.expr = &ast.NilCoalescingOpExpr{Lhs: yyS[yypt-2].expr, Rhs: yyS[yypt-0].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
 	case 128:
 		{
-			yyVAL.expr_ternary = &ast.TernaryOpExpr{Expr: yyS[yypt-4].expr, Lhs: yyS[yypt-2].expr, Rhs: yyS[yypt-0].expr}
-			yyVAL.expr_ternary.SetPosition(yyS[yypt-4].expr.Position())
+			yyVAL.expr = &ast.TernaryOpExpr{Expr: yyS[yypt-4].expr, Lhs: yyS[yypt-2].expr, Rhs: yyS[yypt-0].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-4].expr.Position())
 		}
 	case 129:
 		{
 			if yyS[yypt-1].type_data.Kind == ast.TypeDefault {
 				yyS[yypt-1].type_data.Kind = ast.TypePtr
-				yyVAL.expr_new = &ast.MakeExpr{TypeData: yyS[yypt-1].type_data}
+				yyVAL.expr = &ast.MakeExpr{TypeData: yyS[yypt-1].type_data}
 			} else {
-				yyVAL.expr_new = &ast.MakeExpr{TypeData: &ast.TypeStruct{Kind: ast.TypePtr, SubType: yyS[yypt-1].type_data}}
+				yyVAL.expr = &ast.MakeExpr{TypeData: &ast.TypeStruct{Kind: ast.TypePtr, SubType: yyS[yypt-1].type_data}}
 			}
-			yyVAL.expr_new.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.expr.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 130:
 		{
-			yyVAL.expr_opchan = &ast.ChanExpr{Lhs: yyS[yypt-2].expr, Rhs: yyS[yypt-0].expr}
-			yyVAL.expr_opchan.SetPosition(yyS[yypt-2].expr.Position())
+			yyVAL.expr = &ast.ChanExpr{Lhs: yyS[yypt-2].expr, Rhs: yyS[yypt-0].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
 	case 131:
 		{
-			yyVAL.expr_opchan = &ast.ChanExpr{Rhs: yyS[yypt-0].expr}
-			yyVAL.expr_opchan.SetPosition(yyS[yypt-0].expr.Position())
+			yyVAL.expr = &ast.ChanExpr{Rhs: yyS[yypt-0].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-0].expr.Position())
 		}
 	case 132:
 		{
-			yyVAL.expr_in = &ast.IncludeExpr{ItemExpr: yyS[yypt-2].expr, ListExpr: &ast.SliceExpr{Value: yyS[yypt-0].expr, Begin: nil, End: nil}}
-			yyVAL.expr_in.SetPosition(yyS[yypt-2].expr.Position())
+			yyVAL.expr = &ast.IncludeExpr{ItemExpr: yyS[yypt-2].expr, ListExpr: &ast.SliceExpr{Value: yyS[yypt-0].expr, Begin: nil, End: nil}}
+			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
 	case 133:
 		{
-			yyVAL.expr_delete = &ast.DeleteExpr{WhatExpr: yyS[yypt-1].expr}
-			yyVAL.expr_delete.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.expr = &ast.DeleteExpr{WhatExpr: yyS[yypt-1].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 134:
 		{
-			yyVAL.expr_delete = &ast.DeleteExpr{WhatExpr: yyS[yypt-3].expr, KeyExpr: yyS[yypt-1].expr}
-			yyVAL.expr_delete.SetPosition(yyS[yypt-5].tok.Position())
+			yyVAL.expr = &ast.DeleteExpr{WhatExpr: yyS[yypt-3].expr, KeyExpr: yyS[yypt-1].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-5].tok.Position())
 		}
 	case 135:
 		{
-			yyVAL.expr_close = &ast.CloseExpr{WhatExpr: yyS[yypt-1].expr}
-			yyVAL.expr_close.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.expr = &ast.CloseExpr{WhatExpr: yyS[yypt-1].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 136:
 		{
-			yyVAL.expr_literals = yyS[yypt-0].expr_literals_helper
-			yyVAL.expr_literals.SetPosition(yyS[yypt-0].expr_literals_helper.Position())
+			yyVAL.expr = yyS[yypt-0].expr_literals_helper
+			yyVAL.expr.SetPosition(yyS[yypt-0].expr_literals_helper.Position())
 		}
 	case 137:
 		{
@@ -2194,11 +2073,11 @@ yynewstate:
 		}
 	case 142:
 		{
-			yyVAL.expr_member_or_ident = yyS[yypt-0].expr_ident
+			yyVAL.expr = yyS[yypt-0].expr_ident
 		}
 	case 143:
 		{
-			yyVAL.expr_member_or_ident = yyS[yypt-0].expr_member
+			yyVAL.expr = yyS[yypt-0].expr_member
 		}
 	case 144:
 		{
@@ -2220,13 +2099,13 @@ yynewstate:
 		}
 	case 148:
 		{
-			yyVAL.expr_call = &ast.CallExpr{Name: yyS[yypt-1].expr_ident.Lit, SubExprs: yyS[yypt-0].expr_call_helper.Exprs, VarArg: yyS[yypt-0].expr_call_helper.VarArg}
-			yyVAL.expr_call.SetPosition(yyS[yypt-1].expr_ident.Position())
+			yyVAL.expr = &ast.CallExpr{Name: yyS[yypt-1].expr_ident.Lit, SubExprs: yyS[yypt-0].expr_call_helper.Exprs, VarArg: yyS[yypt-0].expr_call_helper.VarArg}
+			yyVAL.expr.SetPosition(yyS[yypt-1].expr_ident.Position())
 		}
 	case 149:
 		{
-			yyVAL.expr_anon_call = &ast.AnonCallExpr{Expr: yyS[yypt-1].expr, SubExprs: yyS[yypt-0].expr_call_helper.Exprs, VarArg: yyS[yypt-0].expr_call_helper.VarArg}
-			yyVAL.expr_anon_call.SetPosition(yyS[yypt-1].expr.Position())
+			yyVAL.expr = &ast.AnonCallExpr{Expr: yyS[yypt-1].expr, SubExprs: yyS[yypt-0].expr_call_helper.Exprs, VarArg: yyS[yypt-0].expr_call_helper.VarArg}
+			yyVAL.expr.SetPosition(yyS[yypt-1].expr.Position())
 		}
 	case 150:
 		{
@@ -2256,22 +2135,22 @@ yynewstate:
 		}
 	case 155:
 		{
-			yyVAL.expr_unary = &ast.UnaryExpr{Operator: yyS[yypt-1].unary_op, Expr: yyS[yypt-0].expr}
-			yyVAL.expr_unary.SetPosition(yyS[yypt-0].expr.Position())
+			yyVAL.expr = &ast.UnaryExpr{Operator: yyS[yypt-1].unary_op, Expr: yyS[yypt-0].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-0].expr.Position())
 		}
 	case 156:
 		{
-			if el, ok := yyS[yypt-0].expr_member_or_ident.(*ast.IdentExpr); ok {
-				yyVAL.expr_unary = &ast.AddrExpr{Expr: el}
-			} else if el, ok := yyS[yypt-0].expr_member_or_ident.(*ast.MemberExpr); ok {
-				yyVAL.expr_unary = el
+			if el, ok := yyS[yypt-0].expr.(*ast.IdentExpr); ok {
+				yyVAL.expr = &ast.AddrExpr{Expr: el}
+			} else if el, ok := yyS[yypt-0].expr.(*ast.MemberExpr); ok {
+				yyVAL.expr = el
 			}
-			yyVAL.expr_unary.SetPosition(yyS[yypt-0].expr_member_or_ident.Position())
+			yyVAL.expr.SetPosition(yyS[yypt-0].expr.Position())
 		}
 	case 157:
 		{
-			yyVAL.expr_unary = &ast.DerefExpr{Expr: yyS[yypt-0].expr_member_or_ident}
-			yyVAL.expr_unary.SetPosition(yyS[yypt-0].expr_member_or_ident.Position())
+			yyVAL.expr = &ast.DerefExpr{Expr: yyS[yypt-0].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-0].expr.Position())
 		}
 	case 158:
 		{
@@ -2323,22 +2202,22 @@ yynewstate:
 		}
 	case 170:
 		{
-			yyVAL.expr_binary = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].bin_op, Rhs: yyS[yypt-0].expr}
-			yyVAL.expr_binary.SetPosition(yyS[yypt-2].expr.Position())
+			yyVAL.expr = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].bin_op, Rhs: yyS[yypt-0].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
 	case 171:
 		{
-			yyVAL.expr_binary = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: "==", Rhs: yyS[yypt-0].expr}
-			yyVAL.expr_binary.SetPosition(yyS[yypt-2].expr.Position())
+			yyVAL.expr = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: "==", Rhs: yyS[yypt-0].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
 	case 172:
 		{
-			yyVAL.expr_binary = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].op_assoc1, Rhs: yyS[yypt-0].expr}
-			yyVAL.expr_binary.SetPosition(yyS[yypt-2].expr.Position())
+			yyVAL.expr = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].op_assoc1, Rhs: yyS[yypt-0].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
 	case 173:
 		{
-			yyVAL.expr_binary = yyS[yypt-0].expr_assoc
+			yyVAL.expr = yyS[yypt-0].expr_assoc
 		}
 	case 174:
 		{
@@ -2408,8 +2287,8 @@ yynewstate:
 			if yyS[yypt-7].opt_expr_ident != nil {
 				f.Name = yyS[yypt-7].opt_expr_ident.Lit
 			}
-			yyVAL.expr_func = f
-			yyVAL.expr_func.SetPosition(yyS[yypt-8].tok.Position())
+			yyVAL.expr = f
+			yyVAL.expr.SetPosition(yyS[yypt-8].tok.Position())
 		}
 	case 189:
 		{
@@ -2437,23 +2316,23 @@ yynewstate:
 		}
 	case 192:
 		{
-			yyVAL.expr_make = &ast.MakeExpr{TypeData: yyS[yypt-1].type_data}
-			yyVAL.expr_make.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.expr = &ast.MakeExpr{TypeData: yyS[yypt-1].type_data}
+			yyVAL.expr.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 193:
 		{
-			yyVAL.expr_make = &ast.MakeExpr{TypeData: yyS[yypt-3].type_data, LenExpr: yyS[yypt-1].expr}
-			yyVAL.expr_make.SetPosition(yyS[yypt-5].tok.Position())
+			yyVAL.expr = &ast.MakeExpr{TypeData: yyS[yypt-3].type_data, LenExpr: yyS[yypt-1].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-5].tok.Position())
 		}
 	case 194:
 		{
-			yyVAL.expr_make = &ast.MakeExpr{TypeData: yyS[yypt-5].type_data, LenExpr: yyS[yypt-3].expr, CapExpr: yyS[yypt-1].expr}
-			yyVAL.expr_make.SetPosition(yyS[yypt-7].tok.Position())
+			yyVAL.expr = &ast.MakeExpr{TypeData: yyS[yypt-5].type_data, LenExpr: yyS[yypt-3].expr, CapExpr: yyS[yypt-1].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-7].tok.Position())
 		}
 	case 195:
 		{
-			yyVAL.expr_make = &ast.MakeTypeExpr{Name: yyS[yypt-3].tok.Lit, Type: yyS[yypt-1].expr}
-			yyVAL.expr_make.SetPosition(yyS[yypt-6].tok.Position())
+			yyVAL.expr = &ast.MakeTypeExpr{Name: yyS[yypt-3].tok.Lit, Type: yyS[yypt-1].expr}
+			yyVAL.expr.SetPosition(yyS[yypt-6].tok.Position())
 		}
 	case 196:
 		{
@@ -2527,19 +2406,19 @@ yynewstate:
 	case 207:
 		{
 			yyS[yypt-1].expr_map_content.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: &ast.TypeStruct{Name: "interface"}, SubType: &ast.TypeStruct{Name: "interface"}}
-			yyVAL.expr_map = yyS[yypt-1].expr_map_content
-			yyVAL.expr_map.SetPosition(yyS[yypt-3].tok.Position())
+			yyVAL.expr = yyS[yypt-1].expr_map_content
+			yyVAL.expr.SetPosition(yyS[yypt-3].tok.Position())
 		}
 	case 208:
 		{
 			yyS[yypt-1].expr_map_content.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: yyS[yypt-5].type_data, SubType: yyS[yypt-3].type_data}
-			yyVAL.expr_map = yyS[yypt-1].expr_map_content
-			yyVAL.expr_map.SetPosition(yyS[yypt-7].tok.Position())
+			yyVAL.expr = yyS[yypt-1].expr_map_content
+			yyVAL.expr.SetPosition(yyS[yypt-7].tok.Position())
 		}
 	case 209:
 		{
-			yyVAL.expr_map = yyS[yypt-1].expr_map_content
-			yyVAL.expr_map.SetPosition(yyS[yypt-1].expr_map_content.Position())
+			yyVAL.expr = yyS[yypt-1].expr_map_content
+			yyVAL.expr.SetPosition(yyS[yypt-1].expr_map_content.Position())
 		}
 	case 210:
 		{
@@ -2569,8 +2448,8 @@ yynewstate:
 			} else if el, ok := yyS[yypt-0].expr_slice_helper1.(*ast.ItemExpr); ok {
 				el.Value = yyS[yypt-1].expr
 			}
-			yyVAL.expr_item_or_slice = yyS[yypt-0].expr_slice_helper1
-			yyVAL.expr_item_or_slice.SetPosition(yyS[yypt-1].expr.Position())
+			yyVAL.expr = yyS[yypt-0].expr_slice_helper1
+			yyVAL.expr.SetPosition(yyS[yypt-1].expr.Position())
 		}
 	case 216:
 		{

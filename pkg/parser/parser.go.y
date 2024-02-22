@@ -99,6 +99,7 @@ import (
 %type<expr_map_content_helper> expr_map_content_helper
 %type<expr_map_key_value> expr_map_key_value
 %type<expr_slice_helper1> expr_slice_helper1
+%type<slice> slice
 %type<expr_ident> expr_ident
 %type<opt_expr_ident> opt_expr_ident
 %type<start> start
@@ -157,6 +158,7 @@ import (
 	op_assoc                        string
 	op_assoc1                       string
 	expr_slice_helper1              ast.Expr
+	slice                           ast.Expr
 	expr_ident                      *ast.IdentExpr
 	opt_expr_ident                  *ast.IdentExpr
 }
@@ -1137,21 +1139,27 @@ expr_item_or_slice :
 	}
 
 expr_slice_helper1 :
-	'[' expr ']'
+	'[' slice ']'
 	{
-		$$ = &ast.ItemExpr{Index: $2}
+		$$ = $2
 	}
-	| '[' expr ':' expr ']'
+
+slice :
+	expr ':' expr
 	{
-		$$ = &ast.SliceExpr{Begin: $2, End: $4}
+		$$ = &ast.SliceExpr{Begin: $1, End: $3}
 	}
-	| '[' expr ':' ']'
+	| expr ':'
 	{
-		$$ = &ast.SliceExpr{Begin: $2, End: nil}
+		$$ = &ast.SliceExpr{Begin: $1, End: nil}
 	}
-	| '[' ':' expr ']'
+	| ':' expr
 	{
-		$$ = &ast.SliceExpr{Begin: nil, End: $3}
+		$$ = &ast.SliceExpr{Begin: nil, End: $2}
+	}
+	| expr
+	{
+		$$ = &ast.ItemExpr{Index: $1}
 	}
 
 expr_idents :

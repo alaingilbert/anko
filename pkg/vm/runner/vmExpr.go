@@ -570,44 +570,51 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 	v = elemIfInterface(v)
 	switch v.Kind() {
 	case reflect.String, reflect.Slice, reflect.Array:
-		var rbi, rei int
-		if e.Begin != nil {
-			rb, err := invokeExpr(vmp, env, e.Begin)
-			if err != nil {
-				return nilValueL, newError(e.Begin, err)
-			}
-			rbi, err = tryToInt(rb)
-			if err != nil {
-				return nilValueL, newError(e, ErrIndexMustBeNumber)
-			}
-			if rbi < 0 || rbi > v.Len() {
-				return nilValueL, newError(e, ErrIndexOutOfRange)
-			}
-		} else {
-			rbi = 0
-		}
-		if e.End != nil {
-			re, err := invokeExpr(vmp, env, e.End)
-			if err != nil {
-				return nilValueL, newError(e.End, err)
-			}
-			rei, err = tryToInt(re)
-			if err != nil {
-				return nilValueL, newError(e, ErrIndexMustBeNumber)
-			}
-			if rei < 0 || rei > v.Len() {
-				return nilValueL, newError(e, ErrIndexOutOfRange)
-			}
-		} else {
-			rei = v.Len()
-		}
-		if rbi > rei {
-			return nilValueL, newError(e, ErrInvalidSliceIndex)
-		}
-		return v.Slice(rbi, rei), nil
+		return sliceExpr(vmp, env, v, e)
 	default:
 		return nilValueL, newStringError(e, "type "+v.Kind().String()+" does not support slice operation")
 	}
+}
+
+func sliceExpr(vmp *VmParams, env envPkg.IEnv, v reflect.Value, lhs *ast.SliceExpr) (vv reflect.Value, err error) {
+	nilValueL := nilValue
+	tryToIntL := tryToInt
+	var rbi, rei int
+	if lhs.Begin != nil {
+		rb, err := invokeExpr(vmp, env, lhs.Begin)
+		if err != nil {
+			return nilValueL, newError(lhs, err)
+		}
+		rbi, err = tryToIntL(rb)
+		if err != nil {
+			return nilValueL, newError(lhs, ErrIndexMustBeNumber)
+		}
+		if rbi < 0 || rbi > v.Len() {
+			return nilValueL, newError(lhs, ErrIndexOutOfRange)
+		}
+	} else {
+		rbi = 0
+	}
+	if lhs.End != nil {
+		re, err := invokeExpr(vmp, env, lhs.End)
+		if err != nil {
+			return nilValueL, newError(lhs, err)
+		}
+		rei, err = tryToIntL(re)
+		if err != nil {
+			return nilValueL, newError(lhs, ErrIndexMustBeNumber)
+		}
+		if rei < 0 || rei > v.Len() {
+			return nilValueL, newError(lhs, ErrIndexOutOfRange)
+		}
+	} else {
+		rei = v.Len()
+	}
+	if rbi > rei {
+		return nilValueL, newError(lhs, ErrInvalidSliceIndex)
+	}
+	v = v.Slice(rbi, rei)
+	return v, nil
 }
 
 func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.Value, error) {
@@ -960,6 +967,7 @@ func invokeDbgExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DbgExpr) (reflect.Valu
 }
 
 func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Value, error) {
+	toIntL := toInt
 	t, err := makeType(vmp, env, e.TypeData)
 	if err != nil {
 		return nilValue, err
@@ -976,7 +984,7 @@ func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 			if err != nil {
 				return nilValue, err
 			}
-			aLen = toInt(rv)
+			aLen = toIntL(rv)
 		}
 		aCap := aLen
 		if e.CapExpr != nil {
@@ -985,7 +993,7 @@ func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 			if err != nil {
 				return nilValue, err
 			}
-			aCap = toInt(rv)
+			aCap = toIntL(rv)
 		}
 		if aLen > aCap {
 			return nilValue, newStringError(e, "make slice len > cap")
@@ -1000,7 +1008,7 @@ func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 			if err != nil {
 				return nilValue, err
 			}
-			aLen = toInt(rv)
+			aLen = toIntL(rv)
 		}
 		return reflect.MakeChan(t, aLen), nil
 	default:

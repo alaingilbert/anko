@@ -277,41 +277,10 @@ func invokeLetSliceExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, lhs *a
 
 	// Slice && Array
 	case reflect.Slice, reflect.Array:
-		var rbi, rei int
-		if lhs.Begin != nil {
-			rb, err := invokeExpr(vmp, env, lhs.Begin)
-			if err != nil {
-				return nilValueL, newError(lhs, err)
-			}
-			rbi, err = tryToInt(rb)
-			if err != nil {
-				return nilValueL, newError(lhs, ErrIndexMustBeNumber)
-			}
-			if rbi < 0 || rbi > v.Len() {
-				return nilValueL, newError(lhs, ErrIndexOutOfRange)
-			}
-		} else {
-			rbi = 0
+		v, err = sliceExpr(vmp, env, v, lhs)
+		if err != nil {
+			return nilValueL, err
 		}
-		if lhs.End != nil {
-			re, err := invokeExpr(vmp, env, lhs.End)
-			if err != nil {
-				return nilValueL, newError(lhs, err)
-			}
-			rei, err = tryToInt(re)
-			if err != nil {
-				return nilValueL, newError(lhs, ErrIndexMustBeNumber)
-			}
-			if rei < 0 || rei > v.Len() {
-				return nilValueL, newError(lhs, ErrIndexOutOfRange)
-			}
-		} else {
-			rei = v.Len()
-		}
-		if rbi > rei {
-			return nilValueL, newError(lhs, ErrInvalidSliceIndex)
-		}
-		v = v.Slice(rbi, rei)
 		if !v.CanSet() {
 			return nilValueL, newStringError(lhs, "slice cannot be assigned")
 		}

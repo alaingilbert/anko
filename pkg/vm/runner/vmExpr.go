@@ -576,7 +576,7 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 	}
 }
 
-func sliceExpr(vmp *VmParams, env envPkg.IEnv, v reflect.Value, lhs *ast.SliceExpr) (vv reflect.Value, err error) {
+func sliceExpr(vmp *VmParams, env envPkg.IEnv, v reflect.Value, lhs *ast.SliceExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	tryToIntL := tryToInt
 	var rbi, rei int

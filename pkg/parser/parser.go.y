@@ -103,6 +103,7 @@ import (
 %type<slice> slice
 %type<expr_ident> expr_ident
 %type<opt_expr_ident> opt_expr_ident
+%type<expr_typed_ident> expr_typed_ident
 %type<start> start
 
 %union{
@@ -144,6 +145,7 @@ import (
 	func_expr_typed_ident           *ast.ParamExpr
 	func_expr_idents_last_untyped   []*ast.ParamExpr
 	func_expr_args                  struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}
+	expr_typed_ident                struct{Name string; TypeData *ast.TypeStruct}
 	func_expr_typed_idents          []*ast.ParamExpr
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
 	opt_func_return_expr_idents1    []*ast.FuncReturnValuesExpr
@@ -620,9 +622,9 @@ func_expr_untyped_ident :
 	}
 
 func_expr_typed_ident :
-	IDENT type_data
+	expr_typed_ident
 	{
-		$$ = &ast.ParamExpr{Name: $1.Lit, TypeData: $2}
+		$$ = &ast.ParamExpr{Name: $1.Name, TypeData: $1.TypeData}
 	}
 
 func_expr_idents_last_untyped :
@@ -833,6 +835,12 @@ expr_ident :
 	{
 		$$ = &ast.IdentExpr{Lit: $1.Lit}
 		$$.SetPosition($1.Position())
+	}
+
+expr_typed_ident :
+	expr_ident type_data
+	{
+		$$ = struct{Name string; TypeData *ast.TypeStruct}{Name: $1.Lit, TypeData: $2}
 	}
 
 expr_member :
@@ -1057,17 +1065,17 @@ type_data :
 	}
 
 type_data_struct :
-	IDENT type_data
+	expr_typed_ident
 	{
-		$$ = &ast.TypeStruct{Kind: ast.TypeStructType, StructNames: []string{$1.Lit}, StructTypes: []*ast.TypeStruct{$2}}
+		$$ = &ast.TypeStruct{Kind: ast.TypeStructType, StructNames: []string{$1.Name}, StructTypes: []*ast.TypeStruct{$1.TypeData}}
 	}
-	| type_data_struct comma_opt_newlines IDENT type_data
+	| type_data_struct comma_opt_newlines expr_typed_ident
 	{
 		if $1 == nil {
 			yylex.Error("syntax error: unexpected ','")
 		}
-		$$.StructNames = append($$.StructNames, $3.Lit)
-		$$.StructTypes = append($$.StructTypes, $4)
+		$$.StructNames = append($$.StructNames, $3.Name)
+		$$.StructTypes = append($$.StructTypes, $3.TypeData)
 	}
 
 typed_slice_count :

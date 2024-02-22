@@ -420,8 +420,7 @@ expr_iterable :
 	| expr_array
 	| expr_anon_call
 	| expr_call
-	| expr_ident
-	| expr_member
+	| expr_member_or_ident
 
 expr_for_idents :
 	IDENT

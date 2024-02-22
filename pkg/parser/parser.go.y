@@ -30,7 +30,6 @@ import (
 %type<stmt> start
 %type<stmt> compstmt
 %type<stmt> opt_stmt_var_or_lets
-%type<stmt> stmt_typed_lets
 %type<stmt> opt_finally
 %type<stmt> maybe_else
 
@@ -109,6 +108,7 @@ import (
 %type<else_if_list> else_if_list
 %type<else_if_list> stmt_select_cases
 %type<else_if_list> opt_stmt_select_cases
+%type<op_lets> op_lets
 
 %union{
 	stmtsStmt                       *ast.StmtsStmt
@@ -131,6 +131,7 @@ import (
 	tok                             ast.Token
 	opt_ident                       *ast.Token
 	str                             string
+	op_lets                         bool
 }
 
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR IN EQEQ NEQ GE LE OROR ANDAND NEW
@@ -314,7 +315,6 @@ opt_stmt_var_or_lets :
 
 stmt_var_or_lets :
 	stmt_var
-	| stmt_typed_lets
 	| stmt_lets
 
 stmt_var :
@@ -339,35 +339,21 @@ stmt_var :
 		$$.SetPosition($1.Position())
 	}
 
-stmt_typed_lets :
-	exprs WALRUS exprs
-	{
-		if len($1) == 2 && len($3) == 1 {
-			if _, ok := $3[0].(*ast.ItemExpr); ok {
-				$$ = &ast.LetMapItemStmt{Lhss: $1, Rhs: $3[0]}
-			} else {
-				$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
-			}
-		} else {
-			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
-			if len($1) != len($3) && !(len($3) == 1 && len($1) > len($3)) {
-				yylex.Error("unexpected ','")
-			}
-		}
-		$$.SetPosition($1[0].Position())
-	}
+op_lets :
+	WALRUS { $$ = true }
+	| '='  { $$ = false }
 
 stmt_lets :
-	exprs '=' exprs
+	exprs op_lets exprs
 	{
 		if len($1) == 2 && len($3) == 1 {
 			if _, ok := $3[0].(*ast.ItemExpr); ok {
 				$$ = &ast.LetMapItemStmt{Lhss: $1, Rhs: $3[0]}
 			} else {
-				$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3}
+				$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: $2}
 			}
 		} else {
-			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3}
+			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: $2}
 			if len($1) != len($3) && !(len($3) == 1 && len($1) > len($3)) {
 				yylex.Error("unexpected ','")
 			}

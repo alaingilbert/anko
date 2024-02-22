@@ -646,9 +646,6 @@ exprs :
 	}
 	| exprs comma_opt_newlines expr
 	{
-		if len($1) == 0 {
-			yylex.Error("syntax error: unexpected ','")
-		}
 		$$ = append($1, $3)
 	}
 

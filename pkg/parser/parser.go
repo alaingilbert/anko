@@ -1941,9 +1941,6 @@ yynewstate:
 		}
 	case 92:
 		{
-			if len(yyS[yypt-2].exprs) == 0 {
-				yylex.Error("syntax error: unexpected ','")
-			}
 			yyVAL.exprs = append(yyS[yypt-2].exprs, yyS[yypt-0].expr)
 		}
 	case 93:

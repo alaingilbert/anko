@@ -334,11 +334,7 @@ stmt_var :
 	VAR expr_idents '=' exprs
 	{
 		if len($2) == 2 && len($4) == 1 {
-			if _, ok := $4[0].(*ast.ItemExpr); ok {
-				$$ = &ast.VarStmt{Names: $2, Exprs: $4}
-			} else {
-				$$ = &ast.VarStmt{Names: $2, Exprs: $4}
-			}
+			$$ = &ast.VarStmt{Names: $2, Exprs: $4}
 		} else {
 			$$ = &ast.VarStmt{Names: $2, Exprs: $4}
 			if len($2) != len($4) && !(len($4) == 1 && len($2) > len($4)) {
@@ -352,11 +348,7 @@ stmt_typed_lets :
 	exprs WALRUS exprs
 	{
 		if len($1) == 2 && len($3) == 1 {
-			if _, ok := $3[0].(*ast.ItemExpr); ok {
-				$$ = &ast.LetMapItemStmt{Lhss: $1, Rhs: $3[0]}
-			} else {
-				$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
-			}
+			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
 		} else {
 			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: true}
 			if len($1) != len($3) && !(len($3) == 1 && len($1) > len($3)) {

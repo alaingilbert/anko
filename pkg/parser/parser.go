@@ -1659,11 +1659,7 @@ yynewstate:
 	case 38:
 		{
 			if len(yyS[yypt-2].expr_idents) == 2 && len(yyS[yypt-0].exprs) == 1 {
-				if _, ok := yyS[yypt-0].exprs[0].(*ast.ItemExpr); ok {
-					yyVAL.stmt = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
-				} else {
-					yyVAL.stmt = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
-				}
+				yyVAL.stmt = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
 			} else {
 				yyVAL.stmt = &ast.VarStmt{Names: yyS[yypt-2].expr_idents, Exprs: yyS[yypt-0].exprs}
 				if len(yyS[yypt-2].expr_idents) != len(yyS[yypt-0].exprs) && !(len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].expr_idents) > len(yyS[yypt-0].exprs)) {
@@ -1675,11 +1671,7 @@ yynewstate:
 	case 39:
 		{
 			if len(yyS[yypt-2].exprs) == 2 && len(yyS[yypt-0].exprs) == 1 {
-				if _, ok := yyS[yypt-0].exprs[0].(*ast.ItemExpr); ok {
-					yyVAL.stmt_typed_lets = &ast.LetMapItemStmt{Lhss: yyS[yypt-2].exprs, Rhs: yyS[yypt-0].exprs[0]}
-				} else {
-					yyVAL.stmt_typed_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: true}
-				}
+				yyVAL.stmt_typed_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: true}
 			} else {
 				yyVAL.stmt_typed_lets = &ast.LetsStmt{Lhss: yyS[yypt-2].exprs, Operator: "=", Rhss: yyS[yypt-0].exprs, Typed: true}
 				if len(yyS[yypt-2].exprs) != len(yyS[yypt-0].exprs) && !(len(yyS[yypt-0].exprs) == 1 && len(yyS[yypt-2].exprs) > len(yyS[yypt-0].exprs)) {

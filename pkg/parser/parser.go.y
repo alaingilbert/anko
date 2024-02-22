@@ -34,15 +34,12 @@ import (
 %type<stmt> opt_finally
 %type<stmt> maybe_else
 
-%type<else_if_list> else_if_list
 %type<stmt> else_if
 %type<stmt_switch_cases> stmt_switch_cases
 %type<stmt_switch_cases> stmt_switch_cases_helper
 %type<stmt> stmt_switch_case
 %type<stmt> stmt_switch_default
 %type<stmt_select_content> stmt_select_content
-%type<stmt_select_cases> stmt_select_cases
-%type<stmt_select_cases> stmt_select_cases_helper
 %type<stmt> stmt_select_case
 %type<stmt> stmt_select_default
 %type<stmt> stmt_select_opt_default
@@ -109,6 +106,9 @@ import (
 %type<expr> slice
 %type<expr_typed_ident> expr_typed_ident
 %type<opt_ident> opt_ident
+%type<else_if_list> else_if_list
+%type<else_if_list> stmt_select_cases
+%type<else_if_list> opt_stmt_select_cases
 
 %union{
 	stmts                           *ast.StmtsStmt
@@ -118,7 +118,6 @@ import (
 	else_if_list                    []ast.Stmt
 	stmt_switch_cases               *ast.SwitchStmt
 	stmt_select_content             *ast.SelectBodyStmt
-	stmt_select_cases               []ast.Stmt
 	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
 	expr_idents                     []string
 	func_expr_idents                []*ast.ParamExpr
@@ -435,25 +434,25 @@ stmt_select_content :
 	{
 		$$ = &ast.SelectBodyStmt{}
 	}
-	| opt_newlines stmt_select_cases stmt_select_opt_default
+	| opt_newlines opt_stmt_select_cases stmt_select_opt_default
 	{
 		$$ = &ast.SelectBodyStmt{Cases: $2, Default: $3}
 	}
 
-stmt_select_cases :
+opt_stmt_select_cases :
 	/* nothing */
 	{ $$ = nil }
-	| stmt_select_cases_helper
+	| stmt_select_cases
 	{
 		$$ = $1
 	}
 
-stmt_select_cases_helper :
+stmt_select_cases :
 	stmt_select_case
 	{
 		$$ = []ast.Stmt{$1}
 	}
-	| stmt_select_cases_helper stmt_select_case
+	| stmt_select_cases stmt_select_case
 	{
 		$$ = append($$, $2)
 	}

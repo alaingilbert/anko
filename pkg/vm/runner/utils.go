@@ -320,3 +320,17 @@ func importFn(e envPkg.IEnv) func(string) envPkg.IEnv {
 		return pack
 	}
 }
+
+func elemIfInterface(v reflect.Value) reflect.Value {
+	if v.Kind() == reflect.Interface {
+		v = v.Elem()
+	}
+	return v
+}
+
+func elemIfInterfaceNNil(v reflect.Value) reflect.Value {
+	if v.Kind() == reflect.Interface && !v.IsNil() {
+		v = v.Elem()
+	}
+	return v
+}

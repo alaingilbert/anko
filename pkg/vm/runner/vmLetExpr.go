@@ -43,20 +43,6 @@ func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, l
 	return rv, nil
 }
 
-func elemIfInterface(v reflect.Value) reflect.Value {
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
-	return v
-}
-
-func elemIfInterfaceNNil(v reflect.Value) reflect.Value {
-	if v.Kind() == reflect.Interface && !v.IsNil() {
-		v = v.Elem()
-	}
-	return v
-}
-
 func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Expr)

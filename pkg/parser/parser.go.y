@@ -870,7 +870,7 @@ opt_expr_ident :
 	| expr_ident { $$ = $1 }
 
 expr_call :
-	IDENT expr_call_helper
+	expr_ident expr_call_helper
 	{
 		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $2.Exprs, VarArg: $2.VarArg}
 		$$.SetPosition($1.Position())

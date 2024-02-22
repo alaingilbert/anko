@@ -688,9 +688,7 @@ func invokeLetsExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LetsExpr) (reflect.Va
 			break
 		}
 		v := rvs[i]
-		if v.Kind() == reflect.Interface && !v.IsNil() {
-			v = v.Elem()
-		}
+		v = elemIfInterfaceNNil(v)
 		_, err = invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, lhs, v)
 		if err != nil {
 			return nilValue, newError(lhs, err)
@@ -732,9 +730,7 @@ func invokeBinOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.
 	if err != nil {
 		return nilValueL, newError(e.Lhs, err)
 	}
-	if lhsV.Kind() == reflect.Interface && !lhsV.IsNil() {
-		lhsV = lhsV.Elem()
-	}
+	lhsV = elemIfInterfaceNNil(lhsV)
 	switch e.Operator {
 	case "&&":
 		if !toBool(lhsV) {
@@ -750,9 +746,7 @@ func invokeBinOpExpr(vmp *VmParams, env envPkg.IEnv, e *ast.BinOpExpr, expr ast.
 		if err != nil {
 			return nilValueL, newError(e.Rhs, err)
 		}
-		if rhsV.Kind() == reflect.Interface && !rhsV.IsNil() {
-			rhsV = rhsV.Elem()
-		}
+		rhsV = elemIfInterfaceNNil(rhsV)
 	}
 	switch e.Operator {
 	case "+":
@@ -876,9 +870,7 @@ func invokeLenExpr(vmp *VmParams, env envPkg.IEnv, e *ast.LenExpr) (reflect.Valu
 		return nilValue, newError(e.Expr, err)
 	}
 
-	if rv.Kind() == reflect.Interface && !rv.IsNil() {
-		rv = rv.Elem()
-	}
+	rv = elemIfInterfaceNNil(rv)
 
 	switch rv.Kind() {
 	case reflect.Slice, reflect.Array, reflect.Map, reflect.String, reflect.Chan:
@@ -1154,9 +1146,7 @@ func invokeCloseExpr(vmp *VmParams, env envPkg.IEnv, e *ast.CloseExpr) (reflect.
 	if err != nil {
 		return nilValueL, newError(e.WhatExpr, err)
 	}
-	if whatExpr.Kind() == reflect.Interface && !whatExpr.IsNil() {
-		whatExpr = whatExpr.Elem()
-	}
+	whatExpr = elemIfInterfaceNNil(whatExpr)
 
 	switch whatExpr.Kind() {
 	case reflect.Chan:
@@ -1183,9 +1173,7 @@ func invokeDeleteExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DeleteExpr) (reflec
 			return nilValueL, newError(e.KeyExpr, err)
 		}
 	}
-	if whatExpr.Kind() == reflect.Interface && !whatExpr.IsNil() {
-		whatExpr = whatExpr.Elem()
-	}
+	whatExpr = elemIfInterfaceNNil(whatExpr)
 
 	switch whatExpr.Kind() {
 	case reflect.String:

@@ -217,9 +217,7 @@ func anonCallExpr(vmp *VmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Val
 	if err != nil {
 		return nilValue, newError(e, err)
 	}
-	if f.Kind() == reflect.Interface && !f.IsNil() {
-		f = f.Elem()
-	}
+	f = elemIfInterfaceNNil(f)
 	if f.Kind() == reflect.Func {
 		callExpr := &ast.CallExpr{Func: f, Callable: &ast.Callable{SubExprs: e.SubExprs, VarArg: e.VarArg, Go: e.Go, Defer: e.Defer}}
 		callExpr.SetPosition(e.Position())
@@ -256,9 +254,7 @@ func callExpr(vmp *VmParams, envArg env.IEnv, callExpr *ast.CallExpr) (rv reflec
 		}
 	}
 
-	if f.Kind() == reflect.Interface && !f.IsNil() {
-		f = f.Elem()
-	}
+	f = elemIfInterfaceNNil(f)
 	if !f.IsValid() {
 		err = newStringError(callExpr, "cannot call type invalid")
 		return

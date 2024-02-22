@@ -104,9 +104,7 @@ func runVarStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.VarStmt) (reflect.Valu
 	if len(rvs) == 1 && len(stmt.Names) > 1 {
 		// only one right side value but many left side names
 		value := rvs[0]
-		if value.Kind() == reflect.Interface && !value.IsNil() {
-			value = value.Elem()
-		}
+		value = elemIfInterfaceNNil(value)
 		if (value.Kind() == reflect.Slice || value.Kind() == reflect.Array) && value.Len() > 0 {
 			// value is slice/array, add each value to left side names
 			for i := 0; i < value.Len() && i < len(stmt.Names); i++ {
@@ -142,9 +140,7 @@ func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 	if len(rvs) == 1 && len(stmt.Lhss) > 1 {
 		// only one right side value but many left side expressions
 		value := rvs[0]
-		if value.Kind() == reflect.Interface && !value.IsNil() {
-			value = value.Elem()
-		}
+		value = elemIfInterfaceNNil(value)
 		if (value.Kind() == reflect.Slice || value.Kind() == reflect.Array) && value.Len() > 0 {
 			// value is slice/array, add each value to left side expression
 			for i := 0; i < value.Len() && i < len(stmt.Lhss); i++ {
@@ -161,9 +157,7 @@ func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 	// invoke all left side expressions with right side values
 	for i := 0; i < len(rvs) && i < len(stmt.Lhss); i++ {
 		value := rvs[i]
-		if value.Kind() == reflect.Interface && !value.IsNil() {
-			value = value.Elem()
-		}
+		value = elemIfInterfaceNNil(value)
 		_, err = invokeLetExpr(vmp, env, stmt, stmt.Lhss[i], value)
 		if err != nil {
 			return nilValueL, newError(stmt.Lhss[i], err)
@@ -192,9 +186,7 @@ func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt)
 	}
 	for i, lhs := range stmt.Lhss {
 		v := rvs[i]
-		if v.Kind() == reflect.Interface && !v.IsNil() {
-			v = v.Elem()
-		}
+		v = elemIfInterfaceNNil(v)
 		_, err = invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, lhs, v)
 		if err != nil {
 			return nilValueL, newError(lhs, err)
@@ -333,9 +325,7 @@ func runForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt) (reflect.Valu
 	if ee != nil {
 		return val, ee
 	}
-	if val.Kind() == reflect.Interface && !val.IsNil() {
-		val = val.Elem()
-	}
+	val = elemIfInterfaceNNil(val)
 	switch val.Kind() {
 	case reflect.Slice, reflect.Array:
 		return runForStmtSlice(vmp, env, stmt, val)

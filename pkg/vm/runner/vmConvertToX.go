@@ -14,9 +14,7 @@ func reflectValueSliceToInterfaceSlice(valueSlice []reflect.Value) reflect.Value
 			interfaceSlice = append(interfaceSlice, nil)
 			continue
 		}
-		if value.Kind() == reflect.Interface && !value.IsNil() {
-			value = value.Elem()
-		}
+		value = elemIfInterfaceNNil(value)
 		if value.CanInterface() {
 			interfaceSlice = append(interfaceSlice, value.Interface())
 		} else {

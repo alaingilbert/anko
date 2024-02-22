@@ -1171,11 +1171,11 @@ slice :
 	}
 
 expr_idents :
-	IDENT
+	expr_ident
 	{
 		$$ = []string{$1.Lit}
 	}
-	| expr_idents comma_opt_newlines IDENT
+	| expr_idents comma_opt_newlines expr_ident
 	{
 		$$ = append($1, $3.Lit)
 	}

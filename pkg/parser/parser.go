@@ -10,6 +10,7 @@ import (
 
 type yySymType struct {
 	yys                      int
+	start                    ast.Stmt
 	compstmt                 ast.Stmt
 	stmts                    *ast.StmtsStmt
 	opt_stmt_var_or_lets     ast.Stmt
@@ -1541,6 +1542,13 @@ yynewstate:
 	}
 
 	switch r {
+	case 1:
+		{
+			yyVAL.start = yyS[yypt-0].compstmt
+			if l, ok := yylex.(*Lexer); ok {
+				l.stmt = yyVAL.start
+			}
+		}
 	case 2:
 		{
 			yyVAL.compstmt = nil
@@ -1548,9 +1556,6 @@ yynewstate:
 	case 3:
 		{
 			yyVAL.compstmt = yyS[yypt-1].stmts
-			if l, ok := yylex.(*Lexer); ok {
-				l.stmt = yyVAL.compstmt
-			}
 		}
 	case 4:
 		{

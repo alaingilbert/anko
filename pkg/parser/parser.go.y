@@ -101,8 +101,10 @@ import (
 %type<expr_slice_helper1> expr_slice_helper1
 %type<expr_ident> expr_ident
 %type<opt_expr_ident> opt_expr_ident
+%type<start> start
 
 %union{
+	start                           ast.Stmt
 	compstmt                        ast.Stmt
 	stmts                           *ast.StmtsStmt
 	opt_stmt_var_or_lets            ast.Stmt
@@ -184,7 +186,14 @@ import (
 %start    start
 
 %%
-start : compstmt
+start :
+	compstmt
+	{
+		$$ = $1
+		if l, ok := yylex.(*Lexer); ok {
+			l.stmt = $$
+		}
+	}
 
 compstmt :
 	opt_term
@@ -194,9 +203,6 @@ compstmt :
 	| opt_term stmts opt_term
 	{
 		$$ = $2
-		if l, ok := yylex.(*Lexer); ok {
-			l.stmt = $$
-		}
 	}
 
 stmts :

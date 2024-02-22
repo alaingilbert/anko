@@ -681,7 +681,6 @@ func encodeCallableExpr(w *Encoder, expr *ast.Callable) {
 
 func encodeAnonCallExpr(w *Encoder, expr *ast.AnonCallExpr) {
 	encode(w, AnonCallExprBytecode)
-	fmt.Println("???", expr.Callable)
 	encodeCallableExpr(w, expr.Callable)
 	encodeExpr(w, expr.Expr)
 }

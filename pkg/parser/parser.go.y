@@ -38,12 +38,12 @@ import (
 %type<stmt_switch_cases_helper> stmt_switch_cases_helper
 %type<stmt_switch_case> stmt_switch_case
 %type<stmt_switch_default> stmt_switch_default
-%type<stmt_select_body> stmt_select_body
 %type<stmt_select_content> stmt_select_content
 %type<stmt_select_cases> stmt_select_cases
 %type<stmt_select_cases_helper> stmt_select_cases_helper
 %type<stmt_select_case> stmt_select_case
 %type<stmt_select_default> stmt_select_default
+%type<stmt_select_opt_default> stmt_select_opt_default
 %type<exprs> exprs
 %type<opt_exprs> opt_exprs
 %type<comma_separated_exprs> comma_separated_exprs
@@ -121,12 +121,12 @@ import (
 	stmt_switch_cases_helper        *ast.SwitchStmt
 	stmt_switch_case                ast.Stmt
 	stmt_switch_default             ast.Stmt
-	stmt_select_body                *ast.SelectBodyStmt
 	stmt_select_content             *ast.SelectBodyStmt
-	stmt_select_cases               *ast.SelectBodyStmt
-	stmt_select_cases_helper        *ast.SelectBodyStmt
+	stmt_select_cases               []ast.Stmt
+	stmt_select_cases_helper        []ast.Stmt
 	stmt_select_case                ast.Stmt
 	stmt_select_default             ast.Stmt
+	stmt_select_opt_default         ast.Stmt
 	stmt                            ast.Stmt
 	expr                            ast.Expr
 	opt_expr                        ast.Expr
@@ -461,42 +461,27 @@ stmt_select_content :
 	{
 		$$ = &ast.SelectBodyStmt{}
 	}
-	| opt_newlines stmt_select_cases opt_newlines
+	| opt_newlines stmt_select_cases stmt_select_opt_default
 	{
-		$$ = $2
+		$$ = &ast.SelectBodyStmt{Cases: $2, Default: $3}
 	}
 
 stmt_select_cases :
-	stmt_select_cases_helper
+	/* nothing */
+	{ $$ = nil }
+	| stmt_select_cases_helper
 	{
 		$$ = $1
 	}
 
 stmt_select_cases_helper :
-	stmt_select_body
+	stmt_select_case
 	{
-		$$ = $1
+		$$ = []ast.Stmt{$1}
 	}
 	| stmt_select_cases_helper stmt_select_case
 	{
-		$$.Cases = append($$.Cases, $2)
-	}
-	| stmt_select_cases_helper stmt_select_default
-	{
-		if $$.Default != nil {
-		    yylex.Error("multiple default statement")
-		}
-		$$.Default = $2
-	}
-
-stmt_select_body :
-	stmt_select_default
-	{
-		$$ = &ast.SelectBodyStmt{Default: $1}
-	}
-	| stmt_select_case
-	{
-		$$ = &ast.SelectBodyStmt{Cases: []ast.Stmt{$1}}
+		$$ = append($$, $2)
 	}
 
 stmt_select_case :
@@ -505,6 +490,11 @@ stmt_select_case :
 		$$ = &ast.SelectCaseStmt{Expr: $2, Stmt: $4}
 		$$.SetPosition($1.Position())
 	}
+
+stmt_select_opt_default :
+	/* nothing */
+	{ $$ = nil }
+	| stmt_select_default { $$ = $1 }
 
 stmt_select_default :
 	DEFAULT ':' compstmt

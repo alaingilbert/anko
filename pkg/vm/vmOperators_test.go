@@ -490,8 +490,8 @@ func TestSelect(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
 		// test parse errors
-		{Script: `select {default: return 6; default: return 7}`, ParseError: fmt.Errorf("multiple default statement"), RunOutput: int64(7)},
-		{Script: `a = make(chan int64, 1); a <- 1; select {case <-a: return 5; default: return 6; default: return 7}`, ParseError: fmt.Errorf("multiple default statement"), RunOutput: int64(5)},
+		{Script: `select {default: return 6; default: return 7}`, ParseError: fmt.Errorf("unexpected DEFAULT")},
+		{Script: `a = make(chan int64, 1); a <- 1; select {case <-a: return 5; default: return 6; default: return 7}`, ParseError: fmt.Errorf("unexpected DEFAULT")},
 
 		// test run errors
 		{Script: `select {case a = <-b: return 1}`, RunError: envPkg.NewUndefinedSymbolErr("b"), RunOutput: nil},

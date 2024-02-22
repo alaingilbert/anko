@@ -339,10 +339,6 @@ stmt_var :
 		$$.SetPosition($1.Position())
 	}
 
-op_lets :
-	WALRUS { $$ = true }
-	| '='  { $$ = false }
-
 stmt_lets :
 	exprs op_lets exprs
 	{
@@ -360,6 +356,10 @@ stmt_lets :
 		}
 		$$.SetPosition($1[0].Position())
 	}
+
+op_lets :
+	WALRUS { $$ = true }
+	| '='  { $$ = false }
 
 stmt_if :
 	IF expr '{' compstmt '}' else_if_list maybe_else

@@ -203,6 +203,29 @@ stmt :
 	| stmt_defer
 	| stmt_expr
 
+expr :
+	expr_member_or_ident
+	| expr_literals
+	| expr_unary
+	| expr_ternary
+	| expr_nil_coalesce
+	| expr_func
+	| expr_array
+	| expr_paren
+	| expr_binary
+	| expr_call
+	| expr_anon_call
+	| expr_item_or_slice
+	| expr_len
+	| expr_dbg
+	| expr_new
+	| expr_make
+	| expr_map
+	| expr_opchan
+	| expr_close
+	| expr_delete
+	| expr_in
+
 stmt_break :
 	BREAK
 	{
@@ -626,29 +649,6 @@ opt_expr :
 	/* nothing */
 	{ $$ = nil }
 	| expr { $$ = $1 }
-
-expr :
-	expr_member_or_ident
-	| expr_literals
-	| expr_unary
-	| expr_ternary
-	| expr_nil_coalesce
-	| expr_func
-	| expr_array
-	| expr_paren
-	| expr_binary
-	| expr_call
-	| expr_anon_call
-	| expr_item_or_slice
-	| expr_len
-	| expr_dbg
-	| expr_new
-	| expr_make
-	| expr_map
-	| expr_opchan
-	| expr_close
-	| expr_delete
-	| expr_in
 
 expr_dbg :
 	DBG '(' ')'

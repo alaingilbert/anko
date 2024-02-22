@@ -38,17 +38,17 @@ import (
 %type<else_if> else_if
 %type<stmt_switch_cases> stmt_switch_cases
 %type<stmt_switch_cases_helper> stmt_switch_cases_helper
-%type<stmt_switch_case> stmt_switch_case
-%type<stmt_switch_default> stmt_switch_default
+%type<stmt> stmt_switch_case
+%type<stmt> stmt_switch_default
 %type<stmt_select_content> stmt_select_content
 %type<stmt_select_cases> stmt_select_cases
 %type<stmt_select_cases_helper> stmt_select_cases_helper
-%type<stmt_select_case> stmt_select_case
-%type<stmt_select_default> stmt_select_default
-%type<stmt_select_opt_default> stmt_select_opt_default
+%type<stmt> stmt_select_case
+%type<stmt> stmt_select_default
+%type<stmt> stmt_select_opt_default
 %type<exprs> exprs
-%type<opt_exprs> opt_exprs
-%type<comma_separated_exprs> comma_separated_exprs
+%type<exprs> opt_exprs
+%type<exprs> comma_separated_exprs
 
 %type<expr> expr
 %type<expr> expr_member_or_ident
@@ -79,8 +79,8 @@ import (
 %type<expr> expr_ident
 %type<expr> expr_literals_helper
 %type<expr> expr_assoc
+%type<expr> opt_expr
 
-%type<opt_expr> opt_expr
 %type<expr_call_helper> expr_call_helper
 %type<unary_op> unary_op
 %type<bin_op> bin_op
@@ -99,14 +99,14 @@ import (
 %type<opt_func_return_expr_idents1> opt_func_return_expr_idents1
 %type<opt_func_return_expr_idents2> opt_func_return_expr_idents2
 %type<type_data> type_data
-%type<type_data_struct> type_data_struct
+%type<type_data> type_data_struct
 %type<slice_count> slice_count
-%type<typed_slice_count> typed_slice_count
+%type<type_data> typed_slice_count
 %type<expr_map_content> expr_map_content
 %type<expr_map_content_helper> expr_map_content_helper
 %type<expr_map_key_value> expr_map_key_value
-%type<expr_slice_helper1> expr_slice_helper1
-%type<slice> slice
+%type<expr> expr_slice_helper1
+%type<expr> slice
 %type<expr_typed_ident> expr_typed_ident
 %type<opt_ident> opt_ident
 
@@ -116,23 +116,14 @@ import (
 	else_if                         ast.Stmt
 	stmt_switch_cases               *ast.SwitchStmt
 	stmt_switch_cases_helper        *ast.SwitchStmt
-	stmt_switch_case                ast.Stmt
-	stmt_switch_default             ast.Stmt
 	stmt_select_content             *ast.SelectBodyStmt
 	stmt_select_cases               []ast.Stmt
 	stmt_select_cases_helper        []ast.Stmt
-	stmt_select_case                ast.Stmt
-	stmt_select_default             ast.Stmt
-	stmt_select_opt_default         ast.Stmt
 	stmt                            ast.Stmt
 	expr                            ast.Expr
-	opt_expr                        ast.Expr
 	unary_op                        string
-	expr_member                     ast.Expr
 	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
 	exprs                           []ast.Expr
-	opt_exprs                       []ast.Expr
-	comma_separated_exprs           []ast.Expr
 	expr_idents                     []string
 	expr_for_idents                 []string
 	func_expr_idents                []*ast.ParamExpr
@@ -150,16 +141,12 @@ import (
 	expr_map_content_helper         *ast.MapExpr
 	expr_map_key_value              []ast.Expr
 	type_data                       *ast.TypeStruct
-        type_data_struct                *ast.TypeStruct
-        typed_slice_count               *ast.TypeStruct
         slice_count                     int
 	tok                             ast.Token
 	opt_ident                       *ast.Token
 	bin_op                          string
 	op_assoc                        string
 	op_assoc1                       string
-	expr_slice_helper1              ast.Expr
-	slice                           ast.Expr
 }
 
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR IN EQEQ NEQ GE LE OROR ANDAND NEW

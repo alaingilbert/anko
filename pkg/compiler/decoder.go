@@ -721,23 +721,26 @@ func decodeDeleteExpr(r *Decoder) *ast.DeleteExpr {
 	return out
 }
 
-func decodeAnonCallExpr(r *Decoder) *ast.AnonCallExpr {
-	out := &ast.AnonCallExpr{}
+func decodeCallable(r *Decoder) *ast.Callable {
+	out := &ast.Callable{}
 	out.ExprImpl = decodeExprImpl(r)
+	out.SubExprs = r.readExprArray()
 	out.VarArg = r.readBool()
 	out.Go = r.readBool()
+	out.Defer = r.readBool()
+	return out
+}
+
+func decodeAnonCallExpr(r *Decoder) *ast.AnonCallExpr {
+	out := &ast.AnonCallExpr{}
+	out.Callable = decodeCallable(r)
 	out.Expr = decodeExpr(r)
-	out.SubExprs = r.readExprArray()
 	return out
 }
 
 func decodeCallExpr(r *Decoder) *ast.CallExpr {
 	out := &ast.CallExpr{}
-	out.ExprImpl = decodeExprImpl(r)
+	out.Callable = decodeCallable(r)
 	out.Name = r.readString()
-	out.VarArg = r.readBool()
-	out.SubExprs = r.readExprArray()
-	out.Go = r.readBool()
-	out.Defer = r.readBool()
 	return out
 }

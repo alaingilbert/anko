@@ -99,25 +99,26 @@ type TernaryOpExpr struct {
 	Rhs  Expr
 }
 
-// CallExpr provide calling expression.
-type CallExpr struct {
+// Callable ...
+type Callable struct {
 	ExprImpl
-	Func     reflect.Value
-	Name     string
 	SubExprs []Expr
 	VarArg   bool
 	Go       bool
 	Defer    bool
 }
 
+// CallExpr provide calling expression.
+type CallExpr struct {
+	*Callable
+	Func reflect.Value
+	Name string
+}
+
 // AnonCallExpr provide anonymous calling expression. ex: func(){}().
 type AnonCallExpr struct {
-	ExprImpl
-	Expr     Expr
-	SubExprs []Expr
-	VarArg   bool
-	Go       bool
-	Defer    bool
+	*Callable
+	Expr Expr
 }
 
 // MemberExpr provide expression to refer member.

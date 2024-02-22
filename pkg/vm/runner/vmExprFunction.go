@@ -221,7 +221,7 @@ func anonCallExpr(vmp *VmParams, env env.IEnv, e *ast.AnonCallExpr) (reflect.Val
 		f = f.Elem()
 	}
 	if f.Kind() == reflect.Func {
-		callExpr := &ast.CallExpr{Func: f, SubExprs: e.SubExprs, VarArg: e.VarArg, Go: e.Go, Defer: e.Defer}
+		callExpr := &ast.CallExpr{Func: f, Callable: &ast.Callable{SubExprs: e.SubExprs, VarArg: e.VarArg, Go: e.Go, Defer: e.Defer}}
 		callExpr.SetPosition(e.Position())
 		return invokeExpr(vmp, env, callExpr)
 	}

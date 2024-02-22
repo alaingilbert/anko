@@ -671,23 +671,25 @@ func encodeFuncReturnValuesExpr(w *Encoder, expr *ast.FuncReturnValuesExpr) {
 	encodeTypeStruct(w, expr.TypeData)
 }
 
-func encodeAnonCallExpr(w *Encoder, expr *ast.AnonCallExpr) {
-	encode(w, AnonCallExprBytecode)
+func encodeCallableExpr(w *Encoder, expr *ast.Callable) {
 	encodeExprImpl(w, expr.ExprImpl)
+	encodeExprArray(w, expr.SubExprs)
 	encode(w, expr.VarArg)
 	encode(w, expr.Go)
+	encode(w, expr.Defer)
+}
+
+func encodeAnonCallExpr(w *Encoder, expr *ast.AnonCallExpr) {
+	encode(w, AnonCallExprBytecode)
+	fmt.Println("???", expr.Callable)
+	encodeCallableExpr(w, expr.Callable)
 	encodeExpr(w, expr.Expr)
-	encodeExprArray(w, expr.SubExprs)
 }
 
 func encodeCallExpr(w *Encoder, expr *ast.CallExpr) {
 	encode(w, CallExprBytecode)
-	encodeExprImpl(w, expr.ExprImpl)
+	encodeCallableExpr(w, expr.Callable)
 	encodeString(w, expr.Name)
-	encodeBool(w, expr.VarArg)
-	encodeExprArray(w, expr.SubExprs)
-	encodeBool(w, expr.Go)
-	encodeBool(w, expr.Defer)
 }
 
 func encodeCloseExpr(w *Encoder, expr *ast.CloseExpr) {

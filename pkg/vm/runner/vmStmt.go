@@ -692,7 +692,7 @@ func runDeferStmtAnonCallExpr(vmp *VmParams, env envPkg.IEnv, t *ast.AnonCallExp
 	if err != nil {
 		return f, err
 	}
-	callExprInst := &ast.CallExpr{Func: f, SubExprs: t.SubExprs, VarArg: t.VarArg}
+	callExprInst := &ast.CallExpr{Func: f, Callable: &ast.Callable{SubExprs: t.SubExprs, VarArg: t.VarArg}}
 	return runDeferStmtMakeDefer(vmp, f, env, callExprInst)
 }
 

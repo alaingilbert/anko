@@ -59,6 +59,7 @@ import (
 %type<expr> expr_paren
 %type<expr> expr_binary
 %type<expr> expr_call
+%type<expr> expr_callable
 %type<expr> expr_anon_call
 %type<expr> expr_item_or_slice
 %type<expr> expr_len
@@ -280,29 +281,25 @@ stmt_expr :
 	}
 
 stmt_go :
-	GO expr_call
+	GO expr_callable
 	{
-		$2.(*ast.CallExpr).Go = true
-		$$ = &ast.GoroutineStmt{Expr: $2}
-		$$.SetPosition($1.Position())
-	}
-	| GO expr_anon_call
-	{
-		$2.(*ast.AnonCallExpr).Go = true
+		if el, ok := $2.(*ast.CallExpr); ok {
+			el.Go = true
+		} else if el, ok := $2.(*ast.AnonCallExpr); ok {
+			el.Go = true
+		}
 		$$ = &ast.GoroutineStmt{Expr: $2}
 		$$.SetPosition($1.Position())
 	}
 
 stmt_defer :
-	DEFER expr_call
+	DEFER expr_callable
 	{
-        	$2.(*ast.CallExpr).Defer = true
-		$$ = &ast.DeferStmt{Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| DEFER expr_anon_call
-	{
-		$2.(*ast.AnonCallExpr).Defer = true
+		if el, ok := $2.(*ast.CallExpr); ok {
+			el.Defer = true
+		} else if el, ok := $2.(*ast.AnonCallExpr); ok {
+			el.Defer = true
+		}
 		$$ = &ast.DeferStmt{Expr: $2}
 		$$.SetPosition($2.Position())
 	}
@@ -648,9 +645,8 @@ func_expr_typed_idents :
 	}
 
 opt_exprs :
-	{
-		$$ = nil
-	}
+	/* nothing */
+	{ $$ = nil }
 	| exprs { $$ = $1 }
 
 exprs :
@@ -855,17 +851,21 @@ opt_expr_ident :
 	{ $$ = nil }
 	| expr_ident { $$ = $1 }
 
+expr_callable :
+	expr_call
+	| expr_anon_call
+
 expr_call :
 	expr_ident expr_call_helper
 	{
-		$$ = &ast.CallExpr{Name: $1.Lit, SubExprs: $2.Exprs, VarArg: $2.VarArg}
+		$$ = &ast.CallExpr{Name: $1.Lit, Callable: &ast.Callable{SubExprs: $2.Exprs, VarArg: $2.VarArg}}
 		$$.SetPosition($1.Position())
 	}
 
 expr_anon_call :
 	expr expr_call_helper
 	{
-		$$ = &ast.AnonCallExpr{Expr: $1, SubExprs: $2.Exprs, VarArg: $2.VarArg}
+		$$ = &ast.AnonCallExpr{Expr: $1, Callable: &ast.Callable{SubExprs: $2.Exprs, VarArg: $2.VarArg}}
 		$$.SetPosition($1.Position())
 	}
 

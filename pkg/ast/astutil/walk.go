@@ -235,7 +235,7 @@ func walkExpr(expr ast.Expr, f WalkFunc, deep int) error {
 		if err := walkExpr(expr.Expr, f, deep); err != nil {
 			return err
 		}
-		return walkExpr(&ast.CallExpr{Func: reflect.Value{}, SubExprs: expr.SubExprs, VarArg: expr.VarArg, Go: expr.Go}, f, deep)
+		return walkExpr(&ast.CallExpr{Func: reflect.Value{}, Callable: &ast.Callable{SubExprs: expr.SubExprs, VarArg: expr.VarArg, Go: expr.Go}}, f, deep)
 	case *ast.CallExpr:
 		return walkExprs(expr.SubExprs, f, deep)
 	case *ast.TernaryOpExpr:

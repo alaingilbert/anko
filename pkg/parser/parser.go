@@ -10,7 +10,7 @@ import (
 
 type yySymType struct {
 	yys                 int
-	stmts               *ast.StmtsStmt
+	stmtsStmt           *ast.StmtsStmt
 	stmt                ast.Stmt
 	expr                ast.Expr
 	exprs               []ast.Expr
@@ -335,7 +335,7 @@ var (
 		57492: 179, // stmt_select_opt_default (1x)
 		57495: 180, // stmt_switch_cases (1x)
 		57496: 181, // stmt_switch_cases_helper (1x)
-		57503: 182, // stmts (1x)
+		57503: 182, // stmtsStmt (1x)
 		57396: 183, // TYPE (1x)
 		57506: 184, // type_data_struct (1x)
 		57405: 185, // $default (0x)
@@ -527,7 +527,7 @@ var (
 		"stmt_select_opt_default",
 		"stmt_switch_cases",
 		"stmt_switch_cases_helper",
-		"stmts",
+		"stmtsStmt",
 		"TYPE",
 		"type_data_struct",
 		"$default",
@@ -1543,15 +1543,15 @@ yynewstate:
 		}
 	case 3:
 		{
-			yyVAL.stmt = yyS[yypt-1].stmts
+			yyVAL.stmt = yyS[yypt-1].stmtsStmt
 		}
 	case 4:
 		{
-			yyVAL.stmts = &ast.StmtsStmt{Stmts: []ast.Stmt{yyS[yypt-0].stmt}}
+			yyVAL.stmtsStmt = &ast.StmtsStmt{Stmts: []ast.Stmt{yyS[yypt-0].stmt}}
 		}
 	case 5:
 		{
-			yyS[yypt-2].stmts.Stmts = append(yyS[yypt-2].stmts.Stmts, yyS[yypt-0].stmt)
+			yyS[yypt-2].stmtsStmt.Stmts = append(yyS[yypt-2].stmtsStmt.Stmts, yyS[yypt-0].stmt)
 		}
 	case 20:
 		{

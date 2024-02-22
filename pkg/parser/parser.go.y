@@ -7,7 +7,7 @@ import (
 
 %}
 
-%type<stmts> stmts
+%type<stmtsStmt> stmtsStmt
 
 %type<stmt> stmt
 %type<stmt> stmt_var_or_lets
@@ -111,7 +111,7 @@ import (
 %type<else_if_list> opt_stmt_select_cases
 
 %union{
-	stmts                           *ast.StmtsStmt
+	stmtsStmt                       *ast.StmtsStmt
 	stmt                            ast.Stmt
 	expr                            ast.Expr
 	exprs                           []ast.Expr
@@ -172,17 +172,17 @@ compstmt :
 	{
 		$$ = nil
 	}
-	| opt_term stmts opt_term
+	| opt_term stmtsStmt opt_term
 	{
 		$$ = $2
 	}
 
-stmts :
+stmtsStmt :
 	stmt
 	{
 		$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$1}}
 	}
-	| stmts term stmt
+	| stmtsStmt term stmt
 	{
 		$1.Stmts = append($1.Stmts, $3)
 	}

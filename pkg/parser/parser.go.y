@@ -313,9 +313,9 @@ opt_stmt_var_or_lets :
 	| stmt_var_or_lets { $$ = $1 }
 
 stmt_var_or_lets :
-	stmt_var          { $$ = $1 }
-	| stmt_typed_lets { $$ = $1 }
-	| stmt_lets       { $$ = $1 }
+	stmt_var
+	| stmt_typed_lets
+	| stmt_lets
 
 stmt_var :
 	VAR expr_idents '=' exprs

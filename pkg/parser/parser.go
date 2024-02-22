@@ -1624,18 +1624,6 @@ yynewstate:
 		{
 			yyVAL.stmt = yyS[yypt-0].stmt
 		}
-	case 54:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt
-		}
-	case 55:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt
-		}
-	case 56:
-		{
-			yyVAL.stmt = yyS[yypt-0].stmt
-		}
 	case 57:
 		{
 			if len(yyS[yypt-2].expr_idents) == 2 && len(yyS[yypt-0].exprs) == 1 {

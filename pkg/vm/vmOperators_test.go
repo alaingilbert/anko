@@ -644,7 +644,7 @@ func TestForLoop(t *testing.T) {
 		{Script: `continue`, RunError: fmt.Errorf("unexpected continue statement"), Name: ""},
 		{Script: `for 1++ { }`, RunError: fmt.Errorf("invalid operation"), Name: ""},
 		{Script: `for { 1++ }`, RunError: fmt.Errorf("invalid operation"), Name: ""},
-		{Script: `for a in 1++ { }`, RunError: fmt.Errorf("invalid operation"), Name: ""},
+		{Script: `for a in 1++ { }`, ParseError: fmt.Errorf("unexpected '{'"), Name: ""},
 
 		{Script: `for { break }`, RunOutput: nil, Name: ""},
 		{Script: `for {a = 1; if a == 1 { break } }`, RunOutput: nil, Name: ""},
@@ -766,8 +766,8 @@ func TestForLoop(t *testing.T) {
 
 		{Script: `b = 0; for i in a { b = i }`, Input: map[string]any{"a": any([]any{nil})}, RunOutput: nil, Output: map[string]any{"a": any([]any{nil}), "b": nil}, Name: ""},
 
-		{Script: `for i in nil { }`, RunError: fmt.Errorf("for cannot loop over type interface"), Name: ""},
-		{Script: `for i in true { }`, RunError: fmt.Errorf("for cannot loop over type bool"), Name: ""},
+		{Script: `for i in nil { }`, ParseError: fmt.Errorf("unexpected '{'"), Name: ""},
+		{Script: `for i in true { }`, ParseError: fmt.Errorf("unexpected '{'"), Name: ""},
 		{Script: `for i in a { }`, Input: map[string]any{"a": reflect.Value{}}, RunError: fmt.Errorf("for cannot loop over type struct"), Output: map[string]any{"a": reflect.Value{}}, Name: ""},
 		{Script: `for i in a { }`, Input: map[string]any{"a": any(nil)}, RunError: fmt.Errorf("for cannot loop over type interface"), Output: map[string]any{"a": any(nil)}, Name: ""},
 		{Script: `for i in a { }`, Input: map[string]any{"a": any(true)}, RunError: fmt.Errorf("for cannot loop over type bool"), Output: map[string]any{"a": any(true)}, Name: ""},

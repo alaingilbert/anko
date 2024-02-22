@@ -72,8 +72,10 @@ import (
 %type<expr> expr_delete
 %type<expr> expr_in
 
+%type<expr> expr_iterable
+%type<expr> expr_member
+
 %type<opt_expr> opt_expr
-%type<expr_member> expr_member
 %type<expr_call_helper> expr_call_helper
 %type<expr_literals_helper> expr_literals_helper
 %type<unary_op> unary_op
@@ -103,6 +105,7 @@ import (
 %type<expr_slice_helper1> expr_slice_helper1
 %type<slice> slice
 %type<expr_ident> expr_ident
+%type<expr> expr_ident1
 %type<opt_expr_ident> opt_expr_ident
 %type<expr_typed_ident> expr_typed_ident
 %type<start> start
@@ -428,7 +431,7 @@ stmt_for :
 		$$ = &ast.LoopStmt{Expr: $2, Stmt: $4}
 		$$.SetPosition($1.Position())
 	}
-	| FOR expr_for_idents IN expr '{' compstmt '}'
+	| FOR expr_for_idents IN expr_iterable '{' compstmt '}'
 	{
 		$$ = &ast.ForStmt{Vars: $2, Value: $4, Stmt: $6}
 		$$.SetPosition($1.Position())
@@ -438,6 +441,14 @@ stmt_for :
 		$$ = &ast.CForStmt{Stmt1: $2, Expr2: $4, Expr3: $6, Stmt: $8}
 		$$.SetPosition($1.Position())
 	}
+
+expr_iterable :
+	expr_map
+	| expr_array
+	| expr_anon_call
+	| expr_call
+	| expr_ident1
+	| expr_member
 
 expr_for_idents :
 	IDENT
@@ -814,6 +825,13 @@ expr_member_or_ident :
 	| expr_member { $$ = $1 }
 
 expr_ident :
+	IDENT
+	{
+		$$ = &ast.IdentExpr{Lit: $1.Lit}
+		$$.SetPosition($1.Position())
+	}
+
+expr_ident1 :
 	IDENT
 	{
 		$$ = &ast.IdentExpr{Lit: $1.Lit}

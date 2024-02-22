@@ -9,31 +9,23 @@ import (
 )
 
 type yySymType struct {
-	yys                      int
-	stmts                    *ast.StmtsStmt
-	else_if_list             []ast.Stmt
-	else_if                  ast.Stmt
-	stmt_switch_cases        *ast.SwitchStmt
-	stmt_switch_cases_helper *ast.SwitchStmt
-	stmt_select_content      *ast.SelectBodyStmt
-	stmt_select_cases        []ast.Stmt
-	stmt_select_cases_helper []ast.Stmt
-	stmt                     ast.Stmt
-	expr                     ast.Expr
-	unary_op                 string
-	expr_call_helper         struct {
+	yys                 int
+	stmts               *ast.StmtsStmt
+	stmt                ast.Stmt
+	expr                ast.Expr
+	exprs               []ast.Expr
+	else_if_list        []ast.Stmt
+	stmt_switch_cases   *ast.SwitchStmt
+	stmt_select_content *ast.SelectBodyStmt
+	stmt_select_cases   []ast.Stmt
+	expr_call_helper    struct {
 		Exprs  []ast.Expr
 		VarArg bool
 	}
-	exprs                         []ast.Expr
-	expr_idents                   []string
-	expr_for_idents               []string
-	func_expr_idents              []*ast.ParamExpr
-	func_expr_idents_not_empty    []*ast.ParamExpr
-	func_expr_untyped_ident       *ast.ParamExpr
-	func_expr_typed_ident         *ast.ParamExpr
-	func_expr_idents_last_untyped []*ast.ParamExpr
-	func_expr_args                struct {
+	expr_idents           []string
+	func_expr_idents      []*ast.ParamExpr
+	func_expr_typed_ident *ast.ParamExpr
+	func_expr_args        struct {
 		Params   []*ast.ParamExpr
 		VarArg   bool
 		TypeData *ast.TypeStruct
@@ -42,20 +34,13 @@ type yySymType struct {
 		Name     string
 		TypeData *ast.TypeStruct
 	}
-	func_expr_typed_idents       []*ast.ParamExpr
-	opt_func_return_expr_idents  []*ast.FuncReturnValuesExpr
-	opt_func_return_expr_idents1 []*ast.FuncReturnValuesExpr
-	opt_func_return_expr_idents2 []*ast.FuncReturnValuesExpr
-	expr_map_content             *ast.MapExpr
-	expr_map_content_helper      *ast.MapExpr
-	expr_map_key_value           []ast.Expr
-	type_data                    *ast.TypeStruct
-	slice_count                  int
-	tok                          ast.Token
-	opt_ident                    *ast.Token
-	bin_op                       string
-	op_assoc                     string
-	op_assoc1                    string
+	opt_func_return_expr_idents []*ast.FuncReturnValuesExpr
+	expr_map_content            *ast.MapExpr
+	type_data                   *ast.TypeStruct
+	slice_count                 int
+	tok                         ast.Token
+	opt_ident                   *ast.Token
+	str                         string
 }
 
 type yyXError struct {
@@ -1715,12 +1700,12 @@ yynewstate:
 		}
 	case 41:
 		{
-			yyS[yypt-1].else_if_list = append(yyS[yypt-1].else_if_list, yyS[yypt-0].else_if)
+			yyS[yypt-1].else_if_list = append(yyS[yypt-1].else_if_list, yyS[yypt-0].stmt)
 			yyVAL.else_if_list = yyS[yypt-1].else_if_list
 		}
 	case 42:
 		{
-			yyVAL.else_if = &ast.IfStmt{If: yyS[yypt-3].expr, Then: yyS[yypt-1].stmt}
+			yyVAL.stmt = &ast.IfStmt{If: yyS[yypt-3].expr, Then: yyS[yypt-1].stmt}
 		}
 	case 43:
 		{
@@ -1742,7 +1727,7 @@ yynewstate:
 		}
 	case 47:
 		{
-			yyVAL.stmt = &ast.ForStmt{Vars: yyS[yypt-5].expr_for_idents, Value: yyS[yypt-3].expr, Stmt: yyS[yypt-1].stmt}
+			yyVAL.stmt = &ast.ForStmt{Vars: yyS[yypt-5].expr_idents, Value: yyS[yypt-3].expr, Stmt: yyS[yypt-1].stmt}
 			yyVAL.stmt.SetPosition(yyS[yypt-6].tok.Position())
 		}
 	case 48:
@@ -1752,11 +1737,11 @@ yynewstate:
 		}
 	case 55:
 		{
-			yyVAL.expr_for_idents = []string{yyS[yypt-0].tok.Lit}
+			yyVAL.expr_idents = []string{yyS[yypt-0].tok.Lit}
 		}
 	case 56:
 		{
-			yyVAL.expr_for_idents = []string{yyS[yypt-2].tok.Lit, yyS[yypt-0].tok.Lit}
+			yyVAL.expr_idents = []string{yyS[yypt-2].tok.Lit, yyS[yypt-0].tok.Lit}
 		}
 	case 57:
 		{
@@ -1777,15 +1762,15 @@ yynewstate:
 		}
 	case 61:
 		{
-			yyVAL.stmt_select_cases = yyS[yypt-0].stmt_select_cases_helper
+			yyVAL.stmt_select_cases = yyS[yypt-0].stmt_select_cases
 		}
 	case 62:
 		{
-			yyVAL.stmt_select_cases_helper = []ast.Stmt{yyS[yypt-0].stmt}
+			yyVAL.stmt_select_cases = []ast.Stmt{yyS[yypt-0].stmt}
 		}
 	case 63:
 		{
-			yyVAL.stmt_select_cases_helper = append(yyVAL.stmt_select_cases_helper, yyS[yypt-0].stmt)
+			yyVAL.stmt_select_cases = append(yyVAL.stmt_select_cases, yyS[yypt-0].stmt)
 		}
 	case 64:
 		{
@@ -1816,27 +1801,27 @@ yynewstate:
 		}
 	case 70:
 		{
-			yyVAL.stmt_switch_cases = yyS[yypt-0].stmt_switch_cases_helper
+			yyVAL.stmt_switch_cases = yyS[yypt-0].stmt_switch_cases
 		}
 	case 71:
 		{
-			yyVAL.stmt_switch_cases_helper = &ast.SwitchStmt{Default: yyS[yypt-0].stmt}
+			yyVAL.stmt_switch_cases = &ast.SwitchStmt{Default: yyS[yypt-0].stmt}
 		}
 	case 72:
 		{
-			yyVAL.stmt_switch_cases_helper = &ast.SwitchStmt{Cases: []ast.Stmt{yyS[yypt-0].stmt}}
+			yyVAL.stmt_switch_cases = &ast.SwitchStmt{Cases: []ast.Stmt{yyS[yypt-0].stmt}}
 		}
 	case 73:
 		{
-			yyS[yypt-1].stmt_switch_cases_helper.Cases = append(yyS[yypt-1].stmt_switch_cases_helper.Cases, yyS[yypt-0].stmt)
-			yyVAL.stmt_switch_cases_helper = yyS[yypt-1].stmt_switch_cases_helper
+			yyS[yypt-1].stmt_switch_cases.Cases = append(yyS[yypt-1].stmt_switch_cases.Cases, yyS[yypt-0].stmt)
+			yyVAL.stmt_switch_cases = yyS[yypt-1].stmt_switch_cases
 		}
 	case 74:
 		{
-			if yyS[yypt-1].stmt_switch_cases_helper.Default != nil {
+			if yyS[yypt-1].stmt_switch_cases.Default != nil {
 				yylex.Error("multiple default statement")
 			}
-			yyS[yypt-1].stmt_switch_cases_helper.Default = yyS[yypt-0].stmt
+			yyS[yypt-1].stmt_switch_cases.Default = yyS[yypt-0].stmt
 		}
 	case 75:
 		{
@@ -1862,23 +1847,23 @@ yynewstate:
 		}
 	case 80:
 		{
-			yyVAL.opt_func_return_expr_idents = yyS[yypt-1].opt_func_return_expr_idents1
+			yyVAL.opt_func_return_expr_idents = yyS[yypt-1].opt_func_return_expr_idents
 		}
 	case 81:
 		{
-			yyVAL.opt_func_return_expr_idents1 = []*ast.FuncReturnValuesExpr{}
+			yyVAL.opt_func_return_expr_idents = []*ast.FuncReturnValuesExpr{}
 		}
 	case 82:
 		{
-			yyVAL.opt_func_return_expr_idents1 = yyS[yypt-0].opt_func_return_expr_idents2
+			yyVAL.opt_func_return_expr_idents = yyS[yypt-0].opt_func_return_expr_idents
 		}
 	case 83:
 		{
-			yyVAL.opt_func_return_expr_idents2 = []*ast.FuncReturnValuesExpr{{TypeData: yyS[yypt-0].type_data}}
+			yyVAL.opt_func_return_expr_idents = []*ast.FuncReturnValuesExpr{{TypeData: yyS[yypt-0].type_data}}
 		}
 	case 84:
 		{
-			yyVAL.opt_func_return_expr_idents2 = append(yyS[yypt-2].opt_func_return_expr_idents2, &ast.FuncReturnValuesExpr{TypeData: yyS[yypt-0].type_data})
+			yyVAL.opt_func_return_expr_idents = append(yyS[yypt-2].opt_func_return_expr_idents, &ast.FuncReturnValuesExpr{TypeData: yyS[yypt-0].type_data})
 		}
 	case 85:
 		{
@@ -1886,19 +1871,19 @@ yynewstate:
 		}
 	case 86:
 		{
-			yyVAL.func_expr_idents = yyS[yypt-0].func_expr_idents_not_empty
+			yyVAL.func_expr_idents = yyS[yypt-0].func_expr_idents
 		}
 	case 87:
 		{
-			yyVAL.func_expr_idents_not_empty = yyS[yypt-0].func_expr_idents_last_untyped
+			yyVAL.func_expr_idents = yyS[yypt-0].func_expr_idents
 		}
 	case 88:
 		{
-			yyVAL.func_expr_idents_not_empty = yyS[yypt-0].func_expr_typed_idents
+			yyVAL.func_expr_idents = yyS[yypt-0].func_expr_idents
 		}
 	case 89:
 		{
-			yyVAL.func_expr_untyped_ident = &ast.ParamExpr{Name: yyS[yypt-0].tok.Lit}
+			yyVAL.func_expr_typed_ident = &ast.ParamExpr{Name: yyS[yypt-0].tok.Lit}
 		}
 	case 90:
 		{
@@ -1906,19 +1891,19 @@ yynewstate:
 		}
 	case 91:
 		{
-			yyVAL.func_expr_idents_last_untyped = []*ast.ParamExpr{yyS[yypt-0].func_expr_untyped_ident}
+			yyVAL.func_expr_idents = []*ast.ParamExpr{yyS[yypt-0].func_expr_typed_ident}
 		}
 	case 92:
 		{
-			yyVAL.func_expr_idents_last_untyped = append(yyS[yypt-2].func_expr_idents_not_empty, yyS[yypt-0].func_expr_untyped_ident)
+			yyVAL.func_expr_idents = append(yyS[yypt-2].func_expr_idents, yyS[yypt-0].func_expr_typed_ident)
 		}
 	case 93:
 		{
-			yyVAL.func_expr_typed_idents = []*ast.ParamExpr{yyS[yypt-0].func_expr_typed_ident}
+			yyVAL.func_expr_idents = []*ast.ParamExpr{yyS[yypt-0].func_expr_typed_ident}
 		}
 	case 94:
 		{
-			yyVAL.func_expr_typed_idents = append(yyS[yypt-2].func_expr_idents_not_empty, yyS[yypt-0].func_expr_typed_ident)
+			yyVAL.func_expr_idents = append(yyS[yypt-2].func_expr_idents, yyS[yypt-0].func_expr_typed_ident)
 		}
 	case 95:
 		{
@@ -2122,19 +2107,19 @@ yynewstate:
 		}
 	case 159:
 		{
-			yyVAL.unary_op = "-"
+			yyVAL.str = "-"
 		}
 	case 160:
 		{
-			yyVAL.unary_op = "!"
+			yyVAL.str = "!"
 		}
 	case 161:
 		{
-			yyVAL.unary_op = "^"
+			yyVAL.str = "^"
 		}
 	case 162:
 		{
-			yyVAL.expr = &ast.UnaryExpr{Operator: yyS[yypt-1].unary_op, Expr: yyS[yypt-0].expr}
+			yyVAL.expr = &ast.UnaryExpr{Operator: yyS[yypt-1].str, Expr: yyS[yypt-0].expr}
 			yyVAL.expr.SetPosition(yyS[yypt-0].expr.Position())
 		}
 	case 163:
@@ -2153,55 +2138,55 @@ yynewstate:
 		}
 	case 165:
 		{
-			yyVAL.bin_op = "+"
+			yyVAL.str = "+"
 		}
 	case 166:
 		{
-			yyVAL.bin_op = "-"
+			yyVAL.str = "-"
 		}
 	case 167:
 		{
-			yyVAL.bin_op = "*"
+			yyVAL.str = "*"
 		}
 	case 168:
 		{
-			yyVAL.bin_op = "/"
+			yyVAL.str = "/"
 		}
 	case 169:
 		{
-			yyVAL.bin_op = yyS[yypt-0].tok.Lit
+			yyVAL.str = yyS[yypt-0].tok.Lit
 		}
 	case 170:
 		{
-			yyVAL.bin_op = "%"
+			yyVAL.str = "%"
 		}
 	case 171:
 		{
-			yyVAL.bin_op = yyS[yypt-0].tok.Lit
+			yyVAL.str = yyS[yypt-0].tok.Lit
 		}
 	case 172:
 		{
-			yyVAL.bin_op = yyS[yypt-0].tok.Lit
+			yyVAL.str = yyS[yypt-0].tok.Lit
 		}
 	case 173:
 		{
-			yyVAL.bin_op = "|"
+			yyVAL.str = "|"
 		}
 	case 174:
 		{
-			yyVAL.bin_op = yyS[yypt-0].tok.Lit
+			yyVAL.str = yyS[yypt-0].tok.Lit
 		}
 	case 175:
 		{
-			yyVAL.bin_op = "&"
+			yyVAL.str = "&"
 		}
 	case 176:
 		{
-			yyVAL.bin_op = yyS[yypt-0].tok.Lit
+			yyVAL.str = yyS[yypt-0].tok.Lit
 		}
 	case 177:
 		{
-			yyVAL.expr = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].bin_op, Rhs: yyS[yypt-0].expr}
+			yyVAL.expr = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].str, Rhs: yyS[yypt-0].expr}
 			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
 	case 178:
@@ -2211,7 +2196,7 @@ yynewstate:
 		}
 	case 179:
 		{
-			yyVAL.expr = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].op_assoc1, Rhs: yyS[yypt-0].expr}
+			yyVAL.expr = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].str, Rhs: yyS[yypt-0].expr}
 			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
 	case 180:
@@ -2220,31 +2205,31 @@ yynewstate:
 		}
 	case 181:
 		{
-			yyVAL.op_assoc = "+="
+			yyVAL.str = "+="
 		}
 	case 182:
 		{
-			yyVAL.op_assoc = "-="
+			yyVAL.str = "-="
 		}
 	case 183:
 		{
-			yyVAL.op_assoc = "*="
+			yyVAL.str = "*="
 		}
 	case 184:
 		{
-			yyVAL.op_assoc = "/="
+			yyVAL.str = "/="
 		}
 	case 185:
 		{
-			yyVAL.op_assoc = "&="
+			yyVAL.str = "&="
 		}
 	case 186:
 		{
-			yyVAL.op_assoc = "|="
+			yyVAL.str = "|="
 		}
 	case 187:
 		{
-			yyVAL.expr = &ast.AssocExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].op_assoc, Rhs: yyS[yypt-0].expr}
+			yyVAL.expr = &ast.AssocExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].str, Rhs: yyS[yypt-0].expr}
 			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
 	case 188:
@@ -2259,23 +2244,23 @@ yynewstate:
 		}
 	case 190:
 		{
-			yyVAL.op_assoc1 = "!="
+			yyVAL.str = "!="
 		}
 	case 191:
 		{
-			yyVAL.op_assoc1 = ">"
+			yyVAL.str = ">"
 		}
 	case 192:
 		{
-			yyVAL.op_assoc1 = ">="
+			yyVAL.str = ">="
 		}
 	case 193:
 		{
-			yyVAL.op_assoc1 = "<"
+			yyVAL.str = "<"
 		}
 	case 194:
 		{
-			yyVAL.op_assoc1 = "<="
+			yyVAL.str = "<="
 		}
 	case 195:
 		{
@@ -2295,7 +2280,7 @@ yynewstate:
 				Params   []*ast.ParamExpr
 				VarArg   bool
 				TypeData *ast.TypeStruct
-			}{Params: yyS[yypt-2].func_expr_idents_last_untyped, VarArg: true, TypeData: yyS[yypt-0].type_data}
+			}{Params: yyS[yypt-2].func_expr_idents, VarArg: true, TypeData: yyS[yypt-0].type_data}
 		}
 	case 197:
 		{
@@ -2303,7 +2288,7 @@ yynewstate:
 				Params   []*ast.ParamExpr
 				VarArg   bool
 				TypeData *ast.TypeStruct
-			}{Params: yyS[yypt-1].func_expr_idents_last_untyped, VarArg: true, TypeData: nil}
+			}{Params: yyS[yypt-1].func_expr_idents, VarArg: true, TypeData: nil}
 		}
 	case 198:
 		{
@@ -2429,20 +2414,20 @@ yynewstate:
 		}
 	case 219:
 		{
-			yyVAL.expr_map_content = yyS[yypt-1].expr_map_content_helper
+			yyVAL.expr_map_content = yyS[yypt-1].expr_map_content
 		}
 	case 220:
 		{
-			yyVAL.expr_map_content_helper = &ast.MapExpr{Keys: []ast.Expr{yyS[yypt-0].expr_map_key_value[0]}, Values: []ast.Expr{yyS[yypt-0].expr_map_key_value[1]}}
+			yyVAL.expr_map_content = &ast.MapExpr{Keys: []ast.Expr{yyS[yypt-0].exprs[0]}, Values: []ast.Expr{yyS[yypt-0].exprs[1]}}
 		}
 	case 221:
 		{
-			yyVAL.expr_map_content_helper.Keys = append(yyVAL.expr_map_content_helper.Keys, yyS[yypt-0].expr_map_key_value[0])
-			yyVAL.expr_map_content_helper.Values = append(yyVAL.expr_map_content_helper.Values, yyS[yypt-0].expr_map_key_value[1])
+			yyVAL.expr_map_content.Keys = append(yyVAL.expr_map_content.Keys, yyS[yypt-0].exprs[0])
+			yyVAL.expr_map_content.Values = append(yyVAL.expr_map_content.Values, yyS[yypt-0].exprs[1])
 		}
 	case 222:
 		{
-			yyVAL.expr_map_key_value = []ast.Expr{yyS[yypt-2].expr, yyS[yypt-0].expr}
+			yyVAL.exprs = []ast.Expr{yyS[yypt-2].expr, yyS[yypt-0].expr}
 		}
 	case 223:
 		{

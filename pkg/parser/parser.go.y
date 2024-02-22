@@ -35,14 +35,14 @@ import (
 %type<stmt> maybe_else
 
 %type<else_if_list> else_if_list
-%type<else_if> else_if
+%type<stmt> else_if
 %type<stmt_switch_cases> stmt_switch_cases
-%type<stmt_switch_cases_helper> stmt_switch_cases_helper
+%type<stmt_switch_cases> stmt_switch_cases_helper
 %type<stmt> stmt_switch_case
 %type<stmt> stmt_switch_default
 %type<stmt_select_content> stmt_select_content
 %type<stmt_select_cases> stmt_select_cases
-%type<stmt_select_cases_helper> stmt_select_cases_helper
+%type<stmt_select_cases> stmt_select_cases_helper
 %type<stmt> stmt_select_case
 %type<stmt> stmt_select_default
 %type<stmt> stmt_select_opt_default
@@ -82,29 +82,29 @@ import (
 %type<expr> opt_expr
 
 %type<expr_call_helper> expr_call_helper
-%type<unary_op> unary_op
-%type<bin_op> bin_op
-%type<op_assoc> op_assoc
-%type<op_assoc1> op_assoc1
+%type<str> unary_op
+%type<str> bin_op
+%type<str> op_assoc
+%type<str> op_assoc1
 %type<expr_idents> expr_idents
-%type<expr_for_idents> expr_for_idents
+%type<expr_idents> expr_for_idents
 %type<func_expr_idents> func_expr_idents
-%type<func_expr_idents_not_empty> func_expr_idents_not_empty
-%type<func_expr_untyped_ident> func_expr_untyped_ident
+%type<func_expr_idents> func_expr_idents_not_empty
+%type<func_expr_idents> func_expr_typed_idents
+%type<func_expr_idents> func_expr_idents_last_untyped
 %type<func_expr_typed_ident> func_expr_typed_ident
-%type<func_expr_idents_last_untyped> func_expr_idents_last_untyped
+%type<func_expr_typed_ident> func_expr_untyped_ident
 %type<func_expr_args> func_expr_args
-%type<func_expr_typed_idents> func_expr_typed_idents
 %type<opt_func_return_expr_idents> opt_func_return_expr_idents
-%type<opt_func_return_expr_idents1> opt_func_return_expr_idents1
-%type<opt_func_return_expr_idents2> opt_func_return_expr_idents2
+%type<opt_func_return_expr_idents> opt_func_return_expr_idents1
+%type<opt_func_return_expr_idents> opt_func_return_expr_idents2
 %type<type_data> type_data
 %type<type_data> type_data_struct
 %type<slice_count> slice_count
 %type<type_data> typed_slice_count
 %type<expr_map_content> expr_map_content
-%type<expr_map_content_helper> expr_map_content_helper
-%type<expr_map_key_value> expr_map_key_value
+%type<expr_map_content> expr_map_content_helper
+%type<exprs> expr_map_key_value
 %type<expr> expr_slice_helper1
 %type<expr> slice
 %type<expr_typed_ident> expr_typed_ident
@@ -112,41 +112,26 @@ import (
 
 %union{
 	stmts                           *ast.StmtsStmt
-	else_if_list                    []ast.Stmt
-	else_if                         ast.Stmt
-	stmt_switch_cases               *ast.SwitchStmt
-	stmt_switch_cases_helper        *ast.SwitchStmt
-	stmt_select_content             *ast.SelectBodyStmt
-	stmt_select_cases               []ast.Stmt
-	stmt_select_cases_helper        []ast.Stmt
 	stmt                            ast.Stmt
 	expr                            ast.Expr
-	unary_op                        string
-	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
 	exprs                           []ast.Expr
+	else_if_list                    []ast.Stmt
+	stmt_switch_cases               *ast.SwitchStmt
+	stmt_select_content             *ast.SelectBodyStmt
+	stmt_select_cases               []ast.Stmt
+	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
 	expr_idents                     []string
-	expr_for_idents                 []string
 	func_expr_idents                []*ast.ParamExpr
-	func_expr_idents_not_empty      []*ast.ParamExpr
-	func_expr_untyped_ident         *ast.ParamExpr
 	func_expr_typed_ident           *ast.ParamExpr
-	func_expr_idents_last_untyped   []*ast.ParamExpr
 	func_expr_args                  struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}
 	expr_typed_ident                struct{Name string; TypeData *ast.TypeStruct}
-	func_expr_typed_idents          []*ast.ParamExpr
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
-	opt_func_return_expr_idents1    []*ast.FuncReturnValuesExpr
-	opt_func_return_expr_idents2    []*ast.FuncReturnValuesExpr
 	expr_map_content                *ast.MapExpr
-	expr_map_content_helper         *ast.MapExpr
-	expr_map_key_value              []ast.Expr
 	type_data                       *ast.TypeStruct
         slice_count                     int
 	tok                             ast.Token
 	opt_ident                       *ast.Token
-	bin_op                          string
-	op_assoc                        string
-	op_assoc1                       string
+	str                             string
 }
 
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR IN EQEQ NEQ GE LE OROR ANDAND NEW

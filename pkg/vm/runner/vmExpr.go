@@ -579,36 +579,32 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 func sliceExpr(vmp *VmParams, env envPkg.IEnv, v reflect.Value, lhs *ast.SliceExpr) (reflect.Value, error) {
 	nilValueL := nilValue
 	tryToIntL := tryToInt
-	var rbi, rei int
-	if lhs.Begin != nil {
-		rb, err := invokeExpr(vmp, env, lhs.Begin)
-		if err != nil {
-			return nilValueL, newError(lhs, err)
+	tmp := func(e ast.Expr, b int) (int, error) {
+		var ri int
+		if e != nil {
+			rb, err := invokeExpr(vmp, env, e)
+			if err != nil {
+				return 0, newError(lhs, err)
+			}
+			ri, err = tryToIntL(rb)
+			if err != nil {
+				return 0, newError(lhs, ErrIndexMustBeNumber)
+			}
+			if ri < 0 || ri > v.Len() {
+				return 0, newError(lhs, ErrIndexOutOfRange)
+			}
+		} else {
+			ri = b
 		}
-		rbi, err = tryToIntL(rb)
-		if err != nil {
-			return nilValueL, newError(lhs, ErrIndexMustBeNumber)
-		}
-		if rbi < 0 || rbi > v.Len() {
-			return nilValueL, newError(lhs, ErrIndexOutOfRange)
-		}
-	} else {
-		rbi = 0
+		return ri, nil
 	}
-	if lhs.End != nil {
-		re, err := invokeExpr(vmp, env, lhs.End)
-		if err != nil {
-			return nilValueL, newError(lhs, err)
-		}
-		rei, err = tryToIntL(re)
-		if err != nil {
-			return nilValueL, newError(lhs, ErrIndexMustBeNumber)
-		}
-		if rei < 0 || rei > v.Len() {
-			return nilValueL, newError(lhs, ErrIndexOutOfRange)
-		}
-	} else {
-		rei = v.Len()
+	rbi, err := tmp(lhs.Begin, 0)
+	if err != nil {
+		return nilValueL, err
+	}
+	rei, err := tmp(lhs.End, v.Len())
+	if err != nil {
+		return nilValueL, err
 	}
 	if rbi > rei {
 		return nilValueL, newError(lhs, ErrInvalidSliceIndex)

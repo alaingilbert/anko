@@ -52,12 +52,8 @@ func equal(lhsV, rhsV reflect.Value) bool {
 	if (!lhsIsNil && rhsIsNil) || (lhsIsNil && !rhsIsNil) {
 		return false
 	}
-	if lhsV.Kind() == reflect.Interface || lhsV.Kind() == reflect.Pointer {
-		lhsV = lhsV.Elem()
-	}
-	if rhsV.Kind() == reflect.Interface || rhsV.Kind() == reflect.Pointer {
-		rhsV = rhsV.Elem()
-	}
+	lhsV = elemIfInterface(lhsV)
+	rhsV = elemIfInterface(rhsV)
 
 	// Compare a string and a number.
 	// This will attempt to convert the string to a number,

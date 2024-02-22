@@ -43,6 +43,13 @@ func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, l
 	return rv, nil
 }
 
+func elemIfInterface(v reflect.Value) reflect.Value {
+	if v.Kind() == reflect.Interface {
+		v = v.Elem()
+	}
+	return v
+}
+
 func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, lhs *ast.MemberExpr) (vv reflect.Value, err error) {
 	nilValueL := nilValue
 	v, err := invokeExpr(vmp, env, lhs.Expr)
@@ -50,9 +57,7 @@ func invokeLetMemberExpr(vmp *VmParams, env envPkg.IEnv, rv reflect.Value, stmt 
 		return nilValueL, newError(lhs, err)
 	}
 
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
+	v = elemIfInterface(v)
 	if !v.IsValid() {
 		return nilValueL, newError(lhs, ErrNoSupportMemberOpInvalid)
 	}
@@ -124,9 +129,7 @@ func invokeLetItemExpr(vmp *VmParams, rv reflect.Value, env envPkg.IEnv, stmt *a
 	if err != nil {
 		return nilValueL, newError(lhs, err)
 	}
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
+	v = elemIfInterface(v)
 
 	switch v.Kind() {
 	case reflect.Slice, reflect.Array:

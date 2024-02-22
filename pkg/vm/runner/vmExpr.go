@@ -308,9 +308,7 @@ func invokeDeferExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr
 	if err != nil {
 		return nilValue, newError(e.Expr, err)
 	}
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
+	v = elemIfInterface(v)
 	if v.Kind() == reflect.Slice {
 		v = v.Index(0)
 	}
@@ -383,9 +381,7 @@ func invokeAddrExprMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr)
 	if err != nil {
 		return nilValue, newError(e.Expr, err)
 	}
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
+	v = elemIfInterface(v)
 	if v.Kind() == reflect.Slice {
 		v = v.Index(0)
 	}
@@ -445,9 +441,7 @@ func invokeMemberExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MemberExpr) (reflec
 	if err != nil {
 		return nilValueL, newError(e.Expr, err)
 	}
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
+	v = elemIfInterface(v)
 	if !v.IsValid() {
 		return nilValueL, newError(e, ErrNoSupportMemberOpInvalid)
 	}
@@ -514,9 +508,7 @@ func invokeItemExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ItemExpr) (reflect.Va
 	if err != nil {
 		return nilValue, newError(e.Index, err)
 	}
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
+	v = elemIfInterface(v)
 	switch v.Kind() {
 	case reflect.String, reflect.Slice, reflect.Array:
 		ii, err := tryToInt(i)
@@ -575,9 +567,7 @@ func invokeSliceExpr(vmp *VmParams, env envPkg.IEnv, e *ast.SliceExpr) (reflect.
 	if err != nil {
 		return nilValueL, newError(e.Value, err)
 	}
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
+	v = elemIfInterface(v)
 	switch v.Kind() {
 	case reflect.String, reflect.Slice, reflect.Array:
 		var rbi, rei int
@@ -680,9 +670,7 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 	if err != nil {
 		return nilValue, newError(e, err)
 	}
-	if v.Kind() == reflect.Interface {
-		v = v.Elem()
-	}
+	v = elemIfInterface(v)
 	return invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, e.Lhs, v)
 }
 

@@ -357,9 +357,7 @@ func runForStmtSlice(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 			return nilValueL, err
 		}
 		iv := val.Index(i)
-		if iv.Kind() == reflect.Pointer || (iv.Kind() == reflect.Interface && !iv.IsNil()) {
-			iv = iv.Elem()
-		}
+		iv = elemIfInterface(iv)
 		_ = newenv.DefineValue(stmt.Vars[0], iv)
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 		if err != nil && !errors.Is(err, ErrContinue) {
@@ -428,9 +426,7 @@ func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 				break
 			}
 		}
-		if iv.Kind() == reflect.Interface || iv.Kind() == reflect.Pointer {
-			iv = iv.Elem()
-		}
+		iv = elemIfInterface(iv)
 		_ = newenv.DefineValue(stmt.Vars[0], iv)
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
 		if err != nil && !errors.Is(err, ErrContinue) {

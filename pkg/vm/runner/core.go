@@ -42,9 +42,7 @@ func sortAndMax(arr [][]string) (maxLen int) {
 // []interface {}{"a", "b"}
 func keysFn(v any) []any {
 	rv := reflect.ValueOf(v)
-	if rv.Kind() == reflect.Interface {
-		rv = rv.Elem()
-	}
+	rv = elemIfInterface(rv)
 	mapKeysValue := rv.MapKeys()
 	mapKeys := make([]any, len(mapKeysValue))
 	for i := 0; i < len(mapKeysValue); i++ {

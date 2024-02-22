@@ -7,7 +7,6 @@ import (
 
 %}
 
-%type<compstmt> compstmt
 %type<stmts> stmts
 
 %type<stmt> stmt
@@ -28,10 +27,13 @@ import (
 %type<stmt> stmt_continue
 %type<stmt> stmt_throw
 
-%type<opt_stmt_var_or_lets> opt_stmt_var_or_lets
-%type<stmt_typed_lets> stmt_typed_lets
-%type<opt_finally> opt_finally
-%type<maybe_else> maybe_else
+%type<stmt> start
+%type<stmt> compstmt
+%type<stmt> opt_stmt_var_or_lets
+%type<stmt> stmt_typed_lets
+%type<stmt> opt_finally
+%type<stmt> maybe_else
+
 %type<else_if_list> else_if_list
 %type<else_if> else_if
 %type<stmt_switch_cases> stmt_switch_cases
@@ -74,15 +76,16 @@ import (
 
 %type<expr> expr_iterable
 %type<expr> expr_member
+%type<expr> expr_ident
+%type<expr> expr_literals_helper
+%type<expr> expr_assoc
 
 %type<opt_expr> opt_expr
 %type<expr_call_helper> expr_call_helper
-%type<expr_literals_helper> expr_literals_helper
 %type<unary_op> unary_op
 %type<bin_op> bin_op
 %type<op_assoc> op_assoc
 %type<op_assoc1> op_assoc1
-%type<expr_assoc> expr_assoc
 %type<expr_idents> expr_idents
 %type<expr_for_idents> expr_for_idents
 %type<func_expr_idents> func_expr_idents
@@ -104,20 +107,11 @@ import (
 %type<expr_map_key_value> expr_map_key_value
 %type<expr_slice_helper1> expr_slice_helper1
 %type<slice> slice
-%type<expr_ident> expr_ident
-%type<expr> expr_ident1
-%type<opt_expr_ident> opt_expr_ident
 %type<expr_typed_ident> expr_typed_ident
-%type<start> start
+%type<opt_ident> opt_ident
 
 %union{
-	start                           ast.Stmt
-	compstmt                        ast.Stmt
 	stmts                           *ast.StmtsStmt
-	opt_stmt_var_or_lets            ast.Stmt
-	stmt_typed_lets                 ast.Stmt
-	opt_finally                     ast.Stmt
-	maybe_else                      ast.Stmt
 	else_if_list                    []ast.Stmt
 	else_if                         ast.Stmt
 	stmt_switch_cases               *ast.SwitchStmt
@@ -133,9 +127,7 @@ import (
 	stmt                            ast.Stmt
 	expr                            ast.Expr
 	opt_expr                        ast.Expr
-	expr_literals_helper            ast.Expr
 	unary_op                        string
-	expr_assoc                      ast.Expr
 	expr_member                     ast.Expr
 	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
 	exprs                           []ast.Expr
@@ -162,13 +154,12 @@ import (
         typed_slice_count               *ast.TypeStruct
         slice_count                     int
 	tok                             ast.Token
+	opt_ident                       *ast.Token
 	bin_op                          string
 	op_assoc                        string
 	op_assoc1                       string
 	expr_slice_helper1              ast.Expr
 	slice                           ast.Expr
-	expr_ident                      *ast.IdentExpr
-	opt_expr_ident                  *ast.IdentExpr
 }
 
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR IN EQEQ NEQ GE LE OROR ANDAND NEW
@@ -308,7 +299,7 @@ stmt_defer :
 	}
 
 stmt_try :
-	TRY '{' compstmt '}' CATCH opt_expr_ident '{' compstmt '}' opt_finally
+	TRY '{' compstmt '}' CATCH opt_ident '{' compstmt '}' opt_finally
 	{
 		$$ = &ast.TryStmt{Try: $3, Var: $6.Lit, Catch: $8, Finally: $10}
 		$$.SetPosition($1.Position())
@@ -447,7 +438,7 @@ expr_iterable :
 	| expr_array
 	| expr_anon_call
 	| expr_call
-	| expr_ident1
+	| expr_ident
 	| expr_member
 
 expr_for_idents :
@@ -821,17 +812,10 @@ expr_literals_helper :
 	| NIL    { $$ = &ast.ConstExpr{Value: $1.Lit} }
 
 expr_member_or_ident :
-	expr_ident    { $$ = $1 }
-	| expr_member { $$ = $1 }
+	expr_ident
+	| expr_member
 
 expr_ident :
-	IDENT
-	{
-		$$ = &ast.IdentExpr{Lit: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
-
-expr_ident1 :
 	IDENT
 	{
 		$$ = &ast.IdentExpr{Lit: $1.Lit}
@@ -841,8 +825,13 @@ expr_ident1 :
 expr_typed_ident :
 	expr_ident type_data
 	{
-		$$ = struct{Name string; TypeData *ast.TypeStruct}{Name: $1.Lit, TypeData: $2}
+		$$ = struct{Name string; TypeData *ast.TypeStruct}{Name: $1.(*ast.IdentExpr).Lit, TypeData: $2}
 	}
+
+opt_ident :
+	/* nothing */
+	{ $$ = nil }
+	| IDENT { $$ = &$1 }
 
 expr_member :
 	expr '.' IDENT
@@ -851,11 +840,6 @@ expr_member :
 		$$.SetPosition($1.Position())
 	}
 
-opt_expr_ident :
-	/* nothing */
-	{ $$ = nil }
-	| expr_ident { $$ = $1 }
-
 expr_callable :
 	expr_call
 	| expr_anon_call
@@ -863,7 +847,7 @@ expr_callable :
 expr_call :
 	expr_ident expr_call_helper
 	{
-		$$ = &ast.CallExpr{Name: $1.Lit, Callable: &ast.Callable{SubExprs: $2.Exprs, VarArg: $2.VarArg}}
+		$$ = &ast.CallExpr{Name: $1.(*ast.IdentExpr).Lit, Callable: &ast.Callable{SubExprs: $2.Exprs, VarArg: $2.VarArg}}
 		$$.SetPosition($1.Position())
 	}
 
@@ -975,7 +959,7 @@ op_assoc1 :
 	| LE    { $$ = "<=" }
 
 expr_func :
-	FUNC opt_expr_ident '(' func_expr_args ')' opt_func_return_expr_idents '{' compstmt '}'
+	FUNC opt_ident '(' func_expr_args ')' opt_func_return_expr_idents '{' compstmt '}'
 	{
 		f := &ast.FuncExpr{Params: $4.Params, Returns: $6, Stmt: $8, VarArg: $4.VarArg}
 		if $4.TypeData != nil {
@@ -1190,11 +1174,11 @@ slice :
 expr_idents :
 	expr_ident
 	{
-		$$ = []string{$1.Lit}
+		$$ = []string{$1.(*ast.IdentExpr).Lit}
 	}
 	| expr_idents comma_opt_newlines expr_ident
 	{
-		$$ = append($1, $3.Lit)
+		$$ = append($1, $3.(*ast.IdentExpr).Lit)
 	}
 
 opt_term :

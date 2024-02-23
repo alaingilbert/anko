@@ -1111,9 +1111,8 @@ opt_term :
 	| term
 
 term :
-	';'
-	| newlines
-	| ';' newlines
+	newlines
+	| ';' opt_newlines
 
 opt_newlines :
 	/* nothing */

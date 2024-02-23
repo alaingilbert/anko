@@ -615,6 +615,19 @@ func sliceExpr(vmp *VmParams, env envPkg.IEnv, v reflect.Value, lhs *ast.SliceEx
 
 func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.Value, error) {
 	boolToI64 := func(v bool) int64 { return utils.Ternary[int64](v, 1, 0) }
+	incrFn := func(v reflect.Value, incr int64) reflect.Value {
+		switch v.Kind() {
+		case reflect.Float64, reflect.Float32:
+			v = reflect.ValueOf(v.Float() + float64(incr))
+		case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
+			v = reflect.ValueOf(v.Int() + incr)
+		case reflect.Bool:
+			v = reflect.ValueOf(boolToI64(v.Bool()) + incr)
+		default:
+			v = reflect.ValueOf(toInt64(v) + incr)
+		}
+		return v
+	}
 	switch e.Operator {
 	case "++":
 		if alhs, ok := e.Lhs.(*ast.IdentExpr); ok {
@@ -622,16 +635,7 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 			if err != nil {
 				return nilValue, newError(e, err)
 			}
-			switch v.Kind() {
-			case reflect.Float64, reflect.Float32:
-				v = reflect.ValueOf(v.Float() + 1)
-			case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
-				v = reflect.ValueOf(v.Int() + 1)
-			case reflect.Bool:
-				v = reflect.ValueOf(boolToI64(v.Bool()) + 1)
-			default:
-				v = reflect.ValueOf(toInt64(v) + 1)
-			}
+			v = incrFn(v, 1)
 			// not checking err because checked above in get
 			_ = env.SetValue(alhs.Lit, v)
 			return v, nil
@@ -642,16 +646,7 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 			if err != nil {
 				return nilValue, newError(e, err)
 			}
-			switch v.Kind() {
-			case reflect.Float64, reflect.Float32:
-				v = reflect.ValueOf(v.Float() - 1)
-			case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
-				v = reflect.ValueOf(v.Int() - 1)
-			case reflect.Bool:
-				v = reflect.ValueOf(boolToI64(v.Bool()) - 1)
-			default:
-				v = reflect.ValueOf(toInt64(v) - 1)
-			}
+			v = incrFn(v, -1)
 			// not checking err because checked above in get
 			_ = env.SetValue(alhs.Lit, v)
 			return v, nil

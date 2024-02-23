@@ -208,10 +208,8 @@ expr :
 	expr_iterable
 	| expr_literals
 	| expr_unary
-	| expr_ternary
 	| expr_nil_coalesce
 	| expr_func
-	| expr_paren
 	| expr_binary
 	| expr_len
 	| expr_dbg
@@ -224,11 +222,13 @@ expr :
 
 expr_iterable :
 	expr_map
+	| expr_paren
 	| expr_array
 	| expr_anon_call
 	| expr_call
 	| expr_member_or_ident
 	| expr_item_or_slice
+	| expr_ternary
 
 stmt_break :
 	BREAK

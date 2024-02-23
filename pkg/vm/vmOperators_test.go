@@ -660,6 +660,8 @@ func TestForLoop(t *testing.T) {
 
 		{Script: `b = [1,2,3,4,5]; for a in b[1:3] { if a == 1 { break } }`, RunOutput: nil, Name: ""},
 		{Script: `b = [[1,2,3]]; for a in b[0] { if a == 1 { break } }`, RunOutput: nil, Name: ""},
+		{Script: `for a in true ? [1,2,3] : [4,5,6] { if a == 1 { break } }`, RunOutput: nil, Name: ""},
+		{Script: `for a in (true ? [1,2,3] : [4,5,6]) { if a == 1 { break } }`, RunOutput: nil, Name: ""},
 
 		{Script: `a = [1]; for b in a { if b == 1 { break } }`, RunOutput: nil, Output: map[string]any{"a": []any{int64(1)}}, Name: ""},
 		{Script: `a = [1, 2]; for b in a { if b == 2 { break } }`, RunOutput: nil, Output: map[string]any{"a": []any{int64(1), int64(2)}}, Name: ""},

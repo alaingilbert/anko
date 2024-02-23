@@ -2115,7 +2115,7 @@ yynewstate:
 		}
 	case 164:
 		{
-			yyVAL.str = yyS[yypt-0].tok.Lit
+			yyVAL.str = "**"
 		}
 	case 165:
 		{
@@ -2123,11 +2123,11 @@ yynewstate:
 		}
 	case 166:
 		{
-			yyVAL.str = yyS[yypt-0].tok.Lit
+			yyVAL.str = "<<"
 		}
 	case 167:
 		{
-			yyVAL.str = yyS[yypt-0].tok.Lit
+			yyVAL.str = ">>"
 		}
 	case 168:
 		{
@@ -2135,7 +2135,7 @@ yynewstate:
 		}
 	case 169:
 		{
-			yyVAL.str = yyS[yypt-0].tok.Lit
+			yyVAL.str = "||"
 		}
 	case 170:
 		{
@@ -2143,7 +2143,7 @@ yynewstate:
 		}
 	case 171:
 		{
-			yyVAL.str = yyS[yypt-0].tok.Lit
+			yyVAL.str = "&&"
 		}
 	case 172:
 		{

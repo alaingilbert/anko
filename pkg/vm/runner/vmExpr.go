@@ -1064,15 +1064,14 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 
 	if lhs.Kind() == reflect.Chan {
 		chanType := lhs.Type().Elem()
-		if chanType == interfaceType || (rhs.IsValid() && rhs.Type() == chanType) {
-			return doSelect(buildCasesSend(lhs, rhs), false)
-		}
-		if !vmUtils.KindIsNumeric(chanType.Kind()) || !vmUtils.KindIsNumeric(rhs.Type().Kind()) {
-			return nilValue, buildErr(rhs, chanType)
-		}
-		rhs, err = convertReflectValueToType(vmp, rhs, chanType)
-		if err != nil {
-			return nilValue, buildErr(rhs, chanType)
+		if rhs.Type() != chanType {
+			if !vmUtils.KindIsNumeric(chanType.Kind()) || !vmUtils.KindIsNumeric(rhs.Type().Kind()) {
+				return nilValue, buildErr(rhs, chanType)
+			}
+			rhs, err = convertReflectValueToType(vmp, rhs, chanType)
+			if err != nil {
+				return nilValue, buildErr(rhs, chanType)
+			}
 		}
 		return doSelect(buildCasesSend(lhs, rhs), false)
 	}

@@ -578,8 +578,8 @@ func_expr_idents :
 	| func_expr_idents_not_empty { $$ = $1 }
 
 func_expr_idents_not_empty :
-	func_expr_idents_last_untyped { $$ = $1 }
-	| func_expr_typed_idents      { $$ = $1 }
+	func_expr_idents_last_untyped
+	| func_expr_typed_idents
 
 func_expr_untyped_ident :
 	IDENT

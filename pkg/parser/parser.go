@@ -1843,14 +1843,6 @@ yynewstate:
 		{
 			yyVAL.func_expr_idents = yyS[yypt-0].func_expr_idents
 		}
-	case 103:
-		{
-			yyVAL.func_expr_idents = yyS[yypt-0].func_expr_idents
-		}
-	case 104:
-		{
-			yyVAL.func_expr_idents = yyS[yypt-0].func_expr_idents
-		}
 	case 105:
 		{
 			yyVAL.func_expr_typed_ident = &ast.ParamExpr{Name: yyS[yypt-0].tok.Lit}

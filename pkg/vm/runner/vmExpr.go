@@ -945,7 +945,6 @@ func invokeDbgExpr(vmp *VmParams, env envPkg.IEnv, e *ast.DbgExpr) (reflect.Valu
 }
 
 func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Value, error) {
-	toIntL := toInt
 	t, err := makeType(vmp, env, e.TypeData)
 	if err != nil {
 		return nilValue, err
@@ -953,25 +952,26 @@ func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 	if t == nil {
 		return nilValue, newStringError(e, "type cannot be nil for make")
 	}
+	getLenOrCapFn := func(in int, e ast.Expr) (out int, err error) {
+		out = in
+		if e != nil {
+			rv, err := invokeExpr(vmp, env, e)
+			if err != nil {
+				return out, err
+			}
+			out = toInt(rv)
+		}
+		return out, nil
+	}
 	switch e.TypeData.Kind {
 	case ast.TypeSlice:
-		aLen := 0
-		if e.LenExpr != nil {
-			ee := e.LenExpr
-			rv, err := invokeExpr(vmp, env, ee)
-			if err != nil {
-				return nilValue, err
-			}
-			aLen = toIntL(rv)
+		aLen, err := getLenOrCapFn(0, e.LenExpr)
+		if err != nil {
+			return nilValue, err
 		}
-		aCap := aLen
-		if e.CapExpr != nil {
-			ee := e.CapExpr
-			rv, err := invokeExpr(vmp, env, ee)
-			if err != nil {
-				return nilValue, err
-			}
-			aCap = toIntL(rv)
+		aCap, err := getLenOrCapFn(aLen, e.CapExpr)
+		if err != nil {
+			return nilValue, err
 		}
 		if aLen > aCap {
 			return nilValue, newStringError(e, "make slice len > cap")
@@ -979,14 +979,9 @@ func invokeMakeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeExpr) (reflect.Va
 		rv := reflect.MakeSlice(t, aLen, aCap)
 		return rv, nil
 	case ast.TypeChan:
-		aLen := 0
-		if e.LenExpr != nil {
-			ee := e.LenExpr
-			rv, err := invokeExpr(vmp, env, ee)
-			if err != nil {
-				return nilValue, err
-			}
-			aLen = toIntL(rv)
+		aLen, err := getLenOrCapFn(0, e.LenExpr)
+		if err != nil {
+			return nilValue, err
 		}
 		return reflect.MakeChan(t, aLen), nil
 	default:

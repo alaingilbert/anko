@@ -79,7 +79,6 @@ import (
 %type<expr_call_helper> expr_call_helper
 %type<str> unary_op
 %type<str> bin_op
-%type<str> op_assoc
 %type<str> op_assoc1
 %type<expr_idents> expr_idents
 %type<expr_idents> expr_for_idents
@@ -852,11 +851,25 @@ bin_op :
 	| LE          { $$ = "<=" }
 	| NILCOALESCE { $$ = "??" }
 
+	| PLUSEQ      { $$ = "+=" }
+	| MINUSEQ     { $$ = "-=" }
+	| MULEQ       { $$ = "*=" }
+	| DIVEQ       { $$ = "/=" }
+	| ANDEQ       { $$ = "&=" }
+	| OREQ        { $$ = "|=" }
+
 expr_binary :
 	expr bin_op expr
 	{
 		if $2 == "??" {
 			$$ = &ast.NilCoalescingOpExpr{Lhs: $1, Rhs: $3}
+		} else if $2 == "+=" ||
+			  $2 == "-=" ||
+			  $2 == "*=" ||
+			  $2 == "/=" ||
+			  $2 == "&=" ||
+			  $2 == "|=" {
+			$$ = &ast.AssocExpr{Lhs: $1, Operator: $2, Rhs: $3}
 		} else {
 			$$ = &ast.BinOpExpr{Lhs: $1, Operator: $2, Rhs: $3}
 		}
@@ -869,25 +882,12 @@ expr_binary :
 	}
 	| expr_assoc
 
-op_assoc :
-	PLUSEQ    { $$ = "+=" }
-	| MINUSEQ { $$ = "-=" }
-	| MULEQ   { $$ = "*=" }
-	| DIVEQ   { $$ = "/=" }
-	| ANDEQ   { $$ = "&=" }
-	| OREQ    { $$ = "|=" }
-
 op_assoc1 :
 	PLUSPLUS     { $$ = "++" }
 	| MINUSMINUS { $$ = "--" }
 
 expr_assoc :
-	expr op_assoc expr
-	{
-		$$ = &ast.AssocExpr{Lhs: $1, Operator: $2, Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr op_assoc1
+	expr op_assoc1
 	{
 		$$ = &ast.AssocExpr{Lhs: $1, Operator: $2}
 		$$.SetPosition($1.Position())

@@ -878,7 +878,7 @@ expr_binary :
 		$$ = &ast.BinOpExpr{Lhs: $1, Operator: $2, Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
-	| expr_assoc { $$ = $1 }
+	| expr_assoc
 
 op_assoc :
 	PLUSEQ    { $$ = "+=" }

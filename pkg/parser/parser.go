@@ -2161,10 +2161,6 @@ yynewstate:
 			yyVAL.expr = &ast.BinOpExpr{Lhs: yyS[yypt-2].expr, Operator: yyS[yypt-1].str, Rhs: yyS[yypt-0].expr}
 			yyVAL.expr.SetPosition(yyS[yypt-2].expr.Position())
 		}
-	case 175:
-		{
-			yyVAL.expr = yyS[yypt-0].expr
-		}
 	case 176:
 		{
 			yyVAL.str = "+="

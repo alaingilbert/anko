@@ -1078,12 +1078,13 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 	}
 
 	cases := buildCasesRecv(rhs, zeroValue)
-	if e.Lhs == nil {
-		return doSelect(cases, false)
-	}
-	rv, err := doSelect(cases, true)
+	checkOk := e.Lhs != nil
+	rv, err := doSelect(cases, checkOk)
 	if err != nil {
 		return nilValue, err
+	}
+	if e.Lhs == nil {
+		return rv, err
 	}
 	return invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, e.Lhs, rv)
 }

@@ -108,6 +108,7 @@ import (
 %type<else_if_list> stmt_select_cases
 %type<else_if_list> opt_stmt_select_cases
 %type<op_lets> op_lets
+%type<tok> const_expr
 
 %union{
 	stmtsStmt                       *ast.StmtsStmt
@@ -758,11 +759,11 @@ expr_literals :
 	}
 
 expr_literals_helper :
-	NUMBER   { $$ = &ast.NumberExpr{Lit: $1.Lit} }
-	| STRING { $$ = &ast.StringExpr{Lit: $1.Lit} }
-	| TRUE   { $$ = &ast.ConstExpr{Value: $1.Lit} }
-	| FALSE  { $$ = &ast.ConstExpr{Value: $1.Lit} }
-	| NIL    { $$ = &ast.ConstExpr{Value: $1.Lit} }
+	  NUMBER     { $$ = &ast.NumberExpr{Lit: $1.Lit} }
+	| STRING     { $$ = &ast.StringExpr{Lit: $1.Lit} }
+	| const_expr { $$ = &ast.ConstExpr{Value: $1.Lit} }
+
+const_expr : TRUE | FALSE | NIL
 
 expr_member_or_ident :
 	expr_ident

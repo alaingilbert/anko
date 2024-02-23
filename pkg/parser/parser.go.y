@@ -79,6 +79,7 @@ import (
 
 %type<expr_call_helper> expr_call_helper
 %type<str> unary_op
+%type<str> unary_op1
 %type<str> bin_op
 %type<str> op_assoc
 %type<str> op_assoc1
@@ -827,24 +828,28 @@ unary_op :
 	| '!' { $$ = "!" }
 	| '^' { $$ = "^" }
 
+unary_op1 :
+	'*'   { $$ = "*" }
+	| '&' { $$ = "&" }
+
+
 expr_unary :
 	unary_op expr %prec UNARY
 	{
 		$$ = &ast.UnaryExpr{Operator: $1, Expr: $2}
 		$$.SetPosition($2.Position())
 	}
-	| '&' expr_member_or_ident %prec UNARY
+	| unary_op1 expr_member_or_ident %prec UNARY
 	{
-		if el, ok := $2.(*ast.IdentExpr); ok {
-			$$ = &ast.AddrExpr{Expr: el}
-		} else if el, ok := $2.(*ast.MemberExpr); ok {
-			$$ = el
+		if $1 == "&" {
+			if el, ok := $2.(*ast.IdentExpr); ok {
+				$$ = &ast.AddrExpr{Expr: el}
+			} else if el, ok := $2.(*ast.MemberExpr); ok {
+				$$ = el
+			}
+		} else if $1 == "*" {
+			$$ = &ast.DerefExpr{Expr: $2}
 		}
-		$$.SetPosition($2.Position())
-	}
-	| '*' expr_member_or_ident %prec UNARY
-	{
-		$$ = &ast.DerefExpr{Expr: $2}
 		$$.SetPosition($2.Position())
 	}
 

@@ -634,12 +634,7 @@ opt_expr :
 	| expr { $$ = $1 }
 
 expr_dbg :
-	DBG '(' ')'
-	{
-		$$ = &ast.DbgExpr{}
-		$$.SetPosition($1.Position())
-	}
-	| DBG '(' expr ')'
+	DBG '(' opt_expr ')'
 	{
 		$$ = &ast.DbgExpr{Expr: $3}
 		$$.SetPosition($1.Position())

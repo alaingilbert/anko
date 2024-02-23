@@ -102,7 +102,6 @@ import (
 %type<expr_map_content> expr_map_content
 %type<expr_map_content> expr_map_content_helper
 %type<exprs> expr_map_key_value
-%type<expr> expr_slice_helper1
 %type<expr> slice
 %type<expr_typed_ident> expr_typed_ident
 %type<opt_ident> opt_ident
@@ -1081,19 +1080,16 @@ expr_map_key_value :
 	}
 
 expr_item_or_slice :
-	expr expr_slice_helper1
+	expr '[' slice ']'
 	{
-		if el, ok := $2.(*ast.SliceExpr); ok {
+		if el, ok := $3.(*ast.SliceExpr); ok {
 			el.Value = $1
-		} else if el, ok := $2.(*ast.ItemExpr); ok {
+		} else if el, ok := $3.(*ast.ItemExpr); ok {
 			el.Value = $1
 		}
-		$$ = $2
+		$$ = $3
                	$$.SetPosition($1.Position())
 	}
-
-expr_slice_helper1 :
-	'[' slice ']' { $$ = $2 }
 
 slice :
 	  expr ':' expr { $$ = &ast.SliceExpr{Begin: $1, End: $3}  }

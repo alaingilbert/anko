@@ -51,7 +51,6 @@ import (
 %type<expr> expr_literals
 %type<expr> expr_unary
 %type<expr> expr_ternary
-%type<expr> expr_nil_coalesce
 %type<expr> expr_func
 %type<expr> expr_array
 %type<expr> expr_paren
@@ -208,7 +207,6 @@ expr :
 	expr_iterable
 	| expr_literals
 	| expr_unary
-	| expr_nil_coalesce
 	| expr_func
 	| expr_binary
 	| expr_len
@@ -682,13 +680,6 @@ comma_separated_exprs :
 		$$ = $2
 	}
 
-expr_nil_coalesce :
-	expr NILCOALESCE expr
-	{
-		$$ = &ast.NilCoalescingOpExpr{Lhs: $1, Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-
 expr_ternary :
 	expr '?' expr ':' expr
 	{
@@ -842,28 +833,33 @@ expr_unary :
 	}
 
 bin_op :
-	'+'          { $$ = "+" }
-	| '-'        { $$ = "-" }
-	| '*'        { $$ = "*" }
-	| '/'        { $$ = "/" }
-	| POW        { $$ = "**" }
-	| '%'        { $$ = "%" }
-	| SHIFTLEFT  { $$ = "<<" }
-	| SHIFTRIGHT { $$ = ">>" }
-	| '|'        { $$ = "|" }
-	| OROR       { $$ = "||" }
-	| '&'        { $$ = "&" }
-	| ANDAND     { $$ = "&&" }
-	| NEQ        { $$ = "!=" }
-	| '>'        { $$ = ">" }
-	| GE         { $$ = ">=" }
-	| '<'        { $$ = "<" }
-	| LE         { $$ = "<=" }
+	'+'           { $$ = "+" }
+	| '-'         { $$ = "-" }
+	| '*'         { $$ = "*" }
+	| '/'         { $$ = "/" }
+	| POW         { $$ = "**" }
+	| '%'         { $$ = "%" }
+	| SHIFTLEFT   { $$ = "<<" }
+	| SHIFTRIGHT  { $$ = ">>" }
+	| '|'         { $$ = "|" }
+	| OROR        { $$ = "||" }
+	| '&'         { $$ = "&" }
+	| ANDAND      { $$ = "&&" }
+	| NEQ         { $$ = "!=" }
+	| '>'         { $$ = ">" }
+	| GE          { $$ = ">=" }
+	| '<'         { $$ = "<" }
+	| LE          { $$ = "<=" }
+	| NILCOALESCE { $$ = "??" }
 
 expr_binary :
 	expr bin_op expr
 	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: $2, Rhs: $3}
+		if $2 == "??" {
+			$$ = &ast.NilCoalescingOpExpr{Lhs: $1, Rhs: $3}
+		} else {
+			$$ = &ast.BinOpExpr{Lhs: $1, Operator: $2, Rhs: $3}
+		}
 		$$.SetPosition($1.Position())
 	}
 	| expr EQEQ expr

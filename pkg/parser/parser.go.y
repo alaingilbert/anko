@@ -205,27 +205,30 @@ stmt :
 	| stmt_expr
 
 expr :
-	expr_member_or_ident
+	expr_iterable
 	| expr_literals
 	| expr_unary
 	| expr_ternary
 	| expr_nil_coalesce
 	| expr_func
-	| expr_array
 	| expr_paren
 	| expr_binary
-	| expr_call
-	| expr_anon_call
 	| expr_item_or_slice
 	| expr_len
 	| expr_dbg
 	| expr_new
 	| expr_make
-	| expr_map
 	| expr_opchan
 	| expr_close
 	| expr_delete
 	| expr_in
+
+expr_iterable :
+	expr_map
+	| expr_array
+	| expr_anon_call
+	| expr_call
+	| expr_member_or_ident
 
 stmt_break :
 	BREAK
@@ -414,13 +417,6 @@ stmt_for :
 		$$ = &ast.CForStmt{Stmt1: $2, Expr2: $4, Expr3: $6, Stmt: $8}
 		$$.SetPosition($1.Position())
 	}
-
-expr_iterable :
-	expr_map
-	| expr_array
-	| expr_anon_call
-	| expr_call
-	| expr_member_or_ident
 
 expr_for_idents :
 	IDENT

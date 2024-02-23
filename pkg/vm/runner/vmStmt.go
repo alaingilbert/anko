@@ -186,7 +186,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		})
 		return rv, err
 	}
-	
+
 	// if
 	rv, err := invokeExprFn(env, stmt.If)
 	if err != nil {
@@ -380,15 +380,9 @@ func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 	for {
 		iv := nilValue
 		if !vmp.Validate {
-			cases := []reflect.SelectCase{{
-				Dir:  reflect.SelectRecv,
-				Chan: reflect.ValueOf(vmp.ctx.Done()),
-				Send: zeroValue,
-			}, {
-				Dir:  reflect.SelectRecv,
-				Chan: val,
-				Send: zeroValue,
-			}}
+			cases := []reflect.SelectCase{
+				{Dir: reflect.SelectRecv, Chan: reflect.ValueOf(vmp.ctx.Done()), Send: zeroValue},
+				{Dir: reflect.SelectRecv, Chan: val, Send: zeroValue}}
 			var chosen int
 			var ok bool
 			chosen, iv, ok = reflect.Select(cases)

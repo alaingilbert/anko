@@ -81,7 +81,6 @@ import (
 %type<str> unary_op
 %type<str> bin_op
 %type<str> op_assoc
-%type<str> op_assoc1
 %type<expr_idents> expr_idents
 %type<expr_idents> expr_for_idents
 %type<func_expr_idents> func_expr_idents
@@ -861,6 +860,11 @@ bin_op :
 	| OROR       { $$ = $1.Lit }
 	| '&'        { $$ = "&" }
 	| ANDAND     { $$ = $1.Lit }
+	| NEQ        { $$ = "!=" }
+	| '>'        { $$ = ">" }
+	| GE         { $$ = ">=" }
+	| '<'        { $$ = "<" }
+	| LE         { $$ = "<=" }
 
 expr_binary :
 	expr bin_op expr
@@ -868,17 +872,12 @@ expr_binary :
 		$$ = &ast.BinOpExpr{Lhs: $1, Operator: $2, Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
+	| expr_assoc
 	| expr EQEQ expr
 	{
 		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "==", Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
-	| expr op_assoc1 expr
-	{
-		$$ = &ast.BinOpExpr{Lhs: $1, Operator: $2, Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| expr_assoc
 
 op_assoc :
 	PLUSEQ    { $$ = "+=" }
@@ -904,13 +903,6 @@ expr_assoc :
 		$$ = &ast.AssocExpr{Lhs: $1, Operator: "--"}
 		$$.SetPosition($1.Position())
 	}
-
-op_assoc1 :
-	NEQ     { $$ = "!=" }
-	| '>'   { $$ = ">" }
-	| GE    { $$ = ">=" }
-	| '<'   { $$ = "<" }
-	| LE    { $$ = "<=" }
 
 expr_func :
 	FUNC opt_ident '(' func_expr_args ')' opt_func_return_expr_idents '{' compstmt '}'

@@ -17,7 +17,9 @@ import (
 %type<stmt> stmt_defer
 %type<stmt> stmt_go
 %type<stmt> stmt_if
+%type<stmt> stmt_loop
 %type<stmt> stmt_for
+%type<stmt> for_content
 %type<stmt> stmt_switch
 %type<stmt> stmt_select
 %type<stmt> stmt_expr
@@ -131,7 +133,7 @@ import (
 	op_lets                         bool
 }
 
-%token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR IN EQEQ NEQ GE LE OROR ANDAND NEW
+%token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR LOOP IN EQEQ NEQ GE LE OROR ANDAND NEW
             TRUE FALSE NIL NILCOALESCE MODULE TRY CATCH FINALLY PLUSEQ MINUSEQ MULEQ DIVEQ ANDEQ OREQ BREAK
             CONTINUE PLUSPLUS MINUSMINUS POW SHIFTLEFT SHIFTRIGHT SWITCH SELECT CASE DEFAULT GO DEFER CHAN MAKE
             OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG WALRUS
@@ -193,6 +195,7 @@ stmt :
 	| stmt_throw
 	| stmt_module
 	| stmt_if
+	| stmt_loop
 	| stmt_for
 	| stmt_try
 	| stmt_switch
@@ -391,26 +394,39 @@ maybe_else :
 		$$ = $3
 	}
 
-stmt_for :
-	FOR '{' compstmt '}'
+stmt_loop :
+	LOOP '{' compstmt '}'
 	{
 		$$ = &ast.LoopStmt{Stmt: $3}
 		$$.SetPosition($1.Position())
 	}
-	| FOR expr '{' compstmt '}'
+
+stmt_for :
+	FOR for_content '{' compstmt '}'
 	{
-		$$ = &ast.LoopStmt{Expr: $2, Stmt: $4}
+		if el, ok := $2.(*ast.LoopStmt); ok {
+			el.Stmt = $4
+		} else if el, ok := $2.(*ast.ForStmt); ok {
+			el.Stmt = $4
+		} else if el, ok := $2.(*ast.CForStmt); ok {
+			el.Stmt = $4
+		}
+		$$ = $2
 		$$.SetPosition($1.Position())
 	}
-	| FOR expr_for_idents IN expr_iterable '{' compstmt '}'
+
+for_content :
+	expr
 	{
-		$$ = &ast.ForStmt{Vars: $2, Value: $4, Stmt: $6}
-		$$.SetPosition($1.Position())
+		$$ = &ast.LoopStmt{Expr: $1}
 	}
-	| FOR opt_stmt_var_or_lets ';' opt_expr ';' opt_expr '{' compstmt '}'
+	| expr_for_idents IN expr_iterable
 	{
-		$$ = &ast.CForStmt{Stmt1: $2, Expr2: $4, Expr3: $6, Stmt: $8}
-		$$.SetPosition($1.Position())
+		$$ = &ast.ForStmt{Vars: $1, Value: $3}
+	}
+	| opt_stmt_var_or_lets ';' opt_expr ';' opt_expr
+	{
+		$$ = &ast.CForStmt{Stmt1: $1, Expr2: $3, Expr3: $5}
 	}
 
 expr_for_idents :

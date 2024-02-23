@@ -45,7 +45,6 @@ var opName = map[string]int{
 	"var":      VAR,
 	"throw":    THROW,
 	"if":       IF,
-	"for":      FOR,
 	"break":    BREAK,
 	"continue": CONTINUE,
 	"in":       IN,
@@ -95,7 +94,19 @@ retry:
 		if name, ok := opName[lit]; ok {
 			tok = name
 		} else {
-			tok = IDENT
+			if lit == "for" {
+				s.next()
+				if s.peek() == '{' {
+					tok = LOOP
+					lit = "for"
+				} else {
+					tok = FOR
+					lit = "for"
+				}
+				s.back()
+			} else {
+				tok = IDENT
+			}
 		}
 	case isDigit(ch):
 		tok = NUMBER

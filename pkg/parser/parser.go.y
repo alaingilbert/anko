@@ -838,7 +838,7 @@ expr_unary :
 		$$ = &ast.UnaryExpr{Operator: $1, Expr: $2}
 		$$.SetPosition($2.Position())
 	}
-	| unary_op1 expr_member_or_ident %prec UNARY
+	| unary_op1 expr %prec UNARY
 	{
 		if $1 == "&" {
 			if el, ok := $2.(*ast.IdentExpr); ok {

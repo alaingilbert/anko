@@ -213,7 +213,6 @@ expr :
 	| expr_func
 	| expr_paren
 	| expr_binary
-	| expr_item_or_slice
 	| expr_len
 	| expr_dbg
 	| expr_new
@@ -229,6 +228,7 @@ expr_iterable :
 	| expr_anon_call
 	| expr_call
 	| expr_member_or_ident
+	| expr_item_or_slice
 
 stmt_break :
 	BREAK

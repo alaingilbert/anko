@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
+	"github.com/alaingilbert/anko/pkg/utils"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
 	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"math"
@@ -613,6 +614,7 @@ func sliceExpr(vmp *VmParams, env envPkg.IEnv, v reflect.Value, lhs *ast.SliceEx
 }
 
 func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.Value, error) {
+	boolToI64 := func(v bool) int64 { return utils.Ternary[int64](v, 1, 0) }
 	switch e.Operator {
 	case "++":
 		if alhs, ok := e.Lhs.(*ast.IdentExpr); ok {
@@ -626,11 +628,7 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 			case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
 				v = reflect.ValueOf(v.Int() + 1)
 			case reflect.Bool:
-				if v.Bool() {
-					v = reflect.ValueOf(int64(2))
-				} else {
-					v = reflect.ValueOf(int64(1))
-				}
+				v = reflect.ValueOf(boolToI64(v.Bool()) + 1)
 			default:
 				v = reflect.ValueOf(toInt64(v) + 1)
 			}
@@ -650,11 +648,7 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 			case reflect.Int64, reflect.Int32, reflect.Int16, reflect.Int8, reflect.Int:
 				v = reflect.ValueOf(v.Int() - 1)
 			case reflect.Bool:
-				if v.Bool() {
-					v = reflect.ValueOf(int64(0))
-				} else {
-					v = reflect.ValueOf(int64(-1))
-				}
+				v = reflect.ValueOf(boolToI64(v.Bool()) - 1)
 			default:
 				v = reflect.ValueOf(toInt64(v) - 1)
 			}

@@ -67,7 +67,6 @@ import (
 %type<expr> expr_opchan
 %type<expr> expr_close
 %type<expr> expr_delete
-%type<expr> expr_in
 
 %type<expr> expr_iterable
 %type<expr> expr_member
@@ -215,7 +214,6 @@ expr :
 	| expr_opchan
 	| expr_close
 	| expr_delete
-	| expr_in
 
 expr_iterable :
 	expr_map
@@ -705,13 +703,6 @@ expr_opchan :
 		$$.SetPosition($2.Position())
 	}
 
-expr_in :
-	expr IN expr
-	{
-		$$ = &ast.IncludeExpr{ItemExpr: $1, ListExpr: &ast.SliceExpr{Value: $3, Begin: nil, End: nil}}
-		$$.SetPosition($1.Position())
-	}
-
 expr_delete :
 	DELETE '(' expr ')'
 	{
@@ -875,6 +866,11 @@ expr_binary :
 	| expr EQEQ expr
 	{
 		$$ = &ast.BinOpExpr{Lhs: $1, Operator: "==", Rhs: $3}
+		$$.SetPosition($1.Position())
+	}
+	| expr IN expr
+	{
+		$$ = &ast.IncludeExpr{ItemExpr: $1, ListExpr: &ast.SliceExpr{Value: $3, Begin: nil, End: nil}}
 		$$.SetPosition($1.Position())
 	}
 	| expr_assoc

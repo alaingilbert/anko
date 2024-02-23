@@ -89,64 +89,26 @@ func runExprStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ExprStmt) (reflect.Va
 	return rv, nil
 }
 
-func runVarStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.VarStmt) (reflect.Value, error) {
-	var err error
-
+func runVarOrLetStmt[K any](vmp *VmParams, env envPkg.IEnv, exprs1 []K, exprs2 []ast.Expr,
+	defineFn func(K, reflect.Value) error) (reflect.Value, error) {
 	// get right side expression values
-	rvs := make([]reflect.Value, len(stmt.Exprs))
-	for i, expr := range stmt.Exprs {
+	rvs := make([]reflect.Value, len(exprs2))
+	for i, expr := range exprs2 {
+		var err error
 		rvs[i], err = invokeExpr(vmp, env, expr)
 		if err != nil {
 			return nilValue, newError(expr, err)
 		}
 	}
 
-	if len(rvs) == 1 && len(stmt.Names) > 1 {
+	if len(rvs) == 1 && len(exprs1) > 1 {
 		// only one right side value but many left side names
-		value := rvs[0]
-		value = elemIfInterfaceNNil(value)
+		value := elemIfInterfaceNNil(rvs[0])
 		if (value.Kind() == reflect.Slice || value.Kind() == reflect.Array) && value.Len() > 0 {
 			// value is slice/array, add each value to left side names
-			for i := 0; i < value.Len() && i < len(stmt.Names); i++ {
-				_ = env.DefineValue(stmt.Names[i], value.Index(i))
-			}
-			// return last value of slice/array
-			return value.Index(value.Len() - 1), nil
-		}
-	}
-
-	// define all names with right side values
-	for i := 0; i < len(rvs) && i < len(stmt.Names); i++ {
-		_ = env.DefineValue(stmt.Names[i], rvs[i])
-	}
-
-	// return last right side value
-	return rvs[len(rvs)-1], nil
-}
-
-func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Value, error) {
-	nilValueL := nilValue
-	var err error
-
-	// get right side expression values
-	rvs := make([]reflect.Value, len(stmt.Rhss))
-	for i, rhs := range stmt.Rhss {
-		rvs[i], err = invokeExpr(vmp, env, rhs)
-		if err != nil {
-			return nilValueL, newError(rhs, err)
-		}
-	}
-
-	if len(rvs) == 1 && len(stmt.Lhss) > 1 {
-		// only one right side value but many left side expressions
-		value := rvs[0]
-		value = elemIfInterfaceNNil(value)
-		if (value.Kind() == reflect.Slice || value.Kind() == reflect.Array) && value.Len() > 0 {
-			// value is slice/array, add each value to left side expression
-			for i := 0; i < value.Len() && i < len(stmt.Lhss); i++ {
-				_, err = invokeLetExpr(vmp, env, stmt, stmt.Lhss[i], value.Index(i))
-				if err != nil {
-					return nilValueL, newError(stmt.Lhss[i], err)
+			for i := 0; i < value.Len() && i < len(exprs1); i++ {
+				if err := defineFn(exprs1[i], value.Index(i)); err != nil {
+					return nilValue, err
 				}
 			}
 			// return last value of slice/array
@@ -154,22 +116,35 @@ func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 		}
 	}
 
-	// invoke all left side expressions with right side values
-	for i := 0; i < len(rvs) && i < len(stmt.Lhss); i++ {
-		value := rvs[i]
-		value = elemIfInterfaceNNil(value)
-		_, err = invokeLetExpr(vmp, env, stmt, stmt.Lhss[i], value)
-		if err != nil {
-			return nilValueL, newError(stmt.Lhss[i], err)
+	// define all names with right side values
+	for i := 0; i < len(rvs) && i < len(exprs1); i++ {
+		if err := defineFn(exprs1[i], elemIfInterfaceNNil(rvs[i])); err != nil {
+			return nilValue, err
 		}
-	}
-
-	if len(rvs) == 0 {
-		return nilValueL, newError(stmt.Lhss[0], errors.New("invalid syntax"))
 	}
 
 	// return last right side value
 	return rvs[len(rvs)-1], nil
+}
+
+func runVarStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.VarStmt) (reflect.Value, error) {
+	defineFn := func(key string, v reflect.Value) error {
+		if err := env.DefineValue(key, v); err != nil {
+			return newError(stmt, err)
+		}
+		return nil
+	}
+	return runVarOrLetStmt(vmp, env, stmt.Names, stmt.Exprs, defineFn)
+}
+
+func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Value, error) {
+	defineFn := func(e ast.Expr, value reflect.Value) error {
+		if _, err := invokeLetExpr(vmp, env, stmt, e, value); err != nil {
+			return newError(e, err)
+		}
+		return nil
+	}
+	return runVarOrLetStmt(vmp, env, stmt.Lhss, stmt.Rhss, defineFn)
 }
 
 func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt) (reflect.Value, error) {

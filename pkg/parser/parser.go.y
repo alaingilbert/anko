@@ -79,7 +79,6 @@ import (
 
 %type<expr_call_helper> expr_call_helper
 %type<str> unary_op
-%type<str> unary_op1
 %type<str> bin_op
 %type<str> op_assoc
 %type<str> op_assoc1
@@ -826,19 +825,11 @@ unary_op :
 	'-'   { $$ = "-" }
 	| '!' { $$ = "!" }
 	| '^' { $$ = "^" }
-
-unary_op1 :
-	'*'   { $$ = "*" }
+	| '*' { $$ = "*" }
 	| '&' { $$ = "&" }
-
 
 expr_unary :
 	unary_op expr %prec UNARY
-	{
-		$$ = &ast.UnaryExpr{Operator: $1, Expr: $2}
-		$$.SetPosition($2.Position())
-	}
-	| unary_op1 expr %prec UNARY
 	{
 		if $1 == "&" {
 			if el, ok := $2.(*ast.IdentExpr); ok {
@@ -848,6 +839,8 @@ expr_unary :
 			}
 		} else if $1 == "*" {
 			$$ = &ast.DerefExpr{Expr: $2}
+		} else {
+			$$ = &ast.UnaryExpr{Operator: $1, Expr: $2}
 		}
 		$$.SetPosition($2.Position())
 	}

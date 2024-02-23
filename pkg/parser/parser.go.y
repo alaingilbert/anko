@@ -1091,10 +1091,10 @@ expr_slice_helper1 :
 	'[' slice ']' { $$ = $2 }
 
 slice :
-	expr ':' expr { $$ = &ast.SliceExpr{Begin: $1, End: $3}  }
-	| expr ':'    { $$ = &ast.SliceExpr{Begin: $1, End: nil} }
-	| ':' expr    { $$ = &ast.SliceExpr{Begin: nil, End: $2} }
-	| expr        { $$ = &ast.ItemExpr{Index: $1}            }
+	  expr ':' expr { $$ = &ast.SliceExpr{Begin: $1, End: $3}  }
+	| expr ':'      { $$ = &ast.SliceExpr{Begin: $1, End: nil} }
+	|      ':' expr { $$ = &ast.SliceExpr{Begin: nil, End: $2} }
+	| expr          { $$ = &ast.ItemExpr{Index: $1}            }
 
 expr_idents :
 	expr_ident

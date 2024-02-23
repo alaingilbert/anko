@@ -628,28 +628,22 @@ func invokeAssocExpr(vmp *VmParams, env envPkg.IEnv, e *ast.AssocExpr) (reflect.
 		}
 		return v
 	}
-	switch e.Operator {
-	case "++":
-		if alhs, ok := e.Lhs.(*ast.IdentExpr); ok {
-			v, err := env.GetValue(alhs.Lit)
-			if err != nil {
-				return nilValue, newError(e, err)
-			}
-			v = incrFn(v, 1)
-			// not checking err because checked above in get
-			_ = env.SetValue(alhs.Lit, v)
-			return v, nil
+	applyOpOnIdentExpr := func(id *ast.IdentExpr, incr int64) (reflect.Value, error) {
+		v, err := env.GetValue(id.Lit)
+		if err != nil {
+			return nilValue, newError(e, err)
 		}
-	case "--":
-		if alhs, ok := e.Lhs.(*ast.IdentExpr); ok {
-			v, err := env.GetValue(alhs.Lit)
-			if err != nil {
-				return nilValue, newError(e, err)
-			}
-			v = incrFn(v, -1)
-			// not checking err because checked above in get
-			_ = env.SetValue(alhs.Lit, v)
-			return v, nil
+		v = incrFn(v, incr)
+		// not checking err because checked above in get
+		_ = env.SetValue(id.Lit, v)
+		return v, nil
+	}
+	if id, ok := e.Lhs.(*ast.IdentExpr); ok {
+		switch e.Operator {
+		case "++":
+			return applyOpOnIdentExpr(id, 1)
+		case "--":
+			return applyOpOnIdentExpr(id, -1)
 		}
 	}
 

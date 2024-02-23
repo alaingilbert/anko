@@ -172,17 +172,30 @@ func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt)
 
 func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value, error) {
 	validate := vmp.Validate
+
+	invokeExprFn := func(env envPkg.IEnv, e ast.Expr) (rv reflect.Value, err error) {
+		env.WithNewEnv(func(newenv envPkg.IEnv) {
+			rv, err = invokeExpr(vmp, newenv, e)
+		})
+		return rv, err
+	}
+
+	runStmtFn := func(env envPkg.IEnv, stmt ast.Stmt) (rv reflect.Value, err error) {
+		env.WithNewEnv(func(newenv envPkg.IEnv) {
+			rv, err = runSingleStmt(vmp, newenv, stmt)
+		})
+		return rv, err
+	}
+	
 	// if
-	rv, err := invokeExpr(vmp, env, stmt.If)
+	rv, err := invokeExprFn(env, stmt.If)
 	if err != nil {
 		return rv, newError(stmt.If, err)
 	}
 
 	if toBool(rv) || validate {
 		// then
-		env.WithNewEnv(func(newenv envPkg.IEnv) {
-			rv, err = runSingleStmt(vmp, newenv, stmt.Then)
-		})
+		rv, err = runStmtFn(env, stmt.Then)
 		if err != nil {
 			return rv, newError(stmt, err)
 		}
@@ -194,9 +207,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 	for _, statement := range stmt.ElseIf {
 		elseIf := statement.(*ast.IfStmt)
 		// else if - if
-		env.WithNewEnv(func(newenv envPkg.IEnv) {
-			rv, err = invokeExpr(vmp, newenv, elseIf.If)
-		})
+		rv, err = invokeExprFn(env, elseIf.If)
 		if err != nil {
 			return rv, newError(elseIf.If, err)
 		}
@@ -205,12 +216,11 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		}
 
 		// else if - then
-		env.WithNewEnv(func(newenv envPkg.IEnv) {
-			rv, err = runSingleStmt(vmp, newenv, elseIf.Then)
-		})
+		rv, err = runStmtFn(env, elseIf.Then)
 		if err != nil {
 			return rv, newError(elseIf, err)
 		}
+
 		if !validate {
 			return rv, nil
 		}
@@ -218,9 +228,7 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 
 	if stmt.Else != nil {
 		// else
-		env.WithNewEnv(func(newenv envPkg.IEnv) {
-			rv, err = runSingleStmt(vmp, newenv, stmt.Else)
-		})
+		rv, err = runStmtFn(env, stmt.Else)
 		if err != nil {
 			return rv, newError(stmt, err)
 		}

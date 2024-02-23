@@ -1006,15 +1006,27 @@ func invokeMakeTypeExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MakeTypeExpr, exp
 }
 
 func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Expr) (reflect.Value, error) {
-	rhs, err := invokeExpr(vmp, env, e.Rhs)
-	if err != nil {
-		return nilValue, newError(e.Rhs, err)
+	buildErr := func(rhs reflect.Value, chanType reflect.Type) error {
+		return newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
 	}
 
 	ctxCase := reflect.SelectCase{
 		Dir:  reflect.SelectRecv,
 		Chan: reflect.ValueOf(vmp.ctx.Done()),
 		Send: zeroValue,
+	}
+
+	buildCases := func(dir reflect.SelectDir, ch, send reflect.Value) []reflect.SelectCase {
+		tmpCase := reflect.SelectCase{Dir: dir, Chan: ch, Send: send}
+		return []reflect.SelectCase{ctxCase, tmpCase}
+	}
+
+	buildCasesSend := func(ch, send reflect.Value) []reflect.SelectCase {
+		return buildCases(reflect.SelectSend, ch, send)
+	}
+
+	buildCasesRecv := func(ch, send reflect.Value) []reflect.SelectCase {
+		return buildCases(reflect.SelectRecv, ch, send)
 	}
 
 	doSelect := func(cases []reflect.SelectCase, checkOk bool) (reflect.Value, error) {
@@ -1031,50 +1043,49 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 		return rv, nil
 	}
 
-	if e.Lhs == nil {
-		if rhs.Kind() == reflect.Chan {
-			tmpCase := reflect.SelectCase{Dir: reflect.SelectRecv, Chan: rhs, Send: zeroValue}
-			cases := []reflect.SelectCase{ctxCase, tmpCase}
-			return doSelect(cases, false)
-		}
-	} else {
-		lhs, err := invokeExpr(vmp, env, e.Lhs)
+	var err error
+	var lhs, rhs reflect.Value
+
+	rhs, err = invokeExpr(vmp, env, e.Rhs)
+	if err != nil {
+		return nilValue, newError(e.Rhs, err)
+	}
+
+	if e.Lhs != nil {
+		lhs, err = invokeExpr(vmp, env, e.Lhs)
 		if err != nil {
 			return nilValue, newError(e.Lhs, err)
 		}
-		if lhs.Kind() == reflect.Chan {
-			chanType := lhs.Type().Elem()
-			if chanType == interfaceType || (rhs.IsValid() && rhs.Type() == chanType) {
-				tmpCase := reflect.SelectCase{Dir: reflect.SelectSend, Chan: lhs, Send: rhs}
-				cases := []reflect.SelectCase{ctxCase, tmpCase}
-				return doSelect(cases, false)
-			} else {
-				buildErr := func(rhs reflect.Value, chanType reflect.Type) error {
-					return newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
-				}
-				if !vmUtils.KindIsNumeric(chanType.Kind()) || !vmUtils.KindIsNumeric(rhs.Type().Kind()) {
-					return nilValue, buildErr(rhs, chanType)
-				}
-				rhs, err = convertReflectValueToType(vmp, rhs, chanType)
-				if err != nil {
-					return nilValue, buildErr(rhs, chanType)
-				}
-				tmpCase := reflect.SelectCase{Dir: reflect.SelectSend, Chan: lhs, Send: rhs}
-				cases := []reflect.SelectCase{ctxCase, tmpCase}
-				return doSelect(cases, false)
-			}
-		} else if rhs.Kind() == reflect.Chan {
-			tmpCase := reflect.SelectCase{Dir: reflect.SelectRecv, Chan: rhs, Send: zeroValue}
-			cases := []reflect.SelectCase{ctxCase, tmpCase}
-			rv, err := doSelect(cases, true)
-			if err != nil {
-				return nilValue, err
-			}
-			return invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, e.Lhs, rv)
-		}
 	}
 
-	return nilValue, newStringError(e, "invalid operation for chan")
+	if lhs.Kind() != reflect.Chan && rhs.Kind() != reflect.Chan {
+		return nilValue, newStringError(e, "invalid operation for chan")
+	}
+
+	if lhs.Kind() == reflect.Chan {
+		chanType := lhs.Type().Elem()
+		if chanType == interfaceType || (rhs.IsValid() && rhs.Type() == chanType) {
+			return doSelect(buildCasesSend(lhs, rhs), false)
+		}
+		if !vmUtils.KindIsNumeric(chanType.Kind()) || !vmUtils.KindIsNumeric(rhs.Type().Kind()) {
+			return nilValue, buildErr(rhs, chanType)
+		}
+		rhs, err = convertReflectValueToType(vmp, rhs, chanType)
+		if err != nil {
+			return nilValue, buildErr(rhs, chanType)
+		}
+		return doSelect(buildCasesSend(lhs, rhs), false)
+	}
+
+	cases := buildCasesRecv(rhs, zeroValue)
+	if e.Lhs == nil {
+		return doSelect(cases, false)
+	}
+	rv, err := doSelect(cases, true)
+	if err != nil {
+		return nilValue, err
+	}
+	return invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, e.Lhs, rv)
 }
 
 func invokeFuncExpr(vmp *VmParams, env envPkg.IEnv, e *ast.FuncExpr) (reflect.Value, error) {

@@ -1011,20 +1011,19 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 		return nilValue, newError(e.Rhs, err)
 	}
 
+	ctxCase := reflect.SelectCase{
+		Dir:  reflect.SelectRecv,
+		Chan: reflect.ValueOf(vmp.ctx.Done()),
+		Send: zeroValue,
+	}
+
 	if e.Lhs == nil {
 		if rhs.Kind() == reflect.Chan {
 			if vmp.Validate {
 				return nilValue, nil
 			}
-			cases := []reflect.SelectCase{{
-				Dir:  reflect.SelectRecv,
-				Chan: reflect.ValueOf(vmp.ctx.Done()),
-				Send: zeroValue,
-			}, {
-				Dir:  reflect.SelectRecv,
-				Chan: rhs,
-				Send: zeroValue,
-			}}
+			tmpCase := reflect.SelectCase{Dir: reflect.SelectRecv, Chan: rhs, Send: zeroValue}
+			cases := []reflect.SelectCase{ctxCase, tmpCase}
 			chosen, rv, _ := reflect.Select(cases)
 			if chosen == 0 {
 				return nilValue, vmp.ctx.Err()
@@ -1039,15 +1038,8 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 		if lhs.Kind() == reflect.Chan {
 			chanType := lhs.Type().Elem()
 			if chanType == interfaceType || (rhs.IsValid() && rhs.Type() == chanType) {
-				cases := []reflect.SelectCase{{
-					Dir:  reflect.SelectRecv,
-					Chan: reflect.ValueOf(vmp.ctx.Done()),
-					Send: zeroValue,
-				}, {
-					Dir:  reflect.SelectSend,
-					Chan: lhs,
-					Send: rhs,
-				}}
+				tmpCase := reflect.SelectCase{Dir: reflect.SelectSend, Chan: lhs, Send: rhs}
+				cases := []reflect.SelectCase{ctxCase, tmpCase}
 				if !vmp.Validate {
 					if chosen, _, _ := reflect.Select(cases); chosen == 0 {
 						return nilValue, vmp.ctx.Err()
@@ -1064,15 +1056,8 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 				if err != nil {
 					return nilValue, buildErr(rhs, chanType)
 				}
-				cases := []reflect.SelectCase{{
-					Dir:  reflect.SelectRecv,
-					Chan: reflect.ValueOf(vmp.ctx.Done()),
-					Send: zeroValue,
-				}, {
-					Dir:  reflect.SelectSend,
-					Chan: lhs,
-					Send: rhs,
-				}}
+				tmpCase := reflect.SelectCase{Dir: reflect.SelectSend, Chan: lhs, Send: rhs}
+				cases := []reflect.SelectCase{ctxCase, tmpCase}
 				if !vmp.Validate {
 					if chosen, _, _ := reflect.Select(cases); chosen == 0 {
 						return nilValue, vmp.ctx.Err()
@@ -1082,15 +1067,8 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 			return nilValue, nil
 		} else if rhs.Kind() == reflect.Chan {
 			var rv reflect.Value
-			cases := []reflect.SelectCase{{
-				Dir:  reflect.SelectRecv,
-				Chan: reflect.ValueOf(vmp.ctx.Done()),
-				Send: zeroValue,
-			}, {
-				Dir:  reflect.SelectRecv,
-				Chan: rhs,
-				Send: zeroValue,
-			}}
+			tmpCase := reflect.SelectCase{Dir: reflect.SelectRecv, Chan: rhs, Send: zeroValue}
+			cases := []reflect.SelectCase{ctxCase, tmpCase}
 			if !vmp.Validate {
 				var chosen int
 				var ok bool

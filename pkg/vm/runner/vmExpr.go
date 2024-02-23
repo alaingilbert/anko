@@ -1017,18 +1017,25 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 		Send: zeroValue,
 	}
 
+	doSelect := func(cases []reflect.SelectCase, checkOk bool) (reflect.Value, error) {
+		if vmp.Validate {
+			return nilValue, nil
+		}
+		chosen, rv, ok := reflect.Select(cases)
+		if chosen == 0 {
+			return nilValue, vmp.ctx.Err()
+		}
+		if checkOk && !ok {
+			return rv, newStringError(expr, "failed to send to channel")
+		}
+		return rv, nil
+	}
+
 	if e.Lhs == nil {
 		if rhs.Kind() == reflect.Chan {
-			if vmp.Validate {
-				return nilValue, nil
-			}
 			tmpCase := reflect.SelectCase{Dir: reflect.SelectRecv, Chan: rhs, Send: zeroValue}
 			cases := []reflect.SelectCase{ctxCase, tmpCase}
-			chosen, rv, _ := reflect.Select(cases)
-			if chosen == 0 {
-				return nilValue, vmp.ctx.Err()
-			}
-			return rv, nil
+			return doSelect(cases, false)
 		}
 	} else {
 		lhs, err := invokeExpr(vmp, env, e.Lhs)
@@ -1040,11 +1047,7 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 			if chanType == interfaceType || (rhs.IsValid() && rhs.Type() == chanType) {
 				tmpCase := reflect.SelectCase{Dir: reflect.SelectSend, Chan: lhs, Send: rhs}
 				cases := []reflect.SelectCase{ctxCase, tmpCase}
-				if !vmp.Validate {
-					if chosen, _, _ := reflect.Select(cases); chosen == 0 {
-						return nilValue, vmp.ctx.Err()
-					}
-				}
+				return doSelect(cases, false)
 			} else {
 				buildErr := func(rhs reflect.Value, chanType reflect.Type) error {
 					return newStringError(e, "cannot use type "+rhs.Type().String()+" as type "+chanType.String()+" to send to chan")
@@ -1058,27 +1061,14 @@ func invokeChanExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ChanExpr, expr ast.Ex
 				}
 				tmpCase := reflect.SelectCase{Dir: reflect.SelectSend, Chan: lhs, Send: rhs}
 				cases := []reflect.SelectCase{ctxCase, tmpCase}
-				if !vmp.Validate {
-					if chosen, _, _ := reflect.Select(cases); chosen == 0 {
-						return nilValue, vmp.ctx.Err()
-					}
-				}
+				return doSelect(cases, false)
 			}
-			return nilValue, nil
 		} else if rhs.Kind() == reflect.Chan {
-			var rv reflect.Value
 			tmpCase := reflect.SelectCase{Dir: reflect.SelectRecv, Chan: rhs, Send: zeroValue}
 			cases := []reflect.SelectCase{ctxCase, tmpCase}
-			if !vmp.Validate {
-				var chosen int
-				var ok bool
-				chosen, rv, ok = reflect.Select(cases)
-				if chosen == 0 {
-					return nilValue, vmp.ctx.Err()
-				}
-				if !ok {
-					return nilValue, newStringError(expr, "failed to send to channel")
-				}
+			rv, err := doSelect(cases, true)
+			if err != nil {
+				return nilValue, err
 			}
 			return invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, e.Lhs, rv)
 		}

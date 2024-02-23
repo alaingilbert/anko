@@ -699,12 +699,7 @@ expr_new :
 	}
 
 expr_opchan :
-	expr OPCHAN expr
-	{
-		$$ = &ast.ChanExpr{Lhs: $1, Rhs: $3}
-		$$.SetPosition($1.Position())
-	}
-	| OPCHAN expr
+	OPCHAN expr
 	{
 		$$ = &ast.ChanExpr{Rhs: $2}
 		$$.SetPosition($2.Position())
@@ -850,19 +845,21 @@ bin_op :
 	| '<'         { $$ = "<" }
 	| LE          { $$ = "<=" }
 	| NILCOALESCE { $$ = "??" }
-
 	| PLUSEQ      { $$ = "+=" }
 	| MINUSEQ     { $$ = "-=" }
 	| MULEQ       { $$ = "*=" }
 	| DIVEQ       { $$ = "/=" }
 	| ANDEQ       { $$ = "&=" }
 	| OREQ        { $$ = "|=" }
+	| OPCHAN      { $$ = "<-" }
 
 expr_binary :
 	expr bin_op expr
 	{
 		if $2 == "??" {
 			$$ = &ast.NilCoalescingOpExpr{Lhs: $1, Rhs: $3}
+		} else if $2 == "<-" {
+			$$ = &ast.ChanExpr{Lhs: $1, Rhs: $3}
 		} else if $2 == "+=" ||
 			  $2 == "-=" ||
 			  $2 == "*=" ||

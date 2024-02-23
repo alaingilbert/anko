@@ -81,6 +81,7 @@ import (
 %type<str> unary_op
 %type<str> bin_op
 %type<str> op_assoc
+%type<str> op_assoc1
 %type<expr_idents> expr_idents
 %type<expr_idents> expr_for_idents
 %type<func_expr_idents> func_expr_idents
@@ -887,20 +888,19 @@ op_assoc :
 	| ANDEQ   { $$ = "&=" }
 	| OREQ    { $$ = "|=" }
 
+op_assoc1 :
+	PLUSPLUS     { $$ = "++" }
+	| MINUSMINUS { $$ = "--" }
+
 expr_assoc :
 	expr op_assoc expr
 	{
 		$$ = &ast.AssocExpr{Lhs: $1, Operator: $2, Rhs: $3}
 		$$.SetPosition($1.Position())
 	}
-	| expr PLUSPLUS
+	| expr op_assoc1
 	{
-		$$ = &ast.AssocExpr{Lhs: $1, Operator: "++"}
-		$$.SetPosition($1.Position())
-	}
-	| expr MINUSMINUS
-	{
-		$$ = &ast.AssocExpr{Lhs: $1, Operator: "--"}
+		$$ = &ast.AssocExpr{Lhs: $1, Operator: $2}
 		$$.SetPosition($1.Position())
 	}
 

@@ -64,6 +64,7 @@ import (
 %type<expr> expr_item_or_slice
 %type<expr> expr_len
 %type<expr> expr_dbg
+%type<expr> dbg_content
 %type<expr> expr_new
 %type<expr> expr_make
 %type<expr> expr_map
@@ -652,15 +653,20 @@ opt_expr :
 	| expr { $$ = $1 }
 
 expr_dbg :
-	DBG '(' opt_expr ')'
+	DBG '(' dbg_content ')'
 	{
-		$$ = &ast.DbgExpr{Expr: $3}
+		$$ = $3
 		$$.SetPosition($1.Position())
 	}
-	| DBG '(' type_data ')'
+
+dbg_content :
+	opt_expr
 	{
-		$$ = &ast.DbgExpr{TypeData: $3}
-		$$.SetPosition($1.Position())
+		$$ = &ast.DbgExpr{Expr: $1}
+	}
+	| type_data
+	{
+		$$ = &ast.DbgExpr{TypeData: $1}
 	}
 
 expr_len :

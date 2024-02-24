@@ -89,6 +89,18 @@ func (e *Error) Error() string {
 	return e.Message
 }
 
+type SymbolAlreadyDefinedError struct {
+	symbol string
+}
+
+func NewSymbolAlreadyDefinedError(symbol string) *SymbolAlreadyDefinedError {
+	return &SymbolAlreadyDefinedError{symbol: symbol}
+}
+
+func (e *SymbolAlreadyDefinedError) Error() string {
+	return fmt.Sprintf("already defined symbol '%s'", e.symbol)
+}
+
 type WrongArgTypeError struct {
 	want     string
 	received string

@@ -1,3 +1,9 @@
+// Remaining reduce/reduce conflicts are:
+//     expr_item_or_slice -> '['
+//     bin_op -> '*'
+//     expr_dbg -> '*' type_data     (`'*' type_data` conflicts with `binary operator '*'`)
+//     stmt_for -> IN                (`FOR ... IN ... {` conflicts with `expr IN expr`)
+
 %{
 package parser
 

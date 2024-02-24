@@ -98,6 +98,7 @@ import (
 %type<type_data> type_data_idents
 %type<type_data> map_type
 %type<type_data> type_data_struct
+%type<type_data> type_struct_content
 %type<type_data> typed_slice_count
 
 %type<expr_idents> expr_idents
@@ -1011,15 +1012,21 @@ type_data_helper :
 			$$ = &ast.TypeStruct{Kind: ast.TypeChan, SubType: $2}
 		}
 	}
-	| STRUCT '{' opt_newlines type_data_struct opt_newlines '}'
+	| STRUCT '{' type_struct_content '}'
 	{
-		$$ = $4
+		$$ = $3
 	}
 
 map_type :
 	MAP '[' type_data ']' type_data
 	{
 		$$ = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
+	}
+
+type_struct_content :
+	opt_newlines type_data_struct opt_newlines
+	{
+		$$ = $2
 	}
 
 type_data_struct :

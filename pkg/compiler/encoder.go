@@ -244,6 +244,7 @@ func encodeLetsStmt(w *Encoder, stmt *ast.LetsStmt) {
 	encodeString(w, stmt.Operator)
 	encodeExprArray(w, stmt.Rhss)
 	encodeBool(w, stmt.Typed)
+	encodeBool(w, stmt.Mutable)
 }
 
 func encodeLetMapItemStmt(w *Encoder, stmt *ast.LetMapItemStmt) {
@@ -610,6 +611,7 @@ func encodeTypeStruct(w *Encoder, expr *ast.TypeStruct) {
 		encodeTypeStruct(w, expr.Key)
 		encodeStringArray(w, expr.StructNames)
 		encodeTypeStructArray(w, expr.StructTypes)
+		encodeBool(w, expr.Mutable)
 	}
 }
 

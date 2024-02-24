@@ -156,7 +156,7 @@ import (
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR LOOP IN EQEQ NEQ GE LE OROR ANDAND NEW
             TRUE FALSE NIL NILCOALESCE MODULE TRY CATCH FINALLY PLUSEQ MINUSEQ MULEQ DIVEQ ANDEQ OREQ BREAK
             CONTINUE PLUSPLUS MINUSMINUS POW SHIFTLEFT SHIFTRIGHT SWITCH SELECT CASE DEFAULT GO DEFER CHAN MAKE
-            OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG WALRUS EMPTYARR
+            OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG WALRUS EMPTYARR MUT
 
 /* lowest precedence */
 %left POW
@@ -378,6 +378,23 @@ stmt_lets :
 			}
 		}
 		$$.SetPosition($1[0].Position())
+	}
+	| MUT exprs WALRUS exprs
+	{
+		isItem := false
+		if len($2) == 2 && len($4) == 1 {
+			if _, ok := $4[0].(*ast.ItemExpr); ok {
+				isItem = true
+				$$ = &ast.LetMapItemStmt{Lhss: $2, Rhs: $4[0]}
+			}
+		}
+		if !isItem {
+			$$ = &ast.LetsStmt{Lhss: $2, Operator: "=", Rhss: $4, Typed: true, Mutable: true}
+			if len($2) != len($4) && !(len($4) == 1 && len($2) > len($4)) {
+				yylex.Error("unexpected ','")
+			}
+		}
+		$$.SetPosition($2[0].Position())
 	}
 
 op_lets :
@@ -778,7 +795,14 @@ expr_ident :
 expr_typed_ident :
 	expr_ident type_data
 	{
-		$$ = struct{Name string; TypeData *ast.TypeStruct}{Name: $1.(*ast.IdentExpr).Lit, TypeData: $2}
+		typeData := $2
+		$$ = struct{Name string; TypeData *ast.TypeStruct}{Name: $1.(*ast.IdentExpr).Lit, TypeData: typeData}
+	}
+	| MUT expr_ident type_data
+	{
+		typeData := $3
+		typeData.Mutable = true
+		$$ = struct{Name string; TypeData *ast.TypeStruct}{Name: $2.(*ast.IdentExpr).Lit, TypeData: typeData}
 	}
 
 opt_ident :

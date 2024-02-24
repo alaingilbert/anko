@@ -31,10 +31,13 @@ func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, l
 		return nilValue, newErrorf(lhs, "already defined symbol '%s'", lhs.Lit)
 	}
 	if stmtTyped {
-		rv = reflect.ValueOf(&vmUtils.StronglyTyped{V: rv})
+		rv = reflect.ValueOf(vmUtils.NewStronglyTyped(rv, stmt.Mutable))
 	}
 	if err := env.SetValue(lhs.Lit, rv); err != nil {
 		if errors.Is(err, vmUtils.ErrTypeMismatch) {
+			return nilValue, newError(lhs, err)
+		}
+		if errors.Is(err, vmUtils.ErrImmutable) {
 			return nilValue, newError(lhs, err)
 		}
 		if err := env.DefineValue(lhs.Lit, rv); err != nil {

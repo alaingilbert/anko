@@ -65,13 +65,13 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 			inInterface := in[i+1].Interface()
 			if rv, ok = inInterface.(reflect.Value); ok {
 				if isTyped {
-					rv = reflect.ValueOf(&vmUtils.StronglyTyped{V: rv})
+					rv = reflect.ValueOf(vmUtils.NewStronglyTyped(rv, funcExpr.Params[i].TypeData.Mutable))
 				}
 				err = newEnv.DefineValue(funcExpr.Params[i].Name, rv)
 			} else {
 				tmp := reflect.ValueOf(inInterface)
 				if isTyped {
-					tmp = reflect.ValueOf(&vmUtils.StronglyTyped{V: tmp})
+					tmp = reflect.ValueOf(vmUtils.NewStronglyTyped(tmp, funcExpr.Params[i].TypeData.Mutable))
 				}
 				err = newEnv.DefineValue(funcExpr.Params[i].Name, tmp)
 			}
@@ -95,13 +95,13 @@ func funcExpr(vmp *VmParams, env env.IEnv, funcExpr *ast.FuncExpr) (reflect.Valu
 				inInterface := in[lenParams].Interface()
 				if newRv, ok := inInterface.(reflect.Value); ok {
 					if isTyped {
-						newRv = reflect.ValueOf(&vmUtils.StronglyTyped{V: in[lenParams]})
+						newRv = reflect.ValueOf(vmUtils.NewStronglyTyped(in[lenParams], funcExpr.Params[lenParams-1].TypeData.Mutable))
 					}
 					rv = newRv
 				} else {
 					rv = reflect.ValueOf(inInterface)
 					if isTyped {
-						rv = reflect.ValueOf(&vmUtils.StronglyTyped{V: rv})
+						rv = reflect.ValueOf(vmUtils.NewStronglyTyped(rv, funcExpr.Params[lenParams-1].TypeData.Mutable))
 					}
 				}
 				err = newEnv.DefineValue(funcExpr.Params[lenParams-1].Name, rv)

@@ -13,10 +13,21 @@ var (
 	NilValue = reflect.New(reflect.TypeOf((*any)(nil)).Elem()).Elem()
 )
 
+var ErrImmutable = errors.New("immutable variable")
 var ErrTypeMismatch = errors.New("type mismatch")
 
 // StronglyTyped is a special type that let the vm know that the value is strongly typed and should keep its type
-type StronglyTyped struct{ V reflect.Value }
+type StronglyTyped struct {
+	V       reflect.Value
+	Mutable bool
+}
+
+func NewStronglyTyped(v reflect.Value, mut bool) *StronglyTyped {
+	return &StronglyTyped{
+		V:       v,
+		Mutable: mut,
+	}
+}
 
 func ReplaceInterface(in string) string { return strings.ReplaceAll(in, "interface {}", "any") }
 

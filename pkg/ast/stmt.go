@@ -153,6 +153,7 @@ type LetsStmt struct {
 	Operator string
 	Rhss     []Expr
 	Typed    bool
+	Mutable  bool
 }
 
 // LetMapItemStmt provide statement of let for map item.

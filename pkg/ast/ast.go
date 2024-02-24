@@ -28,4 +28,5 @@ type TypeStruct struct {
 	Key         *TypeStruct
 	StructNames []string
 	StructTypes []*TypeStruct
+	Mutable     bool
 }

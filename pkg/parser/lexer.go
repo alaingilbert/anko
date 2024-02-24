@@ -72,7 +72,7 @@ var opName = map[string]int{
 	"len":      LEN,
 	"delete":   DELETE,
 	"close":    CLOSE,
-	":=":       WALRUS,
+	"mut":      MUT,
 }
 
 // Init resets code to scan.

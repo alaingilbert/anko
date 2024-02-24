@@ -485,10 +485,13 @@ func (e *Env) setValue(k string, v reflect.Value) error {
 	if envValue, ok := e.values.Get(k); ok {
 		if envValue.IsValid() {
 			if typedValue, ok := envValue.Interface().(*vmUtils.StronglyTyped); ok {
+				if !typedValue.Mutable {
+					return vmUtils.ErrImmutable
+				}
 				if v.Kind().String() != typedValue.V.Kind().String() {
 					return vmUtils.ErrTypeMismatch
 				}
-				v = reflect.ValueOf(&vmUtils.StronglyTyped{V: v})
+				v = reflect.ValueOf(vmUtils.NewStronglyTyped(v, typedValue.Mutable))
 			}
 		}
 		e.values.Insert(k, v)

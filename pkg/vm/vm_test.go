@@ -1653,6 +1653,8 @@ func TestEnvRef(t *testing.T) {
 func TestFuncTypedParams(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
+		{Script: `func a(x int64)(int64){ x += 1; return x }; a(1)`, RunError: vmUtils.ErrImmutable, Name: ""},
+		{Script: `func a(mut x int64)(int64){ x += 1; return x }; a(1)`, RunOutput: int64(2), Name: ""},
 		{Script: `func a(x any){return x}; a(1)`, RunOutput: int64(1), Name: ""},
 		{Script: `func a(x any){return x}; a("1")`, RunOutput: "1", Name: ""},
 		{Script: `func a(x int64){return x}; a(1)`, RunOutput: int64(1), Name: ""},
@@ -1671,8 +1673,10 @@ func TestFuncTypedParams(t *testing.T) {
 		{Script: `func a(x ...int64){return x}; a(1,"2",3)`, RunError: fmt.Errorf("function wants argument type []int64 but received type string"), Name: ""},
 		{Script: `func a(x int64, y int64, z int64){return x}; a([]int64{1,2,3}...)`, RunOutput: int64(1), Name: ""},
 		{Script: `func a(x){x="test";x=1;return x}; a(1)`, RunOutput: int64(1), Name: ""},
-		{Script: `func a(x int64){x="test";x=1;return x}; a(1)`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
-		{Script: `func a(x int64, y int64){x="test";x=1;return x}; a(1, 2)`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
+		{Script: `func a(x int64){x="test";x=1;return x}; a(1)`, RunError: vmUtils.ErrImmutable, Name: ""},
+		{Script: `func a(mut x int64){x="test";x=1;return x}; a(1)`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
+		{Script: `func a(x int64, y int64){x="test";x=1;return x}; a(1, 2)`, RunError: vmUtils.ErrImmutable, Name: ""},
+		{Script: `func a(mut x int64, y int64){x="test";x=1;return x}; a(1, 2)`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, nil) })
@@ -1704,11 +1708,14 @@ func TestFuncTypedReturns(t *testing.T) {
 func TestTypedValues(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{
-		{Script: `a := 1; a = 2`, RunOutput: int64(2)},
+		{Script: `a := 1; a = 2`, RunError: vmUtils.ErrImmutable},
+		{Script: `mut a := 1; a = 2`, RunOutput: int64(2)},
 		{Script: `a = 1; a = "1"`, RunOutput: "1"},
-		{Script: `a := 1; a = "1"`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
+		{Script: `a := 1; a = "1"`, RunError: vmUtils.ErrImmutable, Name: ""},
+		{Script: `mut a := 1; a = "1"`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
 		{Script: `a := 1; delete("a"); a = "1"`, RunOutput: "1"},
-		{Script: `a := 1; a = 2; a = "1"`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
+		{Script: `a := 1; a = 2; a = "1"`, RunError: vmUtils.ErrImmutable, Name: ""},
+		{Script: `mut a := 1; a = 2; a = "1"`, RunError: vmUtils.ErrTypeMismatch, Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true, ResetEnv: true}) })

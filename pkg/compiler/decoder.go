@@ -230,6 +230,7 @@ func decodeLetsStmt(r *Decoder) *ast.LetsStmt {
 	out.Operator = r.readString()
 	out.Rhss = r.readExprArray()
 	out.Typed = r.readBool()
+	out.Mutable = r.readBool()
 	return out
 }
 
@@ -630,6 +631,7 @@ func decodeTypeStruct(r *Decoder) *ast.TypeStruct {
 	out.Key = decodeTypeStruct(r)
 	out.StructNames = r.readStringArray()
 	out.StructTypes = decodeTypeStructArray(r)
+	out.Mutable = r.readBool()
 	return out
 }
 

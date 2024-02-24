@@ -15,6 +15,12 @@ import (
 
 %type<stmtsStmt> stmtsStmt
 
+%type<stmts> else_if_list
+%type<stmts> stmt_select_cases
+%type<stmts> opt_stmt_select_cases
+%type<stmts> opt_stmt_switch_cases
+%type<stmts> stmt_switch_cases
+
 %type<stmt> stmt
 %type<stmt> stmt_var_or_lets
 %type<stmt> stmt_var
@@ -34,16 +40,12 @@ import (
 %type<stmt> stmt_return
 %type<stmt> stmt_continue
 %type<stmt> stmt_throw
-
 %type<stmt> start
 %type<stmt> compstmt
 %type<stmt> opt_stmt_var_or_lets
 %type<stmt> opt_finally
 %type<stmt> maybe_else
-
 %type<stmt> else_if
-%type<else_if_list> opt_stmt_switch_cases
-%type<else_if_list> stmt_switch_cases
 %type<stmt> switch_content
 %type<stmt> stmt_switch_case
 %type<stmt> stmt_switch_opt_default
@@ -52,9 +54,11 @@ import (
 %type<stmt> stmt_select_case
 %type<stmt> stmt_select_default
 %type<stmt> stmt_select_opt_default
+
 %type<exprs> exprs
 %type<exprs> opt_exprs
 %type<exprs> comma_separated_exprs
+%type<exprs> expr_map_key_value
 
 %type<expr> expr
 %type<expr> expr_member_or_ident
@@ -78,45 +82,49 @@ import (
 %type<expr> expr_opchan
 %type<expr> expr_close
 %type<expr> expr_delete
-
 %type<expr> expr_iterable
 %type<expr> expr_member
 %type<expr> expr_ident
 %type<expr> expr_literals_helper
 %type<expr> expr_assoc
 %type<expr> opt_expr
+%type<expr> slice
 
-%type<expr_call_helper> expr_call_helper
 %type<str> unary_op
 %type<str> bin_op
 %type<str> op_assoc1
+
+%type<type_data> type_data
+%type<type_data> map_type
+%type<type_data> type_data_struct
+%type<type_data> typed_slice_count
+
 %type<expr_idents> expr_idents
 %type<expr_idents> expr_for_idents
+
+%type<expr_call_helper> expr_call_helper
+
 %type<func_expr_idents> func_expr_idents
 %type<func_expr_idents> func_expr_idents_not_empty
 %type<func_expr_idents> func_expr_typed_idents
 %type<func_expr_idents> func_expr_idents_last_untyped
+
 %type<func_expr_typed_ident> func_expr_typed_ident
 %type<func_expr_typed_ident> func_expr_untyped_ident
+
 %type<func_expr_args> func_expr_args
+
 %type<opt_func_return_expr_idents> opt_func_return_expr_idents
 %type<opt_func_return_expr_idents> opt_func_return_expr_idents1
 %type<opt_func_return_expr_idents> opt_func_return_expr_idents2
-%type<type_data> type_data
-%type<type_data> map_type
-%type<type_data> type_data_struct
+
+%type<expr_map> expr_map_container
+%type<expr_map> expr_map_content
+%type<expr_map> expr_map_content_helper
+
 %type<slice_count> slice_count
-%type<type_data> typed_slice_count
-%type<expr_map_content> expr_map_content
-%type<expr_map_content> expr_map_container
-%type<expr_map_content> expr_map_content_helper
-%type<exprs> expr_map_key_value
-%type<expr> slice
 %type<expr_typed_ident> expr_typed_ident
 %type<opt_ident> opt_ident
-%type<else_if_list> else_if_list
-%type<else_if_list> stmt_select_cases
-%type<else_if_list> opt_stmt_select_cases
 %type<op_lets> op_lets
 %type<tok> const_expr
 
@@ -125,7 +133,7 @@ import (
 	stmt                            ast.Stmt
 	expr                            ast.Expr
 	exprs                           []ast.Expr
-	else_if_list                    []ast.Stmt
+	stmts                           []ast.Stmt
 	stmt_select_content             *ast.SelectBodyStmt
 	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
 	expr_idents                     []string
@@ -134,7 +142,7 @@ import (
 	func_expr_args                  struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}
 	expr_typed_ident                struct{Name string; TypeData *ast.TypeStruct}
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
-	expr_map_content                *ast.MapExpr
+	expr_map                        *ast.MapExpr
 	type_data                       *ast.TypeStruct
         slice_count                     int
 	tok                             ast.Token

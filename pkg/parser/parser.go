@@ -14,7 +14,7 @@ type yySymType struct {
 	stmt                ast.Stmt
 	expr                ast.Expr
 	exprs               []ast.Expr
-	else_if_list        []ast.Stmt
+	stmts               []ast.Stmt
 	stmt_select_content *ast.SelectBodyStmt
 	expr_call_helper    struct {
 		Exprs  []ast.Expr
@@ -33,7 +33,7 @@ type yySymType struct {
 		TypeData *ast.TypeStruct
 	}
 	opt_func_return_expr_idents []*ast.FuncReturnValuesExpr
-	expr_map_content            *ast.MapExpr
+	expr_map                    *ast.MapExpr
 	type_data                   *ast.TypeStruct
 	slice_count                 int
 	tok                         ast.Token
@@ -1635,17 +1635,17 @@ yynewstate:
 		}
 	case 60:
 		{
-			yyVAL.stmt = &ast.IfStmt{If: yyS[yypt-5].expr, Then: yyS[yypt-3].stmt, ElseIf: yyS[yypt-1].else_if_list, Else: yyS[yypt-0].stmt}
+			yyVAL.stmt = &ast.IfStmt{If: yyS[yypt-5].expr, Then: yyS[yypt-3].stmt, ElseIf: yyS[yypt-1].stmts, Else: yyS[yypt-0].stmt}
 			yyVAL.stmt.SetPosition(yyS[yypt-6].tok.Position())
 		}
 	case 61:
 		{
-			yyVAL.else_if_list = []ast.Stmt{}
+			yyVAL.stmts = []ast.Stmt{}
 		}
 	case 62:
 		{
-			yyS[yypt-1].else_if_list = append(yyS[yypt-1].else_if_list, yyS[yypt-0].stmt)
-			yyVAL.else_if_list = yyS[yypt-1].else_if_list
+			yyS[yypt-1].stmts = append(yyS[yypt-1].stmts, yyS[yypt-0].stmt)
+			yyVAL.stmts = yyS[yypt-1].stmts
 		}
 	case 63:
 		{
@@ -1703,23 +1703,23 @@ yynewstate:
 		}
 	case 74:
 		{
-			yyVAL.stmt_select_content = &ast.SelectBodyStmt{Cases: yyS[yypt-1].else_if_list, Default: yyS[yypt-0].stmt}
+			yyVAL.stmt_select_content = &ast.SelectBodyStmt{Cases: yyS[yypt-1].stmts, Default: yyS[yypt-0].stmt}
 		}
 	case 75:
 		{
-			yyVAL.else_if_list = nil
+			yyVAL.stmts = nil
 		}
 	case 76:
 		{
-			yyVAL.else_if_list = yyS[yypt-0].else_if_list
+			yyVAL.stmts = yyS[yypt-0].stmts
 		}
 	case 77:
 		{
-			yyVAL.else_if_list = []ast.Stmt{yyS[yypt-0].stmt}
+			yyVAL.stmts = []ast.Stmt{yyS[yypt-0].stmt}
 		}
 	case 78:
 		{
-			yyVAL.else_if_list = append(yyVAL.else_if_list, yyS[yypt-0].stmt)
+			yyVAL.stmts = append(yyVAL.stmts, yyS[yypt-0].stmt)
 		}
 	case 79:
 		{
@@ -1746,23 +1746,23 @@ yynewstate:
 		}
 	case 84:
 		{
-			yyVAL.stmt = &ast.SwitchStmt{Cases: yyS[yypt-1].else_if_list, Default: yyS[yypt-0].stmt}
+			yyVAL.stmt = &ast.SwitchStmt{Cases: yyS[yypt-1].stmts, Default: yyS[yypt-0].stmt}
 		}
 	case 85:
 		{
-			yyVAL.else_if_list = nil
+			yyVAL.stmts = nil
 		}
 	case 86:
 		{
-			yyVAL.else_if_list = yyS[yypt-0].else_if_list
+			yyVAL.stmts = yyS[yypt-0].stmts
 		}
 	case 87:
 		{
-			yyVAL.else_if_list = []ast.Stmt{yyS[yypt-0].stmt}
+			yyVAL.stmts = []ast.Stmt{yyS[yypt-0].stmt}
 		}
 	case 88:
 		{
-			yyVAL.else_if_list = append(yyVAL.else_if_list, yyS[yypt-0].stmt)
+			yyVAL.stmts = append(yyVAL.stmts, yyS[yypt-0].stmt)
 		}
 	case 89:
 		{
@@ -2327,35 +2327,35 @@ yynewstate:
 		}
 	case 210:
 		{
-			yyS[yypt-0].expr_map_content.TypeData = yyS[yypt-1].type_data
-			yyVAL.expr = yyS[yypt-0].expr_map_content
-			yyVAL.expr.SetPosition(yyS[yypt-0].expr_map_content.Position())
+			yyS[yypt-0].expr_map.TypeData = yyS[yypt-1].type_data
+			yyVAL.expr = yyS[yypt-0].expr_map
+			yyVAL.expr.SetPosition(yyS[yypt-0].expr_map.Position())
 		}
 	case 211:
 		{
-			yyVAL.expr = yyS[yypt-0].expr_map_content
-			yyVAL.expr.SetPosition(yyS[yypt-0].expr_map_content.Position())
+			yyVAL.expr = yyS[yypt-0].expr_map
+			yyVAL.expr.SetPosition(yyS[yypt-0].expr_map.Position())
 		}
 	case 212:
 		{
-			yyVAL.expr_map_content = yyS[yypt-1].expr_map_content
+			yyVAL.expr_map = yyS[yypt-1].expr_map
 		}
 	case 213:
 		{
-			yyVAL.expr_map_content = &ast.MapExpr{}
+			yyVAL.expr_map = &ast.MapExpr{}
 		}
 	case 214:
 		{
-			yyVAL.expr_map_content = yyS[yypt-1].expr_map_content
+			yyVAL.expr_map = yyS[yypt-1].expr_map
 		}
 	case 215:
 		{
-			yyVAL.expr_map_content = &ast.MapExpr{Keys: []ast.Expr{yyS[yypt-0].exprs[0]}, Values: []ast.Expr{yyS[yypt-0].exprs[1]}}
+			yyVAL.expr_map = &ast.MapExpr{Keys: []ast.Expr{yyS[yypt-0].exprs[0]}, Values: []ast.Expr{yyS[yypt-0].exprs[1]}}
 		}
 	case 216:
 		{
-			yyVAL.expr_map_content.Keys = append(yyVAL.expr_map_content.Keys, yyS[yypt-0].exprs[0])
-			yyVAL.expr_map_content.Values = append(yyVAL.expr_map_content.Values, yyS[yypt-0].exprs[1])
+			yyVAL.expr_map.Keys = append(yyVAL.expr_map.Keys, yyS[yypt-0].exprs[0])
+			yyVAL.expr_map.Values = append(yyVAL.expr_map.Values, yyS[yypt-0].exprs[1])
 		}
 	case 217:
 		{

@@ -193,6 +193,8 @@ func decodeSingleStmt(r *Decoder) ast.Stmt {
 		return decodeContinueStmt(r)
 	case ReturnStmtBytecode:
 		return decodeReturnStmt(r)
+	case DbgStmtBytecode:
+		return decodeDbgStmt(r)
 	default:
 		panic(fmt.Sprintf("invalid (%d)", b))
 	}
@@ -367,6 +369,14 @@ func decodeContinueStmt(r *Decoder) *ast.ContinueStmt {
 	return out
 }
 
+func decodeDbgStmt(r *Decoder) *ast.DbgStmt {
+	out := &ast.DbgStmt{}
+	out.StmtImpl = decodeStmtImpl(r)
+	out.Expr = decodeExpr(r)
+	out.TypeData = decodeTypeStruct(r)
+	return out
+}
+
 func decodeReturnStmt(r *Decoder) *ast.ReturnStmt {
 	out := &ast.ReturnStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
@@ -425,8 +435,6 @@ func decodeExpr(r *Decoder) ast.Expr {
 		return decodeNilCoalescingOpExpr(r)
 	case LenExprBytecode:
 		return decodeLenExpr(r)
-	case DbgExprBytecode:
-		return decodeDbgExpr(r)
 	case MakeExprBytecode:
 		return decodeMakeExpr(r)
 	case MakeTypeExprBytecode:
@@ -596,14 +604,6 @@ func decodeLenExpr(r *Decoder) *ast.LenExpr {
 	out := &ast.LenExpr{}
 	out.ExprImpl = decodeExprImpl(r)
 	out.Expr = decodeExpr(r)
-	return out
-}
-
-func decodeDbgExpr(r *Decoder) *ast.DbgExpr {
-	out := &ast.DbgExpr{}
-	out.ExprImpl = decodeExprImpl(r)
-	out.Expr = decodeExpr(r)
-	out.TypeData = decodeTypeStruct(r)
 	return out
 }
 

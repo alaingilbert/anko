@@ -211,6 +211,8 @@ func encodeSingleStmt(w *Encoder, stmt ast.Stmt) {
 		encodeContinueStmt(w, stmt)
 	case *ast.ReturnStmt:
 		encodeReturnStmt(w, stmt)
+	case *ast.DbgStmt:
+		encodeDbgStmt(w, stmt)
 	default:
 		panic("failed")
 	}
@@ -369,6 +371,13 @@ func encodeReturnStmt(w *Encoder, stmt *ast.ReturnStmt) {
 	encodeExprArray(w, stmt.Exprs)
 }
 
+func encodeDbgStmt(w *Encoder, expr *ast.DbgStmt) {
+	encode(w, DbgStmtBytecode)
+	encodeStmtImpl(w, expr.StmtImpl)
+	encodeExpr(w, expr.Expr)
+	encodeTypeStruct(w, expr.TypeData)
+}
+
 func encodeExpr(w *Encoder, expr ast.Expr) {
 	//fmt.Println("encodeExpr", reflect.ValueOf(expr).String())
 	switch expr := expr.(type) {
@@ -412,8 +421,6 @@ func encodeExpr(w *Encoder, expr ast.Expr) {
 		encodeNilCoalescingOpExpr(w, expr)
 	case *ast.LenExpr:
 		encodeLenExpr(w, expr)
-	case *ast.DbgExpr:
-		encodeDbgExpr(w, expr)
 	case *ast.MakeExpr:
 		encodeMakeExpr(w, expr)
 	case *ast.MakeTypeExpr:
@@ -581,13 +588,6 @@ func encodeLenExpr(w *Encoder, expr *ast.LenExpr) {
 	encode(w, LenExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.Expr)
-}
-
-func encodeDbgExpr(w *Encoder, expr *ast.DbgExpr) {
-	encode(w, DbgExprBytecode)
-	encodeExprImpl(w, expr.ExprImpl)
-	encodeExpr(w, expr.Expr)
-	encodeTypeStruct(w, expr.TypeData)
 }
 
 func encodeMakeExpr(w *Encoder, expr *ast.MakeExpr) {

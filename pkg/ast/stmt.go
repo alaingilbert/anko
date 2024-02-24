@@ -26,6 +26,13 @@ type ExprStmt struct {
 	Expr Expr
 }
 
+// DbgStmt provide statement to debug anything
+type DbgStmt struct {
+	StmtImpl
+	Expr     Expr
+	TypeData *TypeStruct
+}
+
 // IfStmt provide "if/else" statement.
 type IfStmt struct {
 	StmtImpl

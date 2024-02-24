@@ -1,11 +1,14 @@
 package runner
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/alaingilbert/anko/pkg/ast"
 	envPkg "github.com/alaingilbert/anko/pkg/vm/env"
+	vmUtils "github.com/alaingilbert/anko/pkg/vm/utils"
 	"reflect"
+	"strconv"
 )
 
 // runSingleStmt executes one statement in the specified environment.
@@ -51,6 +54,8 @@ func runSingleStmt(vmp *VmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value
 		return runGoroutineStmt(vmp, env, stmt)
 	case *ast.DeferStmt:
 		return runDeferStmt(vmp, env, stmt)
+	case *ast.DbgStmt:
+		return invokeDbgStmt(vmp, env, stmt)
 	default:
 		return nilValue, newError(stmt, ErrUnknownStmt)
 	}
@@ -87,6 +92,85 @@ func runExprStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ExprStmt) (reflect.Va
 		return rv, newError(stmt.Expr, err)
 	}
 	return rv, nil
+}
+
+func invokeDbgStmt(vmp *VmParams, env envPkg.IEnv, e *ast.DbgStmt) (reflect.Value, error) {
+	if !vmp.DbgEnabled {
+		return nilValue, nil
+	}
+	if e.Expr == nil && e.TypeData == nil {
+		println(env.String())
+		return nilValue, nil
+	} else if e.Expr != nil {
+		val, err := invokeExpr(vmp, env, e.Expr)
+		if err != nil {
+			return nilValue, err
+		}
+		println(val.String())
+		return nilValue, nil
+	} else if e.TypeData != nil {
+		typeEnv, err := env.GetEnvFromPath(e.TypeData.Env)
+		if err != nil {
+			return nilValue, err
+		}
+		if rv, err := typeEnv.GetValue(e.TypeData.Name); err == nil {
+			if e, ok := rv.Interface().(*envPkg.Env); ok {
+				print(e.String())
+				return nilValue, nil
+			}
+			out := vmUtils.FormatValue(rv)
+			if rv.Kind() != reflect.Func {
+				out += fmt.Sprintf(" | %s", vmUtils.ReplaceInterface(reflect.TypeOf(rv.Interface()).String()))
+			}
+			println(out)
+			return nilValue, nil
+		}
+
+		rt, err := typeEnv.Type(e.TypeData.Name)
+		if err != nil {
+			return nilValue, err
+		}
+		if rt.Kind() == reflect.Interface {
+			nb := rt.NumMethod()
+			methodsArr := make([][]string, 0)
+			for i := 0; i < nb; i++ {
+				method := rt.Method(i)
+				methodsArr = append(methodsArr, []string{method.Name, method.Type.String()})
+			}
+			maxSymbolLen := sortAndMax(methodsArr)
+
+			buf := new(bytes.Buffer)
+			buf.WriteString("type " + rt.Name() + " interface {\n")
+			format := "    %-" + strconv.Itoa(maxSymbolLen) + "v %s\n"
+			for _, v := range methodsArr {
+				buf.WriteString(fmt.Sprintf(format, v[0], v[1]))
+			}
+			buf.WriteString("}")
+			println(buf.String())
+			return nilValue, nil
+		} else if rt.Kind() == reflect.Struct {
+			nb := rt.NumField()
+			fieldsArr := make([][]string, 0)
+			for i := 0; i < nb; i++ {
+				field := rt.Field(i)
+				fieldsArr = append(fieldsArr, []string{field.Name, field.Type.String()})
+			}
+			maxSymbolLen := sortAndMax(fieldsArr)
+
+			buf := new(bytes.Buffer)
+			buf.WriteString("type " + rt.Name() + " struct {\n")
+			format := "    %-" + strconv.Itoa(maxSymbolLen) + "v %s\n"
+			for _, v := range fieldsArr {
+				buf.WriteString(fmt.Sprintf(format, v[0], v[1]))
+			}
+			buf.WriteString("}")
+			println(buf.String())
+			return nilValue, nil
+		}
+		println(rt.String())
+		return nilValue, nil
+	}
+	return nilValue, nil
 }
 
 func runVarOrLetStmt[K any](vmp *VmParams, env envPkg.IEnv, exprs1 []K, exprs2 []ast.Expr,

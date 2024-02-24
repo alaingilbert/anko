@@ -1,6 +1,6 @@
 // Remaining reduce/reduce conflicts are:
 //     bin_op -> '*'
-//     expr_dbg -> '*' type_data     (`'*' type_data` conflicts with `binary operator '*'`)
+//     stmt_dbg -> '*' type_data     (`'*' type_data` conflicts with `binary operator '*'`)
 //     stmt_for -> IN                (`FOR ... IN ... {` conflicts with `expr IN expr`)
 
 %{
@@ -53,6 +53,8 @@ import (
 %type<stmt> stmt_select_case
 %type<stmt> stmt_select_default
 %type<stmt> stmt_select_opt_default
+%type<stmt> stmt_dbg
+%type<stmt> dbg_content
 
 %type<exprs> exprs
 %type<exprs> opt_exprs
@@ -73,8 +75,6 @@ import (
 %type<expr> expr_anon_call
 %type<expr> expr_item_or_slice
 %type<expr> expr_len
-%type<expr> expr_dbg
-%type<expr> dbg_content
 %type<expr> expr_new
 %type<expr> expr_make
 %type<expr> expr_map
@@ -223,6 +223,7 @@ stmt :
 	| stmt_go
 	| stmt_defer
 	| stmt_expr
+	| stmt_dbg
 
 expr :
 	expr_iterable
@@ -231,7 +232,6 @@ expr :
 	| expr_func
 	| expr_binary
 	| expr_len
-	| expr_dbg
 	| expr_new
 	| expr_make
 	| expr_opchan
@@ -651,7 +651,7 @@ opt_expr :
 	{ $$ = nil }
 	| expr { $$ = $1 }
 
-expr_dbg :
+stmt_dbg :
 	DBG '(' dbg_content ')'
 	{
 		$$ = $3
@@ -661,11 +661,11 @@ expr_dbg :
 dbg_content :
 	opt_expr
 	{
-		$$ = &ast.DbgExpr{Expr: $1}
+		$$ = &ast.DbgStmt{Expr: $1}
 	}
 	| type_data
 	{
-		$$ = &ast.DbgExpr{TypeData: $1}
+		$$ = &ast.DbgStmt{TypeData: $1}
 	}
 
 expr_len :

@@ -67,6 +67,10 @@ func getPos(pos ast.Pos) ast.Position {
 // newError makes error interface with message.
 // This doesn't overwrite last error.
 func newError(pos ast.Pos, err error) error {
+	var vmErr *Error
+	if errors.As(err, &vmErr) {
+		return err
+	}
 	return &Error{Message: err.Error(), Pos: getPos(pos), cause: err}
 }
 

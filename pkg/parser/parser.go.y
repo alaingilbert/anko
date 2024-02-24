@@ -129,6 +129,7 @@ import (
 %type<opt_ident> opt_ident
 %type<op_lets> op_lets
 %type<tok> const_expr
+%type<stmt_lets_helper> stmt_lets_helper
 
 %union{
 	stmtsStmt                       *ast.StmtsStmt
@@ -143,6 +144,7 @@ import (
 	func_expr_typed_ident           *ast.ParamExpr
 	func_expr_args                  struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}
 	expr_typed_ident                struct{Name string; TypeData *ast.TypeStruct}
+	stmt_lets_helper                struct{Exprs1, Exprs2 []ast.Expr; Typed, Mutable bool}
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
 	expr_map                        *ast.MapExpr
 	type_data                       *ast.TypeStruct
@@ -362,39 +364,34 @@ stmt_var :
 	}
 
 stmt_lets :
-	exprs op_lets exprs
+	stmt_lets_helper
 	{
+		lhs := $1.Exprs1
+		rhs := $1.Exprs2
 		isItem := false
-		if len($1) == 2 && len($3) == 1 {
-			if _, ok := $3[0].(*ast.ItemExpr); ok {
+		if len(lhs) == 2 && len(rhs) == 1 {
+			if _, ok := rhs[0].(*ast.ItemExpr); ok {
 				isItem = true
-				$$ = &ast.LetMapItemStmt{Lhss: $1, Rhs: $3[0]}
+				$$ = &ast.LetMapItemStmt{Lhss: lhs, Rhs: rhs[0]}
 			}
 		}
 		if !isItem {
-			$$ = &ast.LetsStmt{Lhss: $1, Operator: "=", Rhss: $3, Typed: $2}
-			if len($1) != len($3) && !(len($3) == 1 && len($1) > len($3)) {
+			$$ = &ast.LetsStmt{Lhss: lhs, Operator: "=", Rhss: rhs, Typed: $1.Typed, Mutable: $1.Mutable}
+			if len(lhs) != len(rhs) && !(len(rhs) == 1 && len(lhs) > len(rhs)) {
 				yylex.Error("unexpected ','")
 			}
 		}
-		$$.SetPosition($1[0].Position())
+		$$.SetPosition(lhs[0].Position())
+	}
+
+stmt_lets_helper :
+	exprs op_lets exprs
+	{
+		$$ = struct{Exprs1, Exprs2 []ast.Expr; Typed, Mutable bool}{Exprs1: $1, Exprs2: $3, Typed: $2, Mutable: false}
 	}
 	| MUT exprs WALRUS exprs
 	{
-		isItem := false
-		if len($2) == 2 && len($4) == 1 {
-			if _, ok := $4[0].(*ast.ItemExpr); ok {
-				isItem = true
-				$$ = &ast.LetMapItemStmt{Lhss: $2, Rhs: $4[0]}
-			}
-		}
-		if !isItem {
-			$$ = &ast.LetsStmt{Lhss: $2, Operator: "=", Rhss: $4, Typed: true, Mutable: true}
-			if len($2) != len($4) && !(len($4) == 1 && len($2) > len($4)) {
-				yylex.Error("unexpected ','")
-			}
-		}
-		$$.SetPosition($2[0].Position())
+		$$ = struct{Exprs1, Exprs2 []ast.Expr; Typed, Mutable bool}{Exprs1: $2, Exprs2: $4, Typed: true, Mutable: true}
 	}
 
 op_lets :

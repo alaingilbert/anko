@@ -95,6 +95,7 @@ import (
 
 %type<type_data> type_data
 %type<type_data> type_data_helper
+%type<type_data> type_data_idents
 %type<type_data> map_type
 %type<type_data> type_data_struct
 %type<type_data> typed_slice_count
@@ -964,12 +965,12 @@ expr_make :
 
 type_data : type_data_helper
 
-type_data_helper :
+type_data_idents :
 	IDENT
 	{
 		$$ = &ast.TypeStruct{Name: $1.Lit}
 	}
-	| type_data_helper '.' IDENT
+	| type_data_idents '.' IDENT
 	{
 		if $1.Kind != ast.TypeDefault {
 			yylex.Error("not type default")
@@ -977,6 +978,12 @@ type_data_helper :
 			$1.Env = append($1.Env, $1.Name)
 			$1.Name = $3.Lit
 		}
+	}
+
+type_data_helper :
+	type_data_idents
+	{
+		$$ = $1
 	}
 	| '*' type_data_helper
 	{

@@ -37,6 +37,8 @@ import (
 
 %type<stmt> else_if
 %type<stmt_switch_cases> stmt_switch_cases
+%type<stmt_switch_cases> switch_content
+%type<stmt_switch_cases> opt_switch_content
 %type<stmt_switch_cases> stmt_switch_cases_helper
 %type<stmt> stmt_switch_case
 %type<stmt> stmt_switch_default
@@ -501,19 +503,31 @@ stmt_select_default :
 	}
 
 stmt_switch :
-	SWITCH expr '{' opt_newlines stmt_switch_cases opt_newlines '}'
+	SWITCH expr '{' opt_switch_content '}'
 	{
-		$5.Expr = $2
-		$$ = $5
+		$4.Expr = $2
+		$$ = $4
 		$$.SetPosition($1.Position())
 	}
 
-stmt_switch_cases :
+opt_switch_content :
 	/* nothing */
 	{
 		$$ = &ast.SwitchStmt{}
 	}
-	| stmt_switch_cases_helper
+	| switch_content
+	{
+		$$ = $1
+	}
+
+switch_content :
+	opt_newlines stmt_switch_cases opt_newlines
+	{
+		$$ = $2
+	}
+
+stmt_switch_cases :
+	stmt_switch_cases_helper
 	{
 		$$ = $1
 	}

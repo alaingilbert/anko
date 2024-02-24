@@ -199,6 +199,8 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 	}
 	if stmt, ok := stmt.(*ast.StmtsStmt); ok {
 		if stmt != nil {
+			//by, _ := json.Marshal(stmt)
+			//fmt.Println(string(by))
 			value, err = e.Run(ctx, stmt)
 			if test.RunErrorFunc != nil {
 				(*test.RunErrorFunc)(t, err)

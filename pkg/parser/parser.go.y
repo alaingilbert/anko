@@ -41,6 +41,7 @@ import (
 %type<stmt> stmt_switch_case
 %type<stmt> stmt_switch_default
 %type<stmt_select_content> stmt_select_content
+%type<stmt_select_content> opt_stmt_select_content
 %type<stmt> stmt_select_case
 %type<stmt> stmt_select_default
 %type<stmt> stmt_select_opt_default
@@ -446,12 +447,18 @@ stmt_select :
 		$$.SetPosition($1.Position())
 	}
 
-stmt_select_content :
+opt_stmt_select_content :
 	/* nothing */
 	{
 		$$ = &ast.SelectBodyStmt{}
 	}
-	| opt_newlines opt_stmt_select_cases stmt_select_opt_default
+	| stmt_select_content
+	{
+		$$ = $1
+	}
+
+stmt_select_content :
+	opt_newlines opt_stmt_select_cases stmt_select_opt_default
 	{
 		$$ = &ast.SelectBodyStmt{Cases: $2, Default: $3}
 	}

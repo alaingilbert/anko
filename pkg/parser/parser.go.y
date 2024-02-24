@@ -97,6 +97,7 @@ import (
 %type<opt_func_return_expr_idents> opt_func_return_expr_idents1
 %type<opt_func_return_expr_idents> opt_func_return_expr_idents2
 %type<type_data> type_data
+%type<type_data> map_type
 %type<type_data> type_data_struct
 %type<slice_count> slice_count
 %type<type_data> typed_slice_count
@@ -973,9 +974,9 @@ type_data :
 	{
 		$$ = $1
 	}
-	| MAP '[' type_data ']' type_data
+	| map_type
 	{
-		$$ = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
+		$$ = $1
 	}
 	| CHAN type_data
 	{
@@ -989,6 +990,12 @@ type_data :
 	| STRUCT '{' opt_newlines type_data_struct opt_newlines '}'
 	{
 		$$ = $4
+	}
+
+map_type :
+	MAP '[' type_data ']' type_data
+	{
+		$$ = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
 	}
 
 type_data_struct :
@@ -1028,11 +1035,11 @@ expr_map :
 		$$ = $3
 		$$.SetPosition($1.Position())
 	}
-	| MAP '[' type_data ']' type_data '{' expr_map_content '}'
+	| map_type '{' expr_map_content '}'
 	{
-		$7.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
-		$$ = $7
-		$$.SetPosition($1.Position())
+		$3.TypeData = $1
+		$$ = $3
+		$$.SetPosition($3.Position())
 	}
 	| '{' expr_map_content '}'
 	{

@@ -95,6 +95,7 @@ import (
 %type<str> op_assoc1
 
 %type<type_data> type_data
+%type<type_data> type_data_helper
 %type<type_data> map_type
 %type<type_data> type_data_struct
 %type<type_data> typed_slice_count
@@ -962,12 +963,14 @@ expr_make :
 		$$.SetPosition($1.Position())
 	}
 
-type_data :
+type_data : type_data_helper
+
+type_data_helper :
 	IDENT
 	{
 		$$ = &ast.TypeStruct{Name: $1.Lit}
 	}
-	| type_data '.' IDENT
+	| type_data_helper '.' IDENT
 	{
 		if $1.Kind != ast.TypeDefault {
 			yylex.Error("not type default")
@@ -976,7 +979,7 @@ type_data :
 			$1.Name = $3.Lit
 		}
 	}
-	| '*' type_data
+	| '*' type_data_helper
 	{
 		if $2.Kind == ast.TypeDefault {
 			$2.Kind = ast.TypePtr
@@ -993,7 +996,7 @@ type_data :
 	{
 		$$ = $1
 	}
-	| CHAN type_data
+	| CHAN type_data_helper
 	{
 		if $2.Kind == ast.TypeDefault {
 			$2.Kind = ast.TypeChan

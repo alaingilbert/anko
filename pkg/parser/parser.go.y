@@ -102,6 +102,7 @@ import (
 %type<slice_count> slice_count
 %type<type_data> typed_slice_count
 %type<expr_map_content> expr_map_content
+%type<expr_map_content> expr_map_container
 %type<expr_map_content> expr_map_content_helper
 %type<exprs> expr_map_key_value
 %type<expr> slice
@@ -1029,16 +1030,22 @@ slice_count :
 	| '[' ']' slice_count { $$ = $3 + 1 }
 
 expr_map :
-	map_type '{' expr_map_content '}'
+	map_type expr_map_container
 	{
-		$3.TypeData = $1
-		$$ = $3
-		$$.SetPosition($3.Position())
-	}
-	| '{' expr_map_content '}'
-	{
+		$2.TypeData = $1
 		$$ = $2
 		$$.SetPosition($2.Position())
+	}
+	| expr_map_container
+	{
+		$$ = $1
+		$$.SetPosition($1.Position())
+	}
+
+expr_map_container :
+	'{' expr_map_content '}'
+	{
+		$$ = $2
 	}
 
 expr_map_content :

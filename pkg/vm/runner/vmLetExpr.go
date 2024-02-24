@@ -26,10 +26,11 @@ func invokeLetExpr(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt, expr ast.
 }
 
 func invokeLetIdentExpr(env envPkg.IEnv, rv reflect.Value, stmt *ast.LetsStmt, lhs *ast.IdentExpr) (vv reflect.Value, err error) {
-	if env.HasValue(lhs.Lit) && stmt.Typed {
+	stmtTyped := stmt.Typed
+	if env.HasValue(lhs.Lit) && stmtTyped {
 		return nilValue, newErrorf(lhs, "already defined symbol '%s'", lhs.Lit)
 	}
-	if stmt.Typed {
+	if stmtTyped {
 		rv = reflect.ValueOf(&vmUtils.StronglyTyped{V: rv})
 	}
 	if err := env.SetValue(lhs.Lit, rv); err != nil {

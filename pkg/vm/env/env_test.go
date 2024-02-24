@@ -1376,7 +1376,7 @@ func TestHasValue(t *testing.T) {
 	_ = env.Define("a", 123)
 	assert.True(t, env.HasValue("a"))
 	newenv := env.newEnv()
-	assert.False(t, newenv.HasValue("a"))
+	assert.True(t, newenv.HasValue("a"))
 	_ = newenv.Define("a", 456)
 	assert.True(t, newenv.HasValue("a"))
 }

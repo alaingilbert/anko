@@ -136,7 +136,7 @@ func (e *Env) Get(k string) (any, error) { return e.get(k) }
 
 func (e *Env) GetValue(k string) (reflect.Value, error) { return e.getValue(k) }
 
-// HasValue returns either or not the key is present in our env values
+// HasValue returns either or not the key is present in our env values or any parent env
 func (e *Env) HasValue(k string) bool { return e.hasValue(k) }
 
 //func (e *Env) Set(k string, v any) error { return e.set(k, v) }
@@ -464,7 +464,13 @@ func (e *Env) getValue(k string) (reflect.Value, error) {
 }
 
 func (e *Env) hasValue(k string) bool {
-	return e.values.ContainsKey(k)
+	if e.values.ContainsKey(k) {
+		return true
+	}
+	if e.parent != nil {
+		return e.parent.hasValue(k)
+	}
+	return false
 }
 
 // Set modifies value which specified as symbol. It goes to upper scope until

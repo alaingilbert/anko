@@ -155,7 +155,7 @@ import (
 %token<tok> IDENT NUMBER STRING ARRAY VARARG FUNC RETURN VAR THROW IF ELSE FOR LOOP IN EQEQ NEQ GE LE OROR ANDAND NEW
             TRUE FALSE NIL NILCOALESCE MODULE TRY CATCH FINALLY PLUSEQ MINUSEQ MULEQ DIVEQ ANDEQ OREQ BREAK
             CONTINUE PLUSPLUS MINUSMINUS POW SHIFTLEFT SHIFTRIGHT SWITCH SELECT CASE DEFAULT GO DEFER CHAN MAKE
-            OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG WALRUS
+            OPCHAN TYPE LEN DELETE CLOSE MAP STRUCT DBG WALRUS EMPTYARR
 
 /* lowest precedence */
 %left POW
@@ -682,7 +682,7 @@ expr_paren :
 	}
 
 expr_array :
-	'[' ']'
+	EMPTYARR
 	{
 		$$ = &ast.ArrayExpr{}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
@@ -1043,8 +1043,8 @@ typed_slice_count :
 	}
 
 slice_count :
-	  '[' ']'             { $$ = 1      }
-	| '[' ']' slice_count { $$ = $3 + 1 }
+	  EMPTYARR            { $$ = 1      }
+	| EMPTYARR slice_count { $$ = $2 + 1 }
 
 expr_map :
 	map_type expr_map_container

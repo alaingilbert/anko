@@ -331,7 +331,17 @@ retry:
 				tok = int(ch)
 				lit = string(ch)
 			}
-		case '\n', '(', ')', ';', '%', '{', '}', '[', ']', ',', '^':
+		case '[':
+			s.next()
+			if s.peek() == ']' {
+				tok = EMPTYARR
+				lit = "[]"
+			} else {
+				s.back()
+				tok = int(ch)
+				lit = string(ch)
+			}
+		case '\n', '(', ')', ';', '%', '{', '}', ']', ',', '^':
 			tok = int(ch)
 			lit = string(ch)
 		default:

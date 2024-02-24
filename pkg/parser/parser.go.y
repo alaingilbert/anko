@@ -36,11 +36,12 @@ import (
 %type<stmt> maybe_else
 
 %type<stmt> else_if
-%type<stmt_switch_cases> stmt_switch_cases
-%type<stmt_switch_cases> switch_content
-%type<stmt_switch_cases> opt_switch_content
-%type<stmt_switch_cases> stmt_switch_cases_helper
+%type<else_if_list> opt_stmt_switch_cases
+%type<else_if_list> stmt_switch_cases
+%type<stmt> switch_content
+%type<stmt> opt_switch_content
 %type<stmt> stmt_switch_case
+%type<stmt> stmt_switch_opt_default
 %type<stmt> stmt_switch_default
 %type<stmt_select_content> stmt_select_content
 %type<stmt> stmt_select_case
@@ -118,7 +119,6 @@ import (
 	expr                            ast.Expr
 	exprs                           []ast.Expr
 	else_if_list                    []ast.Stmt
-	stmt_switch_cases               *ast.SwitchStmt
 	stmt_select_content             *ast.SelectBodyStmt
 	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
 	expr_idents                     []string
@@ -494,7 +494,7 @@ stmt_select_default :
 stmt_switch :
 	SWITCH expr '{' opt_switch_content '}'
 	{
-		$4.Expr = $2
+		$4.(*ast.SwitchStmt).Expr = $2
 		$$ = $4
 		$$.SetPosition($1.Position())
 	}
@@ -510,51 +510,40 @@ opt_switch_content :
 	}
 
 switch_content :
-	opt_newlines stmt_switch_cases opt_newlines
+	opt_newlines opt_stmt_switch_cases stmt_switch_opt_default
 	{
-		$$ = $2
+		$$ = &ast.SwitchStmt{Cases: $2, Default: $3}
+	}
+
+opt_stmt_switch_cases :
+	/* nothing */
+	{ $$ = nil }
+	| stmt_switch_cases
+	{
+		$$ = $1
 	}
 
 stmt_switch_cases :
-	stmt_switch_cases_helper
+	stmt_switch_case
 	{
-		$$ = $1
+		$$ = []ast.Stmt{$1}
 	}
-
-stmt_switch_cases_helper :
-	stmt_switch_default
+	| stmt_switch_cases stmt_switch_case
 	{
-		$$ = &ast.SwitchStmt{Default: $1}
+		$$ = append($$, $2)
 	}
-	| stmt_switch_case
-	{
-		$$ = &ast.SwitchStmt{Cases: []ast.Stmt{$1}}
-	}
-	| stmt_switch_cases_helper stmt_switch_case
-	{
-		$1.Cases = append($1.Cases, $2)
-		$$ = $1
-	}
-	| stmt_switch_cases_helper stmt_switch_default
-	{
-		if $1.Default != nil {
-			yylex.Error("multiple default statement")
-		}
-		$1.Default = $2
-	}
-
 
 stmt_switch_case :
-	CASE expr ':' compstmt
-	{
-		$$ = &ast.SwitchCaseStmt{Exprs: []ast.Expr{$2}, Stmt: $4}
-		$$.SetPosition($1.Position())
-	}
-	| CASE opt_exprs ':' compstmt
+	CASE opt_exprs ':' compstmt
 	{
 		$$ = &ast.SwitchCaseStmt{Exprs: $2, Stmt: $4}
 		$$.SetPosition($1.Position())
 	}
+
+stmt_switch_opt_default :
+	/* nothing */
+	{ $$ = nil }
+	| stmt_switch_default { $$ = $1 }
 
 stmt_switch_default :
 	DEFAULT ':' compstmt

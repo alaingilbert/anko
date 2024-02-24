@@ -39,7 +39,6 @@ import (
 %type<else_if_list> opt_stmt_switch_cases
 %type<else_if_list> stmt_switch_cases
 %type<stmt> switch_content
-%type<stmt> opt_switch_content
 %type<stmt> stmt_switch_case
 %type<stmt> stmt_switch_opt_default
 %type<stmt> stmt_switch_default
@@ -492,21 +491,11 @@ stmt_select_default :
 	}
 
 stmt_switch :
-	SWITCH expr '{' opt_switch_content '}'
+	SWITCH expr '{' switch_content '}'
 	{
 		$4.(*ast.SwitchStmt).Expr = $2
 		$$ = $4
 		$$.SetPosition($1.Position())
-	}
-
-opt_switch_content :
-	/* nothing */
-	{
-		$$ = &ast.SwitchStmt{}
-	}
-	| switch_content
-	{
-		$$ = $1
 	}
 
 switch_content :

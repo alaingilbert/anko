@@ -1029,13 +1029,7 @@ slice_count :
 	| '[' ']' slice_count { $$ = $3 + 1 }
 
 expr_map :
-	MAP '{' expr_map_content '}'
-	{
-		$3.TypeData = &ast.TypeStruct{Kind: ast.TypeMap, Key: &ast.TypeStruct{Name: "interface"}, SubType: &ast.TypeStruct{Name: "interface"}}
-		$$ = $3
-		$$.SetPosition($1.Position())
-	}
-	| map_type '{' expr_map_content '}'
+	map_type '{' expr_map_content '}'
 	{
 		$3.TypeData = $1
 		$$ = $3

@@ -463,16 +463,6 @@ for_content :
 		$$ = &ast.CForStmt{Stmt1: $1, Expr2: $3, Expr3: $5}
 	}
 
-expr_for_idents :
-	IDENT
-	{
-		$$ = []string{$1.Lit}
-	}
-	| IDENT ',' IDENT
-	{
-		$$ = []string{$1.Lit, $3.Lit}
-	}
-
 stmt_select :
 	SELECT '{' stmt_select_content '}'
 	{
@@ -781,13 +771,6 @@ const_expr : TRUE | FALSE | NIL
 expr_member_or_ident :
 	expr_ident
 	| expr_member
-
-expr_ident :
-	IDENT
-	{
-		$$ = &ast.IdentExpr{Lit: $1.Lit}
-		$$.SetPosition($1.Position())
-	}
 
 expr_typed_ident :
 	expr_ident type_data
@@ -1144,6 +1127,16 @@ slice :
 	|      ':' expr { $$ = &ast.SliceExpr{Begin: nil, End: $2} }
 	| expr          { $$ = &ast.ItemExpr{Index: $1}            }
 
+expr_for_idents :
+	IDENT
+	{
+		$$ = []string{$1.Lit}
+	}
+	| IDENT ',' IDENT
+	{
+		$$ = []string{$1.Lit, $3.Lit}
+	}
+
 expr_idents :
 	expr_ident
 	{
@@ -1152,6 +1145,13 @@ expr_idents :
 	| expr_idents comma_opt_newlines expr_ident
 	{
 		$$ = append($1, $3.(*ast.IdentExpr).Lit)
+	}
+
+expr_ident :
+	IDENT
+	{
+		$$ = &ast.IdentExpr{Lit: $1.Lit}
+		$$.SetPosition($1.Position())
 	}
 
 opt_term :

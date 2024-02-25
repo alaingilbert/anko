@@ -187,3 +187,25 @@ a(3) // 4
 	// 3
 	// 4
 }
+
+func Example_vmDbg() {
+	v := vm.New(nil)
+
+	err := v.Define("println", fmt.Println)
+	if err != nil {
+		log.Fatalf("define error: %v\n", err)
+	}
+
+	script := `
+dbg()
+`
+
+	_, err = v.Executor(nil).Run(nil, script)
+	if err != nil {
+		log.Fatalf("execute error: %v\n", err)
+	}
+
+	// output:
+	// No parent
+	// println = func([]any) (int, error)
+}

@@ -99,14 +99,14 @@ func invokeDbgStmt(vmp *VmParams, env envPkg.IEnv, e *ast.DbgStmt) (reflect.Valu
 		return nilValue, nil
 	}
 	if e.Expr == nil && e.TypeData == nil {
-		println(env.String())
+		fmt.Println(env.String())
 		return nilValue, nil
 	} else if e.Expr != nil {
 		val, err := invokeExpr(vmp, env, e.Expr)
 		if err != nil {
 			return nilValue, err
 		}
-		println(val.String())
+		fmt.Println(val.String())
 		return nilValue, nil
 	} else if e.TypeData != nil {
 		typeEnv, err := env.GetEnvFromPath(e.TypeData.Env)
@@ -115,14 +115,14 @@ func invokeDbgStmt(vmp *VmParams, env envPkg.IEnv, e *ast.DbgStmt) (reflect.Valu
 		}
 		if rv, err := typeEnv.GetValue(e.TypeData.Name); err == nil {
 			if e, ok := rv.Interface().(*envPkg.Env); ok {
-				print(e.String())
+				fmt.Print(e.String())
 				return nilValue, nil
 			}
 			out := vmUtils.FormatValue(rv)
 			if rv.Kind() != reflect.Func {
 				out += fmt.Sprintf(" | %s", vmUtils.ReplaceInterface(reflect.TypeOf(rv.Interface()).String()))
 			}
-			println(out)
+			fmt.Println(out)
 			return nilValue, nil
 		}
 
@@ -146,7 +146,7 @@ func invokeDbgStmt(vmp *VmParams, env envPkg.IEnv, e *ast.DbgStmt) (reflect.Valu
 				buf.WriteString(fmt.Sprintf(format, v[0], v[1]))
 			}
 			buf.WriteString("}")
-			println(buf.String())
+			fmt.Println(buf.String())
 			return nilValue, nil
 		} else if rt.Kind() == reflect.Struct {
 			nb := rt.NumField()
@@ -164,10 +164,10 @@ func invokeDbgStmt(vmp *VmParams, env envPkg.IEnv, e *ast.DbgStmt) (reflect.Valu
 				buf.WriteString(fmt.Sprintf(format, v[0], v[1]))
 			}
 			buf.WriteString("}")
-			println(buf.String())
+			fmt.Println(buf.String())
 			return nilValue, nil
 		}
-		println(rt.String())
+		fmt.Println(rt.String())
 		return nilValue, nil
 	}
 	return nilValue, nil

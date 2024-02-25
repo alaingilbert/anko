@@ -404,6 +404,13 @@ func decodeIncludeExpr(r *Decoder) *ast.IncludeExpr {
 	return out
 }
 
+func decodeExprsExpr(r *Decoder) *ast.ExprsExpr {
+	out := &ast.ExprsExpr{}
+	out.ExprImpl = decodeExprImpl(r)
+	out.Exprs = r.readExprArray()
+	return out
+}
+
 func decodeExpr(r *Decoder) ast.Expr {
 	b := r.readBytecode()
 	switch b {
@@ -465,6 +472,8 @@ func decodeExpr(r *Decoder) ast.Expr {
 		return decodeCallExpr(r)
 	case IncludeExprBytecode:
 		return decodeIncludeExpr(r)
+	case ExprsExprBytecode:
+		return decodeExprsExpr(r)
 	default:
 		panic(fmt.Sprintf("invalid (%d)", b))
 	}

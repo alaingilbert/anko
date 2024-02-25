@@ -450,6 +450,8 @@ func encodeExpr(w *Encoder, expr ast.Expr) {
 		encodeDeleteExpr(w, expr)
 	case *ast.IncludeExpr:
 		encodeIncludeExpr(w, expr)
+	case *ast.ExprsExpr:
+		encodeExprsExpr(w, expr)
 	default:
 		fmt.Println("encodeExpr", reflect.ValueOf(expr).String())
 		panic("failed")
@@ -721,4 +723,10 @@ func encodeIncludeExpr(w *Encoder, expr *ast.IncludeExpr) {
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExpr(w, expr.ItemExpr)
 	encodeExpr(w, expr.ListExpr)
+}
+
+func encodeExprsExpr(w *Encoder, expr *ast.ExprsExpr) {
+	encode(w, ExprsExprBytecode)
+	encodeExprImpl(w, expr.ExprImpl)
+	encodeExprArray(w, expr.Exprs)
 }

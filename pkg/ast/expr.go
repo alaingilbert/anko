@@ -30,6 +30,12 @@ type StringExpr struct {
 	Lit string
 }
 
+// ExprsExpr ...
+type ExprsExpr struct {
+	ExprImpl
+	Exprs []Expr
+}
+
 // ArrayExpr provide Array expression.
 type ArrayExpr struct {
 	ExprImpl

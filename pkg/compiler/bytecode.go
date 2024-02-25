@@ -68,6 +68,7 @@ const (
 	ConstExprBytecode      bytecode = 104
 	DbgStmtBytecode        bytecode = 108
 	LabelStmtBytecode      bytecode = 109
+	ExprsExprBytecode      bytecode = 110
 )
 
 // String ...

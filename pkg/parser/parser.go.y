@@ -95,6 +95,7 @@ import (
 %type<type_data> type_data
 %type<type_data> type_data_helper
 %type<type_data> type_data_idents
+%type<type_data> pointer_type
 %type<type_data> map_type
 %type<type_data> type_data_struct
 %type<type_data> type_struct_content
@@ -990,12 +991,8 @@ type_data_idents :
 		}
 	}
 
-type_data_helper :
-	type_data_idents
-	{
-		$$ = $1
-	}
-	| '*' type_data_helper
+pointer_type :
+	'*' type_data_helper
 	{
 		if $2.Kind == ast.TypeDefault {
 			$2.Kind = ast.TypePtr
@@ -1003,6 +1000,16 @@ type_data_helper :
 		} else {
 			$$ = &ast.TypeStruct{Kind: ast.TypePtr, SubType: $2}
 		}
+	}
+
+type_data_helper :
+	type_data_idents
+	{
+		$$ = $1
+	}
+	| pointer_type
+	{
+		$$ = $1
 	}
 	| typed_slice_count
 	{

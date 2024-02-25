@@ -259,7 +259,6 @@ func encodeIfStmt(w *Encoder, stmt *ast.IfStmt) {
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.If)
 	encodeSingleStmt(w, stmt.Then)
-	encodeStmtArray(w, stmt.ElseIf)
 	encodeSingleStmt(w, stmt.Else)
 }
 

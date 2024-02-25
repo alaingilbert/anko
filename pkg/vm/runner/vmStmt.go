@@ -288,28 +288,6 @@ func runIfStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.IfStmt) (reflect.Value,
 		}
 	}
 
-	for _, statement := range stmt.ElseIf {
-		elseIf := statement.(*ast.IfStmt)
-		// else if - if
-		rv, err = invokeExprFn(env, elseIf.If)
-		if err != nil {
-			return rv, newError(elseIf.If, err)
-		}
-		if !toBool(rv) && !validate {
-			continue
-		}
-
-		// else if - then
-		rv, err = runStmtFn(env, elseIf.Then)
-		if err != nil {
-			return rv, newError(elseIf, err)
-		}
-
-		if !validate {
-			return rv, nil
-		}
-	}
-
 	if stmt.Else != nil {
 		// else
 		rv, err = runStmtFn(env, stmt.Else)

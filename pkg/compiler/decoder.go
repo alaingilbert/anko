@@ -247,7 +247,6 @@ func decodeIfStmt(r *Decoder) *ast.IfStmt {
 	out.StmtImpl = decodeStmtImpl(r)
 	out.If = decodeExpr(r)
 	out.Then = decodeSingleStmt(r)
-	out.ElseIf = r.readStmtArray()
 	out.Else = decodeSingleStmt(r)
 	return out
 }

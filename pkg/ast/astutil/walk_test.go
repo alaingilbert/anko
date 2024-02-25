@@ -259,8 +259,6 @@ func TestErrors(t *testing.T) {
 	assert.Error(t, err)
 	err = walkStmt(&ast.IfStmt{Then: errStmt}, fn, 0)
 	assert.Error(t, err)
-	err = walkStmt(&ast.IfStmt{ElseIf: []ast.Stmt{errStmt}}, fn, 0)
-	assert.Error(t, err)
 	err = walkStmt(&ast.IfStmt{Else: errStmt}, fn, 0)
 	assert.Error(t, err)
 	err = walkStmt(&ast.TryStmt{Try: errStmt}, fn, 0)

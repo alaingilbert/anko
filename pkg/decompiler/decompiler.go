@@ -183,16 +183,6 @@ func decompileIfStmt(w *bytes.Buffer, prefix string, s *ast.IfStmt, deep int) {
 	decompileExpr(w, s.If, 0)
 	w.WriteString(" {\n")
 	decompileStmt(w, s.Then, deep+1)
-	if len(s.ElseIf) > 0 {
-		for _, s := range s.ElseIf {
-			if s, ok := s.(*ast.IfStmt); ok {
-				w.WriteString(prefix + "} else if ")
-				decompileExpr(w, s.If, 0)
-				w.WriteString(" {\n")
-				decompileStmt(w, s.Then, deep+1)
-			}
-		}
-	}
 	if s.Else != nil {
 		w.WriteString(prefix + "} else {\n")
 		decompileStmt(w, s.Else, deep+1)

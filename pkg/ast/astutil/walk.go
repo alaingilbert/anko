@@ -88,9 +88,6 @@ func walkStmt(stmt ast.Stmt, f WalkFunc, deep int) error {
 		if err := WalkHelper(stmt.Then, f, deep); err != nil {
 			return err
 		}
-		if err := walkStmts(stmt.ElseIf, f, deep); err != nil {
-			return err
-		}
 		if err := WalkHelper(stmt.Else, f, deep); err != nil {
 			return err
 		}

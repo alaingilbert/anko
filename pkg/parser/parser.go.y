@@ -14,7 +14,6 @@ import (
 
 %type<stmtsStmt> stmtsStmt
 
-%type<stmts> else_if_list
 %type<stmts> stmt_select_cases
 %type<stmts> opt_stmt_select_cases
 %type<stmts> opt_stmt_switch_cases
@@ -45,7 +44,6 @@ import (
 %type<stmt> opt_stmt_var_or_lets
 %type<stmt> opt_finally
 %type<stmt> maybe_else
-%type<stmt> else_if
 %type<stmt> switch_content
 %type<stmt> stmt_switch_case
 %type<stmt> stmt_switch_opt_default
@@ -391,29 +389,15 @@ op_lets :
 	| '='  { $$ = false }
 
 stmt_if :
-	IF expr block else_if_list maybe_else
+	IF expr block maybe_else
 	{
-		$$ = &ast.IfStmt{If: $2, Then: $3, ElseIf: $4, Else: $5}
+		$$ = &ast.IfStmt{If: $2, Then: $3, Else: $4}
 		$$.SetPosition($1.Position())
-	}
-
-else_if_list :
-	/* nothing */
-	{ $$ = []ast.Stmt{} }
-	| else_if_list else_if
-	{
-		$1 = append($1, $2)
-		$$ = $1
-	}
-
-else_if :
-	ELSE IF expr block
-	{
-		$$ = &ast.IfStmt{If: $3, Then: $4}
 	}
 
 maybe_else :
 	/* nothing */   { $$ = nil }
+	| ELSE stmt_if  { $$ = $2  }
 	| ELSE block    { $$ = $2  }
 
 stmt_loop :

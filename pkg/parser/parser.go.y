@@ -529,15 +529,10 @@ stmt_switch_opt_default :
 	| stmt_switch_default { $$ = $1 }
 
 stmt_switch_default :
-	DEFAULT ':' compstmt
-	{
-		$$ = $3
-	}
+	DEFAULT ':' compstmt { $$ = $3 }
 
 opt_func_return_expr_idents :
-	{
-		$$ = nil
-	}
+	{ $$ = nil }
 	| type
 	{
 		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $1}}
@@ -612,14 +607,8 @@ opt_exprs :
 	| exprs       { $$ = $1  }
 
 exprs :
-	expr
-	{
-		$$ = []ast.Expr{$1}
-	}
-	| exprs comma_opt_newlines expr
-	{
-		$$ = append($1, $3)
-	}
+	  expr                          { $$ = []ast.Expr{$1} }
+	| exprs comma_opt_newlines expr { $$ = append($1, $3) }
 
 opt_expr :
 	/* nothing */ { $$ = nil }

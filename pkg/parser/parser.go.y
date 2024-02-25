@@ -130,6 +130,7 @@ import (
 %type<expr_typed_ident> expr_typed_ident
 %type<opt_ident> opt_ident
 %type<op_lets> op_lets
+%type<tok> package_name
 %type<tok> const_expr
 %type<stmt_lets_helper> stmt_lets_helper
 
@@ -985,19 +986,16 @@ type_data :
 	| channel_type
 	| struct_type
 
+package_name: IDENT
+
 type_data_idents :
 	IDENT
 	{
 		$$ = &ast.TypeStruct{Name: $1.Lit}
 	}
-	| type_data_idents '.' IDENT
+	| package_name '.' IDENT
 	{
-		if $1.Kind != ast.TypeDefault {
-			yylex.Error("not type default")
-		} else {
-			$1.Env = append($1.Env, $1.Name)
-			$1.Name = $3.Lit
-		}
+		$$ =  &ast.TypeStruct{Env: []string{$1.Lit}, Name: $3.Lit}
 	}
 
 pointer_type :

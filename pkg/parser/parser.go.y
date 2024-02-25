@@ -430,12 +430,8 @@ else_if :
 	}
 
 maybe_else :
-	/* nothing */
-	{ $$ = nil }
-	| ELSE block
-	{
-		$$ = $2
-	}
+	  /* nothing */ { $$ = nil }
+	| ELSE block    { $$ = $2  }
 
 stmt_loop :
 	LOOP block
@@ -490,12 +486,8 @@ stmt_select_content :
 	}
 
 opt_stmt_select_cases :
-	/* nothing */
-	{ $$ = nil }
-	| stmt_select_cases
-	{
-		$$ = $1
-	}
+	  /* nothing */     { $$ = nil }
+	| stmt_select_cases { $$ = $1  }
 
 stmt_select_cases :
 	stmt_select_case
@@ -840,7 +832,7 @@ expr_call_helper :
 	}
 
 unary_op :
-	'-'   { $$ = "-" }
+	  '-' { $$ = "-" }
 	| '!' { $$ = "!" }
 	| '^' { $$ = "^" }
 	| '*' { $$ = "*" }
@@ -864,7 +856,7 @@ expr_unary :
 	}
 
 bin_op :
-	'+'           { $$ = "+"  }
+	  '+'         { $$ = "+"  }
 	| '-'         { $$ = "-"  }
 	| '*'         { $$ = "*"  }
 	| '/'         { $$ = "/"  }
@@ -1076,7 +1068,7 @@ typed_slice_count :
 	}
 
 slice_count :
-	  EMPTYARR            { $$ = 1      }
+	  EMPTYARR             { $$ = 1      }
 	| EMPTYARR slice_count { $$ = $2 + 1 }
 
 expr_map :

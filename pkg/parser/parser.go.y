@@ -82,7 +82,6 @@ import (
 %type<expr> expr_close
 %type<expr> expr_delete
 %type<expr> expr_iterable
-%type<expr> expr_no_idents
 %type<expr> expr_member
 %type<expr> expr_ident
 %type<expr> expr_literals_helper
@@ -248,24 +247,6 @@ expr_iterable :
 	| expr_anon_call
 	| expr_call
 	| expr_member_or_ident
-	| expr_item_or_slice
-	| expr_ternary
-
-expr_no_idents :
-	expr_literals
-	| expr_unary
-	| expr_func
-	| expr_binary
-	| expr_len
-	| expr_new
-	| expr_make
-	| expr_opchan
-	| expr_close
-	| expr_delete
-	| expr_paren
-	| expr_array
-	| expr_anon_call
-	| expr_call
 	| expr_item_or_slice
 	| expr_ternary
 
@@ -687,11 +668,7 @@ stmt_dbg :
 	}
 
 dbg_content :
-	expr_no_idents
-	{
-		$$ = &ast.DbgStmt{Expr: $1}
-	}
-	| type_data
+	type_data
 	{
 		$$ = &ast.DbgStmt{TypeData: $1}
 	}

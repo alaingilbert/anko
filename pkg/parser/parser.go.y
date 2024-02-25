@@ -101,7 +101,6 @@ import (
 %type<type_data> typed_slice_count
 
 %type<expr_idents> expr_idents
-%type<expr_idents> expr_for_idents
 
 %type<expr_call_helper> expr_call_helper
 
@@ -453,9 +452,13 @@ for_content :
 	{
 		$$ = &ast.LoopStmt{Expr: $1}
 	}
-	| expr_for_idents IN expr_iterable
+	| IDENT IN expr_iterable
 	{
-		$$ = &ast.ForStmt{Vars: $1, Value: $3}
+		$$ = &ast.ForStmt{Vars: []string{$1.Lit}, Value: $3}
+	}
+	| IDENT ',' IDENT IN expr_iterable
+	{
+		$$ = &ast.ForStmt{Vars: []string{$1.Lit, $3.Lit}, Value: $5}
 	}
 	| opt_stmt_var_or_lets ';' opt_expr ';' opt_expr
 	{
@@ -1126,16 +1129,6 @@ slice :
 	| expr ':'      { $$ = &ast.SliceExpr{Begin: $1, End: nil} }
 	|      ':' expr { $$ = &ast.SliceExpr{Begin: nil, End: $2} }
 	| expr          { $$ = &ast.ItemExpr{Index: $1}            }
-
-expr_for_idents :
-	IDENT
-	{
-		$$ = []string{$1.Lit}
-	}
-	| IDENT ',' IDENT
-	{
-		$$ = []string{$1.Lit, $3.Lit}
-	}
 
 expr_idents :
 	expr_ident

@@ -978,6 +978,14 @@ expr_make :
 
 type_data : type_data_helper
 
+type_data_helper :
+	type_data_idents
+	| pointer_type
+	| typed_slice_count
+	| map_type
+	| channel_type
+	| struct_type
+
 type_data_idents :
 	IDENT
 	{
@@ -1003,14 +1011,6 @@ pointer_type :
 			$$ = &ast.TypeStruct{Kind: ast.TypePtr, SubType: $2}
 		}
 	}
-
-type_data_helper :
-	type_data_idents
-	| pointer_type
-	| typed_slice_count
-	| map_type
-	| channel_type
-	| struct_type
 
 struct_type :
 	STRUCT '{' type_struct_content '}'

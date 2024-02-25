@@ -1,5 +1,7 @@
 // Remaining reduce/reduce conflicts are:
 //     stmt_dbg -> '*' type_data     (`'*' type_data` conflicts with `binary operator '*'`)
+//
+// https://gitlab.com/cznic/gc/-/blob/20cf7bee948948b44142f2a04eff623012069407/v3/internal/ebnf/spec.ebnf
 
 %{
 package parser

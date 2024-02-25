@@ -95,6 +95,8 @@ import (
 %type<str> op_assoc1
 
 %type<type_data> type
+%type<type_data> key_type
+%type<type_data> element_type
 %type<type_data> type_lit
 %type<type_data> qualified_ident
 %type<type_data> type_name
@@ -1031,8 +1033,12 @@ channel_type :
 		}
 	}
 
+key_type : type
+
+element_type : type
+
 map_type :
-	MAP '[' type ']' type
+	MAP '[' key_type ']' element_type
 	{
 		$$ = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
 	}

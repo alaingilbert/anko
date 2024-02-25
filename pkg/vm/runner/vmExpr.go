@@ -94,6 +94,8 @@ func invokeNumberExpr(_ *VmParams, env envPkg.IEnv, e *ast.NumberExpr) (reflect.
 	var err error
 	if strings.HasPrefix(e.Lit, "0x") {
 		i, err = strconv.ParseInt(e.Lit[2:], 16, 64)
+	} else if strings.HasPrefix(e.Lit, "0b") {
+		i, err = strconv.ParseInt(e.Lit[2:], 2, 64)
 	} else {
 		i, err = strconv.ParseInt(e.Lit, 10, 64)
 	}

@@ -370,6 +370,11 @@ func isHex(ch rune) bool {
 	return ('0' <= ch && ch <= '9') || ('a' <= ch && ch <= 'f') || ('A' <= ch && ch <= 'F')
 }
 
+// isBinary returns true if the rune is a binary digits.
+func isBinary(ch rune) bool {
+	return '0' <= ch && ch <= '1'
+}
+
 // isEOL returns true if the rune is at end-of-line or end-of-file.
 func isEOL(ch rune) bool {
 	return ch == '\n' || ch == -1
@@ -462,6 +467,13 @@ func (s *Scanner) scanNumber() (string, error) {
 		ret = append(ret, s.peek())
 		s.next()
 		for isHex(s.peek()) {
+			ret = append(ret, s.peek())
+			s.next()
+		}
+	} else if ch == '0' && s.peek() == 'b' {
+		ret = append(ret, s.peek())
+		s.next()
+		for isBinary(s.peek()) {
 			ret = append(ret, s.peek())
 			s.next()
 		}

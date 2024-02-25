@@ -62,6 +62,14 @@ import (
 %type<exprs> expr_map_key_value
 
 %type<expr> expr
+%type<expr> array_length
+%type<expr> element
+%type<expr> key
+%type<expr> keyed_element
+%type<expr> literal_value
+%type<expr> composite_lit
+%type<expr> element_list
+%type<expr> opt_element_list
 %type<expr> expr_member_or_ident
 %type<expr> expr_literals
 %type<expr> expr_unary
@@ -96,6 +104,8 @@ import (
 %type<type_data> type
 %type<type_data> key_type
 %type<type_data> element_type
+%type<type_data> array_type
+%type<type_data> literal_type
 %type<type_data> type_lit
 %type<type_data> qualified_ident
 %type<type_data> type_name
@@ -224,6 +234,7 @@ stmt :
 
 expr :
 	expr_iterable
+	//| composite_lit
 	| expr_literals
 	| expr_unary
 	| expr_func
@@ -660,6 +671,32 @@ expr_paren :
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
 
+element : expr
+
+element_list :
+	keyed_element
+	| element_list ',' keyed_element
+
+opt_element_list :
+	/* nothing */  { $$ = nil }
+	| element_list { $$ = $1  }
+
+key : expr
+
+keyed_element :
+	element
+	| key ':' element
+
+composite_lit : literal_type literal_value { $$ = $2 }
+
+literal_type : array_type
+
+array_length : expr
+
+array_type : '[' array_length ']' element_type { $$ = $4 }
+
+literal_value : '{' opt_element_list opt_comma '}' { $$ = $2 }
+
 expr_array :
 	EMPTYARR
 	{
@@ -948,6 +985,7 @@ type :
 
 type_lit :
 	pointer_type
+	//| array_type
 	| typed_slice_count
 	| map_type
 	| channel_type
@@ -1119,6 +1157,12 @@ expr_ident :
 		$$ = &ast.IdentExpr{Lit: $1.Lit}
 		$$.SetPosition($1.Position())
 	}
+
+comma : ','
+
+opt_comma:
+	/* nothing */
+	| comma
 
 opt_term :
 	/* nothing */

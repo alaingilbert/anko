@@ -94,10 +94,12 @@ import (
 %type<str> bin_op
 %type<str> op_assoc1
 
-%type<type_data> type_data
+%type<type_data> type
+%type<type_data> type_lit
+%type<type_data> qualified_ident
+%type<type_data> type_name
 %type<type_data> channel_type
 %type<type_data> struct_type
-%type<type_data> type_data_idents
 %type<type_data> pointer_type
 %type<type_data> map_type
 %type<type_data> type_data_struct
@@ -575,7 +577,7 @@ opt_func_return_expr_idents :
 	{
 		$$ = nil
 	}
-	| type_data
+	| type
 	{
 		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $1}}
 	}
@@ -593,11 +595,11 @@ opt_func_return_expr_idents1 :
 	}
 
 opt_func_return_expr_idents2 :
-	type_data
+	type
 	{
 		$$ = []*ast.FuncReturnValuesExpr{&ast.FuncReturnValuesExpr{TypeData: $1}}
 	}
-	| opt_func_return_expr_idents2 comma_opt_newlines type_data
+	| opt_func_return_expr_idents2 comma_opt_newlines type
 	{
 		$$ = append($1, &ast.FuncReturnValuesExpr{TypeData: $3})
 	}
@@ -677,7 +679,7 @@ stmt_dbg :
 	}
 
 dbg_content :
-	type_data
+	type
 	{
 		$$ = &ast.DbgStmt{TypeData: $1}
 	}
@@ -727,7 +729,7 @@ expr_ternary :
 	}
 
 expr_new :
-	NEW '(' type_data ')'
+	NEW '(' type ')'
 	{
 		if $3.Kind == ast.TypeDefault {
 			$3.Kind = ast.TypePtr
@@ -783,12 +785,12 @@ expr_member_or_ident :
 	| expr_member
 
 expr_typed_ident :
-	expr_ident type_data
+	expr_ident type
 	{
 		typeData := $2
 		$$ = struct{Name string; TypeData *ast.TypeStruct}{Name: $1.(*ast.IdentExpr).Lit, TypeData: typeData}
 	}
-	| MUT expr_ident type_data
+	| MUT expr_ident type
 	{
 		typeData := $3
 		typeData.Mutable = true
@@ -943,7 +945,7 @@ expr_func :
 	}
 
 func_expr_args :
-	func_expr_idents_last_untyped VARARG type_data
+	func_expr_idents_last_untyped VARARG type
 	{
 		$$ = struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}{Params: $1, VarArg: true, TypeData: $3}
 	}
@@ -957,17 +959,17 @@ func_expr_args :
 	}
 
 expr_make :
-	MAKE '(' type_data ')'
+	MAKE '(' type ')'
 	{
 		$$ = &ast.MakeExpr{TypeData: $3}
 		$$.SetPosition($1.Position())
 	}
-	| MAKE '(' type_data ',' expr ')'
+	| MAKE '(' type ',' expr ')'
 	{
 		$$ = &ast.MakeExpr{TypeData: $3, LenExpr: $5}
 		$$.SetPosition($1.Position())
 	}
-	| MAKE '(' type_data ',' expr ',' expr ')'
+	| MAKE '(' type ',' expr ',' expr ')'
 	{
 		$$ = &ast.MakeExpr{TypeData: $3, LenExpr: $5, CapExpr: $7}
 		$$.SetPosition($1.Position())
@@ -978,28 +980,31 @@ expr_make :
 		$$.SetPosition($1.Position())
 	}
 
-type_data :
-	type_data_idents
-	| pointer_type
+type :
+	type_name
+	| type_lit
+
+type_lit :
+	pointer_type
 	| typed_slice_count
 	| map_type
 	| channel_type
 	| struct_type
 
+type_name :
+	  IDENT           { $$ = &ast.TypeStruct{Name: $1.Lit} }
+	| qualified_ident { $$ = $1 }
+
 package_name: IDENT
 
-type_data_idents :
-	IDENT
-	{
-		$$ = &ast.TypeStruct{Name: $1.Lit}
-	}
-	| package_name '.' IDENT
+qualified_ident :
+	package_name '.' IDENT
 	{
 		$$ =  &ast.TypeStruct{Env: []string{$1.Lit}, Name: $3.Lit}
 	}
 
 pointer_type :
-	'*' type_data
+	'*' type
 	{
 		if $2.Kind == ast.TypeDefault {
 			$2.Kind = ast.TypePtr
@@ -1016,7 +1021,7 @@ struct_type :
 	}
 
 channel_type :
-	CHAN type_data
+	CHAN type
 	{
 		if $2.Kind == ast.TypeDefault {
 			$2.Kind = ast.TypeChan
@@ -1027,7 +1032,7 @@ channel_type :
 	}
 
 map_type :
-	MAP '[' type_data ']' type_data
+	MAP '[' type ']' type
 	{
 		$$ = &ast.TypeStruct{Kind: ast.TypeMap, Key: $3, SubType: $5}
 	}
@@ -1053,7 +1058,7 @@ type_data_struct :
 	}
 
 typed_slice_count :
-	slice_count type_data
+	slice_count type
 	{
 		if $2.Kind == ast.TypeDefault {
 			$2.Kind = ast.TypeSlice

@@ -333,17 +333,12 @@ stmt_try :
 	}
 
 opt_finally :
-	/* nothing */
-	{ $$ = nil }
-	| FINALLY block
-	{
-		$$ = $2
-	}
+	  /* nothing */ { $$ = nil }
+	| FINALLY block { $$ = $2  }
 
 opt_stmt_var_or_lets :
-	/* nothing */
-	{ $$ = nil }
-	| stmt_var_or_lets { $$ = $1 }
+	  /* nothing */    { $$ = nil }
+	| stmt_var_or_lets { $$ = $1  }
 
 stmt_var_or_lets :
 	stmt_var

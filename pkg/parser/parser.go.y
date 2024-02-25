@@ -197,24 +197,12 @@ start :
 	}
 
 compstmt :
-	opt_term
-	{
-		$$ = nil
-	}
-	| opt_term stmtsStmt opt_term
-	{
-		$$ = $2
-	}
+	  opt_term                    { $$ = nil }
+	| opt_term stmtsStmt opt_term { $$ = $2  }
 
 stmtsStmt :
-	stmt
-	{
-		$$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$1}}
-	}
-	| stmtsStmt term stmt
-	{
-		$1.Stmts = append($1.Stmts, $3)
-	}
+	  stmt                { $$ = &ast.StmtsStmt{Stmts: []ast.Stmt{$1}} }
+	| stmtsStmt term stmt { $1.Stmts = append($1.Stmts, $3)            }
 
 stmt :
 	stmt_var_or_lets
@@ -333,11 +321,11 @@ stmt_try :
 	}
 
 opt_finally :
-	  /* nothing */ { $$ = nil }
+	/* nothing */   { $$ = nil }
 	| FINALLY block { $$ = $2  }
 
 opt_stmt_var_or_lets :
-	  /* nothing */    { $$ = nil }
+	/* nothing */      { $$ = nil }
 	| stmt_var_or_lets { $$ = $1  }
 
 stmt_var_or_lets :
@@ -425,7 +413,7 @@ else_if :
 	}
 
 maybe_else :
-	  /* nothing */ { $$ = nil }
+	/* nothing */   { $$ = nil }
 	| ELSE block    { $$ = $2  }
 
 stmt_loop :
@@ -481,7 +469,7 @@ stmt_select_content :
 	}
 
 opt_stmt_select_cases :
-	  /* nothing */     { $$ = nil }
+	/* nothing */       { $$ = nil }
 	| stmt_select_cases { $$ = $1  }
 
 stmt_select_cases :
@@ -636,9 +624,8 @@ func_expr_typed_idents :
 	}
 
 opt_exprs :
-	/* nothing */
-	{ $$ = nil }
-	| exprs { $$ = $1 }
+	/* nothing */ { $$ = nil }
+	| exprs       { $$ = $1  }
 
 exprs :
 	expr
@@ -651,9 +638,8 @@ exprs :
 	}
 
 opt_expr :
-	/* nothing */
-	{ $$ = nil }
-	| expr { $$ = $1 }
+	/* nothing */ { $$ = nil }
+	| expr        { $$ = $1  }
 
 stmt_dbg :
 	DBG '(' ')'

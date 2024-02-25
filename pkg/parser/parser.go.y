@@ -671,11 +671,11 @@ expr_array :
 		$$ = &ast.ArrayExpr{Exprs: $2}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
-	| typed_slice_count '{' comma_separated_exprs '}'
-	{
-		$$ = &ast.ArrayExpr{Exprs: $3, TypeData: $1}
-		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
-	}
+//	| typed_slice_count '{' comma_separated_exprs '}'
+//	{
+//		$$ = &ast.ArrayExpr{Exprs: $3, TypeData: $1}
+//		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
+//	}
 
 comma_separated_exprs :
 	opt_newlines opt_exprs opt_comma_opt_newlines

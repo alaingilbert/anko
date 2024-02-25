@@ -95,7 +95,6 @@ import (
 %type<str> op_assoc1
 
 %type<type_data> type_data
-%type<type_data> type_data_helper
 %type<type_data> channel_type
 %type<type_data> struct_type
 %type<type_data> type_data_idents
@@ -978,9 +977,7 @@ expr_make :
 		$$.SetPosition($1.Position())
 	}
 
-type_data : type_data_helper
-
-type_data_helper :
+type_data :
 	type_data_idents
 	| pointer_type
 	| typed_slice_count
@@ -1004,7 +1001,7 @@ type_data_idents :
 	}
 
 pointer_type :
-	'*' type_data_helper
+	'*' type_data
 	{
 		if $2.Kind == ast.TypeDefault {
 			$2.Kind = ast.TypePtr
@@ -1021,7 +1018,7 @@ struct_type :
 	}
 
 channel_type :
-	CHAN type_data_helper
+	CHAN type_data
 	{
 		if $2.Kind == ast.TypeDefault {
 			$2.Kind = ast.TypeChan

@@ -1,6 +1,5 @@
 // Remaining reduce/reduce conflicts are:
 //     stmt_dbg -> '*' type_data     (`'*' type_data` conflicts with `binary operator '*'`)
-//     stmt_for -> IN                (`FOR ... IN ... {` conflicts with `expr IN expr`)
 
 %{
 package parser

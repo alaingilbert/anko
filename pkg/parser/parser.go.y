@@ -39,6 +39,7 @@ import (
 %type<stmt> stmt_throw
 %type<stmt> start
 %type<stmt> compstmt
+%type<stmt> block
 %type<stmt> opt_stmt_var_or_lets
 %type<stmt> opt_finally
 %type<stmt> maybe_else
@@ -247,6 +248,8 @@ expr_iterable :
 	| expr_item_or_slice
 	| expr_ternary
 
+block : '{' compstmt '}' { $$ = $2 }
+
 stmt_break :
 	BREAK
 	{
@@ -276,9 +279,9 @@ stmt_throw :
 	}
 
 stmt_module :
-	MODULE IDENT '{' compstmt '}'
+	MODULE IDENT block
 	{
-		$$ = &ast.ModuleStmt{Name: $2.Lit, Stmt: $4}
+		$$ = &ast.ModuleStmt{Name: $2.Lit, Stmt: $3}
 		$$.SetPosition($1.Position())
 	}
 
@@ -314,18 +317,18 @@ stmt_defer :
 	}
 
 stmt_try :
-	TRY '{' compstmt '}' CATCH opt_ident '{' compstmt '}' opt_finally
+	TRY block CATCH opt_ident block opt_finally
 	{
-		$$ = &ast.TryStmt{Try: $3, Var: $6.Lit, Catch: $8, Finally: $10}
+		$$ = &ast.TryStmt{Try: $2, Var: $4.Lit, Catch: $5, Finally: $6}
 		$$.SetPosition($1.Position())
 	}
 
 opt_finally :
 	/* nothing */
 	{ $$ = nil }
-	| FINALLY '{' compstmt '}'
+	| FINALLY block
 	{
-		$$ = $3
+		$$ = $2
 	}
 
 opt_stmt_var_or_lets :
@@ -396,9 +399,9 @@ op_lets :
 	| '='  { $$ = false }
 
 stmt_if :
-	IF expr '{' compstmt '}' else_if_list maybe_else
+	IF expr block else_if_list maybe_else
 	{
-		$$ = &ast.IfStmt{If: $2, Then: $4, ElseIf: $6, Else: $7}
+		$$ = &ast.IfStmt{If: $2, Then: $3, ElseIf: $4, Else: $5}
 		$$.SetPosition($1.Position())
 	}
 
@@ -412,35 +415,35 @@ else_if_list :
 	}
 
 else_if :
-	ELSE IF expr '{' compstmt '}'
+	ELSE IF expr block
 	{
-		$$ = &ast.IfStmt{If: $3, Then: $5}
+		$$ = &ast.IfStmt{If: $3, Then: $4}
 	}
 
 maybe_else :
 	/* nothing */
 	{ $$ = nil }
-	| ELSE '{' compstmt '}'
+	| ELSE block
 	{
-		$$ = $3
+		$$ = $2
 	}
 
 stmt_loop :
-	LOOP '{' compstmt '}'
+	LOOP block
 	{
-		$$ = &ast.LoopStmt{Stmt: $3}
+		$$ = &ast.LoopStmt{Stmt: $2}
 		$$.SetPosition($1.Position())
 	}
 
 stmt_for :
-	FOR for_content '{' compstmt '}'
+	FOR for_content block
 	{
 		if el, ok := $2.(*ast.LoopStmt); ok {
-			el.Stmt = $4
+			el.Stmt = $3
 		} else if el, ok := $2.(*ast.ForStmt); ok {
-			el.Stmt = $4
+			el.Stmt = $3
 		} else if el, ok := $2.(*ast.CForStmt); ok {
-			el.Stmt = $4
+			el.Stmt = $3
 		}
 		$$ = $2
 		$$.SetPosition($1.Position())
@@ -921,9 +924,9 @@ expr_assoc :
 	}
 
 expr_func :
-	FUNC opt_ident '(' func_expr_args ')' opt_func_return_expr_idents '{' compstmt '}'
+	FUNC opt_ident '(' func_expr_args ')' opt_func_return_expr_idents block
 	{
-		f := &ast.FuncExpr{Params: $4.Params, Returns: $6, Stmt: $8, VarArg: $4.VarArg}
+		f := &ast.FuncExpr{Params: $4.Params, Returns: $6, Stmt: $7, VarArg: $4.VarArg}
 		if $4.TypeData != nil {
 			f.Params[len(f.Params)-1].TypeData = $4.TypeData
 		}

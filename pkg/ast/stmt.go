@@ -84,11 +84,13 @@ type LoopStmt struct {
 // BreakStmt provide "break" expression statement.
 type BreakStmt struct {
 	StmtImpl
+	Label string
 }
 
 // ContinueStmt provide "continue" expression statement.
 type ContinueStmt struct {
 	StmtImpl
+	Label string
 }
 
 // ReturnStmt provide "return" expression statement.

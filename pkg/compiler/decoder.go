@@ -362,12 +362,14 @@ func decodeDeferStmt(r *Decoder) *ast.DeferStmt {
 func decodeBreakStmt(r *Decoder) *ast.BreakStmt {
 	out := &ast.BreakStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
+	out.Label = r.readString()
 	return out
 }
 
 func decodeContinueStmt(r *Decoder) *ast.ContinueStmt {
 	out := &ast.ContinueStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
+	out.Label = r.readString()
 	return out
 }
 

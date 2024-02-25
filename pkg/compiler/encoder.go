@@ -360,11 +360,13 @@ func encodeDeferStmt(w *Encoder, stmt *ast.DeferStmt) {
 func encodeBreakStmt(w *Encoder, stmt *ast.BreakStmt) {
 	encode(w, BreakStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
+	encodeString(w, stmt.Label)
 }
 
 func encodeContinueStmt(w *Encoder, stmt *ast.ContinueStmt) {
 	encode(w, ContinueStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
+	encodeString(w, stmt.Label)
 }
 
 func encodeReturnStmt(w *Encoder, stmt *ast.ReturnStmt) {

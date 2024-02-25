@@ -257,11 +257,19 @@ stmt_break :
 		$$ = &ast.BreakStmt{}
 		$$.SetPosition($1.Position())
 	}
+	| BREAK label {
+		$$ = &ast.BreakStmt{Label: $2.Lit}
+		$$.SetPosition($1.Position())
+	}
 
 stmt_continue :
 	CONTINUE
 	{
 		$$ = &ast.ContinueStmt{}
+		$$.SetPosition($1.Position())
+	}
+	| CONTINUE label {
+		$$ = &ast.ContinueStmt{Label: $2.Lit}
 		$$.SetPosition($1.Position())
 	}
 

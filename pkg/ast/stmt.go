@@ -33,6 +33,13 @@ type DbgStmt struct {
 	TypeData *TypeStruct
 }
 
+// LabelStmt provide label statement.
+type LabelStmt struct {
+	StmtImpl
+	Name string
+	Stmt Stmt
+}
+
 // IfStmt provide "if/else" statement.
 type IfStmt struct {
 	StmtImpl

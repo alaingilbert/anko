@@ -67,6 +67,7 @@ const (
 	BinaryOperatorBytecode bytecode = 103 // "+" "-" "*" "/" "%" "**" "<<" ">>" "==" "!=" ">" ">=" "<" "<=" "|" "||" "&" "&&"
 	ConstExprBytecode      bytecode = 104
 	DbgStmtBytecode        bytecode = 108
+	LabelStmtBytecode      bytecode = 109
 )
 
 // String ...

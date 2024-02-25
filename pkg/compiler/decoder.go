@@ -195,6 +195,8 @@ func decodeSingleStmt(r *Decoder) ast.Stmt {
 		return decodeReturnStmt(r)
 	case DbgStmtBytecode:
 		return decodeDbgStmt(r)
+	case LabelStmtBytecode:
+		return decodeLabelStmt(r)
 	default:
 		panic(fmt.Sprintf("invalid (%d)", b))
 	}
@@ -374,6 +376,14 @@ func decodeDbgStmt(r *Decoder) *ast.DbgStmt {
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Expr = decodeExpr(r)
 	out.TypeData = decodeTypeStruct(r)
+	return out
+}
+
+func decodeLabelStmt(r *Decoder) *ast.LabelStmt {
+	out := &ast.LabelStmt{}
+	out.StmtImpl = decodeStmtImpl(r)
+	out.Name = r.readString()
+	out.Stmt = decodeSingleStmt(r)
 	return out
 }
 

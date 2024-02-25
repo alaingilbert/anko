@@ -35,6 +35,7 @@ import (
 %type<stmt> stmt_expr
 %type<stmt> stmt_module
 %type<stmt> stmt_break
+%type<stmt> labeled_stmt
 %type<stmt> stmt_return
 %type<stmt> stmt_continue
 %type<stmt> stmt_throw
@@ -132,6 +133,7 @@ import (
 %type<expr_typed_ident> expr_typed_ident
 %type<opt_ident> opt_ident
 %type<op_lets> op_lets
+%type<tok> label
 %type<tok> package_name
 %type<tok> const_expr
 %type<stmt_lets_helper> stmt_lets_helper
@@ -244,6 +246,10 @@ expr_iterable :
 	| expr_ternary
 
 block : '{' compstmt '}' { $$ = $2 }
+
+label : IDENT
+
+labeled_stmt : label ':' stmt { $$ = &ast.LabelStmt{Name: $1.Lit, Stmt: $3} }
 
 stmt_break :
 	BREAK

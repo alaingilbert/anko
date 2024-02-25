@@ -213,6 +213,8 @@ func encodeSingleStmt(w *Encoder, stmt ast.Stmt) {
 		encodeReturnStmt(w, stmt)
 	case *ast.DbgStmt:
 		encodeDbgStmt(w, stmt)
+	case *ast.LabelStmt:
+		encodeLabelStmt(w, stmt)
 	default:
 		panic("failed")
 	}
@@ -369,6 +371,13 @@ func encodeReturnStmt(w *Encoder, stmt *ast.ReturnStmt) {
 	encode(w, ReturnStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExprArray(w, stmt.Exprs)
+}
+
+func encodeLabelStmt(w *Encoder, stmt *ast.LabelStmt) {
+	encode(w, LabelStmtBytecode)
+	encodeStmtImpl(w, stmt.StmtImpl)
+	encodeString(w, stmt.Name)
+	encodeSingleStmt(w, stmt.Stmt)
 }
 
 func encodeDbgStmt(w *Encoder, expr *ast.DbgStmt) {

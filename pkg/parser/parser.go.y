@@ -94,6 +94,8 @@ import (
 
 %type<type_data> type_data
 %type<type_data> type_data_helper
+%type<type_data> channel_type
+%type<type_data> struct_type
 %type<type_data> type_data_idents
 %type<type_data> pointer_type
 %type<type_data> map_type
@@ -1004,22 +1006,20 @@ pointer_type :
 
 type_data_helper :
 	type_data_idents
-	{
-		$$ = $1
-	}
 	| pointer_type
-	{
-		$$ = $1
-	}
 	| typed_slice_count
-	{
-		$$ = $1
-	}
 	| map_type
+	| channel_type
+	| struct_type
+
+struct_type :
+	STRUCT '{' type_struct_content '}'
 	{
-		$$ = $1
+		$$ = $3
 	}
-	| CHAN type_data_helper
+
+channel_type :
+	CHAN type_data_helper
 	{
 		if $2.Kind == ast.TypeDefault {
 			$2.Kind = ast.TypeChan
@@ -1027,10 +1027,6 @@ type_data_helper :
 		} else {
 			$$ = &ast.TypeStruct{Kind: ast.TypeChan, SubType: $2}
 		}
-	}
-	| STRUCT '{' type_struct_content '}'
-	{
-		$$ = $3
 	}
 
 map_type :

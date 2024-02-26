@@ -421,9 +421,6 @@ func runForStmtSlice(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 						return nilValueL, cErr
 					}
 				}
-				if !vmp.Validate {
-					continue
-				}
 			} else if errors.Is(err, ErrBreak) {
 				var bErr *BreakErr
 				if errors.As(err, &bErr) {
@@ -467,9 +464,6 @@ func runForStmtMap(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 					if cErr.label != "" && cErr.label != stmt.Label {
 						return nilValueL, cErr
 					}
-				}
-				if !vmp.Validate {
-					continue
 				}
 			} else if errors.Is(err, ErrBreak) {
 				var bErr *BreakErr
@@ -521,9 +515,6 @@ func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 					if cErr.label != "" && cErr.label != stmt.Label {
 						return nilValue, cErr
 					}
-				}
-				if !vmp.Validate {
-					continue
 				}
 			} else if errors.Is(err, ErrBreak) {
 				var bErr *BreakErr

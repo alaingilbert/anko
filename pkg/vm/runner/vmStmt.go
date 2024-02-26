@@ -542,20 +542,21 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 }
 
 func runReturnStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ReturnStmt) (reflect.Value, error) {
+	exprs := stmt.Exprs.(*ast.ExprsExpr).Exprs
 	var err error
 	rv := nilValue
-	switch len(stmt.Exprs.(*ast.ExprsExpr).Exprs) {
+	switch len(exprs) {
 	case 0:
 		return rv, nil
 	case 1:
-		rv, err = invokeExpr(vmp, env, stmt.Exprs.(*ast.ExprsExpr).Exprs[0])
+		rv, err = invokeExpr(vmp, env, exprs[0])
 		if err != nil {
 			return rv, newError(stmt, err)
 		}
 		return rv, nil
 	}
-	rvs := make([]any, len(stmt.Exprs.(*ast.ExprsExpr).Exprs))
-	for i, expr := range stmt.Exprs.(*ast.ExprsExpr).Exprs {
+	rvs := make([]any, len(exprs))
+	for i, expr := range exprs {
 		rv, err = invokeExpr(vmp, env, expr)
 		if err != nil {
 			return rv, newError(stmt, err)

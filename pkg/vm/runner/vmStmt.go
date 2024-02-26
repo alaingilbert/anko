@@ -338,7 +338,7 @@ var (
 	errLoopReturn   = errors.New("return")
 )
 
-func handleStmtErr(vmp *VmParams, stmt ast.Stmt, err error) error {
+func handleStmtErr(vmp *VmParams, stmt ast.Stmt, err error, tmp bool) error {
 	if vmp.Validate {
 		return errLoopBreak
 	}
@@ -351,7 +351,9 @@ func handleStmtErr(vmp *VmParams, stmt ast.Stmt, err error) error {
 					return errLoopReturn
 				}
 			}
-			return errLoopContinue
+			if tmp {
+				return errLoopContinue
+			}
 		} else if errors.Is(err, ErrBreak) {
 			var bErr *BreakErr
 			if errors.As(err, &bErr) {
@@ -387,7 +389,7 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 			}
 		}
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		herr := handleStmtErr(vmp, stmt, err)
+		herr := handleStmtErr(vmp, stmt, err, true)
 		if errors.Is(herr, errLoopContinue) {
 			continue
 		} else if errors.Is(herr, errLoopBreak) {
@@ -429,7 +431,7 @@ func runForStmtSlice(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 		iv = elemIfInterface(iv)
 		_ = newenv.DefineValue(stmt.Vars[0], iv)
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		herr := handleStmtErr(vmp, stmt, err)
+		herr := handleStmtErr(vmp, stmt, err, true)
 		if errors.Is(herr, errLoopContinue) {
 			continue
 		} else if errors.Is(herr, errLoopBreak) {
@@ -456,7 +458,7 @@ func runForStmtMap(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 			_ = newenv.DefineValue(stmt.Vars[1], m)
 		}
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		herr := handleStmtErr(vmp, stmt, err)
+		herr := handleStmtErr(vmp, stmt, err, true)
 		if errors.Is(herr, errLoopContinue) {
 			continue
 		} else if errors.Is(herr, errLoopBreak) {
@@ -490,7 +492,7 @@ func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 		iv = elemIfInterface(iv)
 		_ = newenv.DefineValue(stmt.Vars[0], iv)
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		herr := handleStmtErr(vmp, stmt, err)
+		herr := handleStmtErr(vmp, stmt, err, true)
 		if errors.Is(herr, errLoopContinue) {
 			continue
 		} else if errors.Is(herr, errLoopBreak) {
@@ -523,35 +525,17 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 		}
 
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		if err != nil {
-			if errors.Is(err, ErrContinue) {
-				var cErr *ContinueErr
-				if errors.As(err, &cErr) {
-					if cErr.label != "" && cErr.label != stmt.Label {
-						return nilValue, cErr
-					}
-				}
-			} else if errors.Is(err, ErrBreak) {
-				var bErr *BreakErr
-				if errors.As(err, &bErr) {
-					if bErr.label != "" {
-						return nilValueL, bErr
-					}
-				}
-				break
-			} else if errors.Is(err, ErrReturn) {
-				return rv, err
-			} else {
-				return nilValueL, newError(stmt, err)
-			}
+		herr := handleStmtErr(vmp, stmt, err, false)
+		if errors.Is(herr, errLoopContinue) {
+			continue
+		} else if errors.Is(herr, errLoopBreak) {
+			break
+		} else if errors.Is(herr, errLoopReturn) {
+			return rv, err
 		}
 
 		if _, err = invokeExpr(vmp, newenv, stmt.Expr3); err != nil {
 			return nilValueL, err
-		}
-
-		if vmp.Validate {
-			break
 		}
 	}
 	return nilValueL, nil

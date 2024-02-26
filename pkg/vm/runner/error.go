@@ -56,6 +56,50 @@ var (
 	ErrReturn = errors.New("unexpected return statement")
 )
 
+type BreakErr struct {
+	label string
+	cause error
+}
+
+func NewBreakErr(label string) *BreakErr {
+	return &BreakErr{label: label, cause: ErrBreak}
+}
+
+// Unwrap returns the wrapped error.
+func (e *BreakErr) Unwrap() error {
+	return e.cause
+}
+
+func (e *BreakErr) Error() string {
+	out := e.cause.Error()
+	if e.label != "" {
+		out += " (" + e.label + ")"
+	}
+	return out
+}
+
+type ContinueErr struct {
+	label string
+	cause error
+}
+
+func NewContinueErr(label string) *ContinueErr {
+	return &ContinueErr{label: label, cause: ErrContinue}
+}
+
+// Unwrap returns the wrapped error.
+func (e *ContinueErr) Unwrap() error {
+	return e.cause
+}
+
+func (e *ContinueErr) Error() string {
+	out := e.cause.Error()
+	if e.label != "" {
+		out += " (" + e.label + ")"
+	}
+	return out
+}
+
 func getPos(pos ast.Pos) ast.Position {
 	out := ast.Position{Line: 1, Column: 1}
 	if pos != nil {

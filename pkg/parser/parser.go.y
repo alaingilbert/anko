@@ -217,6 +217,7 @@ stmtsStmt :
 
 stmt :
 	stmt_var_or_lets
+	| labeled_stmt
 	| stmt_break
 	| stmt_continue
 	| stmt_return
@@ -261,7 +262,7 @@ block : '{' compstmt '}' { $$ = $2 }
 
 label : IDENT
 
-labeled_stmt : label ':' stmt { $$ = &ast.LabelStmt{Name: $1.Lit, Stmt: $3} }
+labeled_stmt : label ':' term stmt { $$ = &ast.LabelStmt{Name: $1.Lit, Stmt: $4} }
 
 stmt_break :
 	BREAK

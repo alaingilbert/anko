@@ -1705,6 +1705,18 @@ func TestFuncTypedReturns(t *testing.T) {
 	}
 }
 
+func TestLabel(t *testing.T) {
+	_ = os.Setenv("ANKO_DEBUG", "1")
+	tests := []Test{
+		{Script: `label:;for {for { break label }}; 1`, RunOutput: int64(1), Name: ""},
+		{Script: `a = 0; for i=0; i<3; i++ {;label:;for { for { break label } }; a = i }; a`, RunOutput: int64(2), Name: ""},
+		{Script: `a = 0; for i=0; i<3; i++ {;label:;for { for { continue label } }; a = i }; a`, RunOutput: int64(2), Name: ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })
+	}
+}
+
 func TestTypedValues(t *testing.T) {
 	_ = os.Setenv("ANKO_DEBUG", "1")
 	tests := []Test{

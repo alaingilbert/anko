@@ -56,6 +56,8 @@ func runSingleStmt(vmp *VmParams, env envPkg.IEnv, stmt ast.Stmt) (reflect.Value
 		return runDeferStmt(vmp, env, stmt)
 	case *ast.DbgStmt:
 		return invokeDbgStmt(vmp, env, stmt)
+	case *ast.LabelStmt:
+		return invokeLabelStmt(vmp, env, stmt)
 	default:
 		return nilValue, newError(stmt, ErrUnknownStmt)
 	}
@@ -65,11 +67,11 @@ func runStmtsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.StmtsStmt) (reflect.
 	rv := nilValue
 	var err error
 	for _, s := range stmt.Stmts {
-		switch s.(type) {
+		switch e := s.(type) {
 		case *ast.BreakStmt:
-			return nilValue, ErrBreak
+			return nilValue, NewBreakErr(e.Label)
 		case *ast.ContinueStmt:
-			return nilValue, ErrContinue
+			return nilValue, NewContinueErr(e.Label)
 		case *ast.ReturnStmt:
 			rv, err = runSingleStmt(vmp, env, s)
 			if err != nil {
@@ -349,8 +351,26 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 		}
 
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		if err != nil && !errors.Is(err, ErrContinue) {
+		if err != nil {
+			if errors.Is(err, ErrContinue) {
+				var cErr *ContinueErr
+				if errors.As(err, &cErr) {
+					if cErr.label != "" {
+						return nilValueL, cErr
+					}
+				}
+				if vmp.Validate {
+					break
+				}
+				continue
+			}
 			if errors.Is(err, ErrBreak) {
+				var bErr *BreakErr
+				if errors.As(err, &bErr) {
+					if bErr.label != "" {
+						return nilValueL, bErr
+					}
+				}
 				break
 			}
 			if errors.Is(err, ErrReturn) {
@@ -752,4 +772,24 @@ func runDeferStmtMakeDefer(vmp *VmParams, f reflect.Value, env envPkg.IEnv, call
 		CallSlice: useCallSlice,
 	})
 	return f, nil
+}
+
+func invokeLabelStmt(vmp *VmParams, env envPkg.IEnv, e *ast.LabelStmt) (reflect.Value, error) {
+	rv, err := runSingleStmt(vmp, env, e.Stmt)
+	if err != nil {
+		var bErr *BreakErr
+		if errors.As(err, &bErr) {
+			if bErr.label == e.Name {
+				return nilValue, nil
+			}
+		}
+		var cErr *ContinueErr
+		if errors.As(err, &cErr) {
+			if cErr.label == e.Name {
+				return nilValue, nil
+			}
+		}
+		return nilValue, err
+	}
+	return rv, nil
 }

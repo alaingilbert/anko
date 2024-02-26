@@ -1,5 +1,5 @@
 // Remaining reduce/reduce conflicts are:
-//     stmt_dbg -> '*' type_data     (`'*' type_data` conflicts with `binary operator '*'`)
+//     [1, 2, 3] conflicts with [1]int64
 //
 // https://gitlab.com/cznic/gc/-/blob/20cf7bee948948b44142f2a04eff623012069407/v3/internal/ebnf/spec.ebnf
 
@@ -698,7 +698,7 @@ composite_lit :
 		}
 	}
 
-literal_type : array_type | slice_type
+literal_type : slice_type // array_type
 
 array_length : expr
 

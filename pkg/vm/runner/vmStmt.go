@@ -570,6 +570,12 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 		if err != nil {
 			if errors.Is(err, ErrContinue) {
 			} else if errors.Is(err, ErrBreak) {
+				var bErr *BreakErr
+				if errors.As(err, &bErr) {
+					if bErr.label != "" {
+						return nilValueL, bErr
+					}
+				}
 				break
 			} else if errors.Is(err, ErrReturn) {
 				return rv, err

@@ -339,6 +339,9 @@ var (
 )
 
 func handleStmtErr(vmp *VmParams, stmt ast.Stmt, err error) error {
+	if vmp.Validate {
+		return errLoopBreak
+	}
 	stmtLabel := stmt.GetLabel()
 	if err != nil {
 		if errors.Is(err, ErrContinue) {
@@ -348,9 +351,7 @@ func handleStmtErr(vmp *VmParams, stmt ast.Stmt, err error) error {
 					return errLoopReturn
 				}
 			}
-			if !vmp.Validate {
-				return errLoopContinue
-			}
+			return errLoopContinue
 		} else if errors.Is(err, ErrBreak) {
 			var bErr *BreakErr
 			if errors.As(err, &bErr) {
@@ -394,9 +395,6 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 		} else if errors.Is(herr, errLoopReturn) {
 			return rv, err
 		}
-		if vmp.Validate {
-			break
-		}
 	}
 	return nilValueL, nil
 }
@@ -439,9 +437,6 @@ func runForStmtSlice(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 		} else if errors.Is(herr, errLoopReturn) {
 			return rv, err
 		}
-		if vmp.Validate {
-			break
-		}
 	}
 	return nilValueL, nil
 }
@@ -468,9 +463,6 @@ func runForStmtMap(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 			break
 		} else if errors.Is(herr, errLoopReturn) {
 			return rv, err
-		}
-		if vmp.Validate {
-			break
 		}
 	}
 	return nilValueL, nil
@@ -505,9 +497,6 @@ func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 			break
 		} else if errors.Is(herr, errLoopReturn) {
 			return rv, err
-		}
-		if vmp.Validate {
-			break
 		}
 	}
 	return nilValue, nil

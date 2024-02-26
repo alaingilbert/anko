@@ -262,7 +262,12 @@ block : '{' compstmt '}' { $$ = $2 }
 
 label : IDENT
 
-labeled_stmt : label ':' term stmt { $$ = &ast.LabelStmt{Name: $1.Lit, Stmt: $4} }
+labeled_stmt :
+	label ':' term stmt
+	{
+		$4.SetLabel($1.Lit)
+		$$ = &ast.LabelStmt{Name: $1.Lit, Stmt: $4}
+	}
 
 stmt_break :
 	BREAK

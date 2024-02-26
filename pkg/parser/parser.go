@@ -1642,6 +1642,7 @@ yynewstate:
 		}
 	case 45:
 		{
+			yyS[yypt-0].stmt.SetLabel(yyS[yypt-3].tok.Lit)
 			yyVAL.stmt = &ast.LabelStmt{Name: yyS[yypt-3].tok.Lit, Stmt: yyS[yypt-0].stmt}
 		}
 	case 46:

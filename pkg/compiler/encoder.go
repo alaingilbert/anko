@@ -160,6 +160,7 @@ func encodeExprImpl(w *Encoder, i ast.ExprImpl) {
 
 func encodeStmtImpl(w *Encoder, i ast.StmtImpl) {
 	encodePosImpl(w, i.PosImpl)
+	encodeString(w, i.Label)
 }
 
 func encodeSingleStmt(w *Encoder, stmt ast.Stmt) {

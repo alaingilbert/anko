@@ -131,6 +131,7 @@ func decodeExprImpl(r *Decoder) ast.ExprImpl {
 func decodeStmtImpl(r *Decoder) ast.StmtImpl {
 	out := ast.StmtImpl{}
 	out.PosImpl = decodePosImpl(r)
+	out.Label = r.readString()
 	return out
 }
 

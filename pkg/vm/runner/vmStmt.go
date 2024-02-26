@@ -355,7 +355,7 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 			if errors.Is(err, ErrContinue) {
 				var cErr *ContinueErr
 				if errors.As(err, &cErr) {
-					if cErr.label != "" {
+					if cErr.label != "" && cErr.label != stmt.Label {
 						return nilValueL, cErr
 					}
 				}
@@ -417,7 +417,7 @@ func runForStmtSlice(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 			if errors.Is(err, ErrContinue) {
 				var cErr *ContinueErr
 				if errors.As(err, &cErr) {
-					if cErr.label != "" {
+					if cErr.label != "" && cErr.label != stmt.Label {
 						return nilValueL, cErr
 					}
 				}
@@ -464,7 +464,7 @@ func runForStmtMap(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 			if errors.Is(err, ErrContinue) {
 				var cErr *ContinueErr
 				if errors.As(err, &cErr) {
-					if cErr.label != "" {
+					if cErr.label != "" && cErr.label != stmt.Label {
 						return nilValueL, cErr
 					}
 				}
@@ -518,7 +518,7 @@ func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 			if errors.Is(err, ErrContinue) {
 				var cErr *ContinueErr
 				if errors.As(err, &cErr) {
-					if cErr.label != "" {
+					if cErr.label != "" && cErr.label != stmt.Label {
 						return nilValue, cErr
 					}
 				}
@@ -566,27 +566,37 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 			break
 		}
 
-		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		if err != nil {
-			if errors.Is(err, ErrContinue) {
-			} else if errors.Is(err, ErrBreak) {
+		rv, stmtErr := runSingleStmt(vmp, newenv, stmt.Stmt)
+		if stmtErr != nil {
+			if errors.Is(stmtErr, ErrContinue) {
+			} else if errors.Is(stmtErr, ErrBreak) {
 				var bErr *BreakErr
-				if errors.As(err, &bErr) {
+				if errors.As(stmtErr, &bErr) {
 					if bErr.label != "" {
 						return nilValueL, bErr
 					}
 				}
 				break
-			} else if errors.Is(err, ErrReturn) {
-				return rv, err
+			} else if errors.Is(stmtErr, ErrReturn) {
+				return rv, stmtErr
 			} else {
-				return nilValueL, newError(stmt, err)
+				return nilValueL, newError(stmt, stmtErr)
 			}
 		}
 		_, err = invokeExpr(vmp, newenv, stmt.Expr3)
 		if err != nil {
 			return nilValueL, err
 		}
+
+		if errors.Is(stmtErr, ErrContinue) {
+			var cErr *ContinueErr
+			if errors.As(stmtErr, &cErr) {
+				if cErr.label != "" && cErr.label != stmt.Label {
+					return nilValue, cErr
+				}
+			}
+		}
+
 		if vmp.Validate {
 			break
 		}

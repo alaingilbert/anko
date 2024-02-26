@@ -4,11 +4,18 @@ package ast
 type Stmt interface {
 	Pos
 	stmt()
+	SetLabel(string)
 }
 
 // StmtImpl provide commonly implementations for Stmt..
 type StmtImpl struct {
 	PosImpl // StmtImpl provide Pos() function.
+	Label   string
+}
+
+// SetLabel ...
+func (x *StmtImpl) SetLabel(name string) {
+	x.Label = name
 }
 
 // stmt provide restraint interface.

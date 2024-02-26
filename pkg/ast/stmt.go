@@ -5,12 +5,18 @@ type Stmt interface {
 	Pos
 	stmt()
 	SetLabel(string)
+	GetLabel() string
 }
 
 // StmtImpl provide commonly implementations for Stmt..
 type StmtImpl struct {
 	PosImpl // StmtImpl provide Pos() function.
 	Label   string
+}
+
+// GetLabel ...
+func (x *StmtImpl) GetLabel() string {
+	return x.Label
 }
 
 // SetLabel ...

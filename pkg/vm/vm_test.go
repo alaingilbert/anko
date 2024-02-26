@@ -1711,6 +1711,7 @@ func TestLabel(t *testing.T) {
 		{Script: `label:;for {for { break label }}; 1`, RunOutput: int64(1), Name: ""},
 		{Script: `a = 0; for i=0; i<3; i++ {;label:;for { for { break label } }; a = i }; a`, RunOutput: int64(2), Name: ""},
 		{Script: `a = 0; for i=0; i<3; i++ {;label:;for { for { continue label } }; a = i }; a`, RunOutput: int64(2), Name: ""},
+		{Script: `i = 0; label:;for i=0; i<3; i++ {;for { for { continue label } } }; i`, RunOutput: int64(3), Name: ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.Name, func(t *testing.T) { runTest(t, tt, &Options{DefineImport: true, ImportCore: true}) })

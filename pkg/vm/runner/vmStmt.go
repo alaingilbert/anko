@@ -359,12 +359,10 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 						return nilValueL, cErr
 					}
 				}
-				if vmp.Validate {
-					break
+				if !vmp.Validate {
+					continue
 				}
-				continue
-			}
-			if errors.Is(err, ErrBreak) {
+			} else if errors.Is(err, ErrBreak) {
 				var bErr *BreakErr
 				if errors.As(err, &bErr) {
 					if bErr.label != "" {
@@ -372,11 +370,11 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 					}
 				}
 				break
-			}
-			if errors.Is(err, ErrReturn) {
+			} else if errors.Is(err, ErrReturn) {
 				return rv, err
+			} else {
+				return nilValueL, newError(stmt, err)
 			}
-			return nilValueL, newError(stmt, err)
 		}
 		if vmp.Validate {
 			break

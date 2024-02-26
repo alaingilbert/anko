@@ -415,14 +415,21 @@ func runForStmtSlice(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refl
 		iv = elemIfInterface(iv)
 		_ = newenv.DefineValue(stmt.Vars[0], iv)
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		if err != nil && !errors.Is(err, ErrContinue) {
-			if errors.Is(err, ErrBreak) {
+		if err != nil {
+			if errors.Is(err, ErrContinue) {
+				if !vmp.Validate {
+					continue
+				}
+			} else if errors.Is(err, ErrBreak) {
 				break
-			}
-			if errors.Is(err, ErrReturn) {
+			} else if errors.Is(err, ErrReturn) {
 				return rv, err
+			} else {
+				return nilValueL, newError(stmt, err)
 			}
-			return nilValueL, newError(stmt, err)
+		}
+		if vmp.Validate {
+			break
 		}
 	}
 	return nilValueL, nil
@@ -443,14 +450,21 @@ func runForStmtMap(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val reflec
 			_ = newenv.DefineValue(stmt.Vars[1], m)
 		}
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		if err != nil && !errors.Is(err, ErrContinue) {
-			if errors.Is(err, ErrBreak) {
+		if err != nil {
+			if errors.Is(err, ErrContinue) {
+				if !vmp.Validate {
+					continue
+				}
+			} else if errors.Is(err, ErrBreak) {
 				break
-			}
-			if errors.Is(err, ErrReturn) {
+			} else if errors.Is(err, ErrReturn) {
 				return rv, err
+			} else {
+				return nilValueL, newError(stmt, err)
 			}
-			return nilValueL, newError(stmt, err)
+		}
+		if vmp.Validate {
+			break
 		}
 	}
 	return nilValueL, nil
@@ -478,14 +492,18 @@ func runForStmtChan(vmp *VmParams, env envPkg.IEnv, stmt *ast.ForStmt, val refle
 		iv = elemIfInterface(iv)
 		_ = newenv.DefineValue(stmt.Vars[0], iv)
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		if err != nil && !errors.Is(err, ErrContinue) {
-			if errors.Is(err, ErrBreak) {
+		if err != nil {
+			if errors.Is(err, ErrContinue) {
+				if !vmp.Validate {
+					continue
+				}
+			} else if errors.Is(err, ErrBreak) {
 				break
-			}
-			if errors.Is(err, ErrReturn) {
+			} else if errors.Is(err, ErrReturn) {
 				return rv, err
+			} else {
+				return nilValue, newError(stmt, err)
 			}
-			return nilValue, newError(stmt, err)
 		}
 		if vmp.Validate {
 			break
@@ -515,14 +533,15 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 		}
 
 		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
-		if err != nil && !errors.Is(err, ErrContinue) {
-			if errors.Is(err, ErrBreak) {
+		if err != nil {
+			if errors.Is(err, ErrContinue) {
+			} else if errors.Is(err, ErrBreak) {
 				break
-			}
-			if errors.Is(err, ErrReturn) {
+			} else if errors.Is(err, ErrReturn) {
 				return rv, err
+			} else {
+				return nilValueL, newError(stmt, err)
 			}
-			return nilValueL, newError(stmt, err)
 		}
 		_, err = invokeExpr(vmp, newenv, stmt.Expr3)
 		if err != nil {

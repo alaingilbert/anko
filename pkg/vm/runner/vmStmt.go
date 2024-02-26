@@ -359,9 +359,6 @@ func runLoopStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LoopStmt) (reflect.Va
 						return nilValueL, cErr
 					}
 				}
-				if !vmp.Validate {
-					continue
-				}
 			} else if errors.Is(err, ErrBreak) {
 				var bErr *BreakErr
 				if errors.As(err, &bErr) {

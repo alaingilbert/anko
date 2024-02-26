@@ -556,10 +556,11 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 				return nilValueL, newError(stmt, err)
 			}
 		}
-		_, err = invokeExpr(vmp, newenv, stmt.Expr3)
-		if err != nil {
+
+		if _, err = invokeExpr(vmp, newenv, stmt.Expr3); err != nil {
 			return nilValueL, err
 		}
+
 		if vmp.Validate {
 			break
 		}

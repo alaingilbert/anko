@@ -242,9 +242,9 @@ func encodeVarStmt(w *Encoder, stmt *ast.VarStmt) {
 func encodeLetsStmt(w *Encoder, stmt *ast.LetsStmt) {
 	encode(w, LetsStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
-	encodeExprArray(w, stmt.Lhss)
+	encodeExpr(w, stmt.Lhss)
 	encodeString(w, stmt.Operator)
-	encodeExprArray(w, stmt.Rhss)
+	encodeExpr(w, stmt.Rhss)
 	encodeBool(w, stmt.Typed)
 	encodeBool(w, stmt.Mutable)
 }
@@ -253,7 +253,7 @@ func encodeLetMapItemStmt(w *Encoder, stmt *ast.LetMapItemStmt) {
 	encode(w, LetMapItemStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeExpr(w, stmt.Rhs)
-	encodeExprArray(w, stmt.Lhss)
+	encodeExpr(w, stmt.Lhss)
 }
 
 func encodeIfStmt(w *Encoder, stmt *ast.IfStmt) {
@@ -342,7 +342,7 @@ func encodeSwitchCaseStmt(w *Encoder, stmt *ast.SwitchCaseStmt) {
 	encode(w, SwitchCaseStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
 	encodeSingleStmt(w, stmt.Stmt)
-	encodeExprArray(w, stmt.Exprs)
+	encodeExprsExprHelper(w, stmt.Exprs)
 }
 
 func encodeGoroutineStmt(w *Encoder, stmt *ast.GoroutineStmt) {
@@ -372,7 +372,7 @@ func encodeContinueStmt(w *Encoder, stmt *ast.ContinueStmt) {
 func encodeReturnStmt(w *Encoder, stmt *ast.ReturnStmt) {
 	encode(w, ReturnStmtBytecode)
 	encodeStmtImpl(w, stmt.StmtImpl)
-	encodeExprArray(w, stmt.Exprs)
+	encodeExpr(w, stmt.Exprs)
 }
 
 func encodeLabelStmt(w *Encoder, stmt *ast.LabelStmt) {
@@ -494,15 +494,15 @@ func encodeStringExpr(w *Encoder, expr *ast.StringExpr) {
 func encodeArrayExpr(w *Encoder, expr *ast.ArrayExpr) {
 	encode(w, ArrayExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
-	encodeExprArray(w, expr.Exprs)
+	encodeExprsExprHelper(w, expr.Exprs)
 	encodeTypeStruct(w, expr.TypeData)
 }
 
 func encodeMapExpr(w *Encoder, expr *ast.MapExpr) {
 	encode(w, MapExprBytecode)
 	encodeExprImpl(w, expr.ExprImpl)
-	encodeExprArray(w, expr.Keys)
-	encodeExprArray(w, expr.Values)
+	encodeExprsExprHelper(w, expr.Keys)
+	encodeExprsExprHelper(w, expr.Values)
 	encodeTypeStruct(w, expr.TypeData)
 }
 
@@ -687,7 +687,7 @@ func encodeFuncReturnValuesExpr(w *Encoder, expr *ast.FuncReturnValuesExpr) {
 
 func encodeCallableExpr(w *Encoder, expr *ast.Callable) {
 	encodeExprImpl(w, expr.ExprImpl)
-	encodeExprArray(w, expr.SubExprs)
+	encodeExprsExprHelper(w, expr.SubExprs)
 	encode(w, expr.VarArg)
 	encode(w, expr.Go)
 	encode(w, expr.Defer)
@@ -727,6 +727,10 @@ func encodeIncludeExpr(w *Encoder, expr *ast.IncludeExpr) {
 
 func encodeExprsExpr(w *Encoder, expr *ast.ExprsExpr) {
 	encode(w, ExprsExprBytecode)
+	encodeExprsExprHelper(w, expr)
+}
+
+func encodeExprsExprHelper(w *Encoder, expr *ast.ExprsExpr) {
 	encodeExprImpl(w, expr.ExprImpl)
 	encodeExprArray(w, expr.Exprs)
 }

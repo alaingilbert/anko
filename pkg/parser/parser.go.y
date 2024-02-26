@@ -56,9 +56,10 @@ import (
 %type<stmt> stmt_dbg
 %type<stmt> dbg_content
 
-%type<exprs> exprs
-%type<exprs> opt_exprs
-%type<exprs> comma_separated_exprs
+%type<exprsExpr> exprs
+%type<exprsExpr> opt_exprs
+%type<exprsExpr> element_list
+%type<exprsExpr> opt_element_list
 %type<exprs> expr_map_key_value
 
 %type<expr> expr
@@ -68,8 +69,6 @@ import (
 %type<expr> keyed_element
 %type<expr> literal_value
 %type<expr> composite_lit
-%type<expr> element_list
-%type<expr> opt_element_list
 %type<expr> expr_member_or_ident
 %type<expr> expr_literals
 %type<expr> expr_unary
@@ -150,18 +149,19 @@ import (
 
 %union{
 	stmtsStmt                       *ast.StmtsStmt
+	exprsExpr                      	*ast.ExprsExpr
 	stmt                            ast.Stmt
 	expr                            ast.Expr
 	exprs                           []ast.Expr
 	stmts                           []ast.Stmt
 	stmt_select_content             *ast.SelectBodyStmt
-	expr_call_helper                struct{Exprs []ast.Expr; VarArg bool}
+	expr_call_helper                struct{Exprs *ast.ExprsExpr; VarArg bool}
 	expr_idents                     []string
 	func_expr_idents                []*ast.ParamExpr
 	func_expr_typed_ident           *ast.ParamExpr
 	func_expr_args                  struct{Params []*ast.ParamExpr; VarArg bool; TypeData *ast.TypeStruct}
 	expr_typed_ident                struct{Name string; TypeData *ast.TypeStruct}
-	stmt_lets_helper                struct{Exprs1, Exprs2 []ast.Expr; Typed, Mutable bool}
+	stmt_lets_helper                struct{Exprs1, Exprs2 *ast.ExprsExpr; Typed, Mutable bool}
 	opt_func_return_expr_idents     []*ast.FuncReturnValuesExpr
 	expr_map                        *ast.MapExpr
 	type_data                       *ast.TypeStruct
@@ -359,19 +359,19 @@ stmt_var :
 	VAR expr_idents '=' exprs
 	{
 		isItem := false
-		if len($2) == 2 && len($4) == 1 {
-			if _, ok := $4[0].(*ast.ItemExpr); ok {
+		if len($2) == 2 && len($4.Exprs) == 1 {
+			if _, ok := $4.Exprs[0].(*ast.ItemExpr); ok {
 				isItem = true
-				arr := []ast.Expr{}
+				arr := &ast.ExprsExpr{}
 				for _, el := range $2 {
-					arr = append(arr, &ast.IdentExpr{Lit: el})
+					arr.Exprs = append(arr.Exprs, &ast.IdentExpr{Lit: el})
 				}
-				$$ = &ast.LetMapItemStmt{Lhss: arr, Rhs: $4[0]}
+				$$ = &ast.LetMapItemStmt{Lhss: arr, Rhs: $4.Exprs[0]}
 			}
 		}
 		if !isItem {
-			$$ = &ast.VarStmt{Names: $2, Exprs: $4}
-			if len($2) != len($4) && !(len($4) == 1 && len($2) > len($4)) {
+			$$ = &ast.VarStmt{Names: $2, Exprs: $4.Exprs}
+			if len($2) != len($4.Exprs) && !(len($4.Exprs) == 1 && len($2) > len($4.Exprs)) {
 				yylex.Error("unexpected ','")
 			}
 		}
@@ -384,29 +384,29 @@ stmt_lets :
 		lhs := $1.Exprs1
 		rhs := $1.Exprs2
 		isItem := false
-		if len(lhs) == 2 && len(rhs) == 1 {
-			if _, ok := rhs[0].(*ast.ItemExpr); ok {
+		if len(lhs.Exprs) == 2 && len(rhs.Exprs) == 1 {
+			if _, ok := rhs.Exprs[0].(*ast.ItemExpr); ok {
 				isItem = true
-				$$ = &ast.LetMapItemStmt{Lhss: lhs, Rhs: rhs[0]}
+				$$ = &ast.LetMapItemStmt{Lhss: lhs, Rhs: rhs.Exprs[0]}
 			}
 		}
 		if !isItem {
 			$$ = &ast.LetsStmt{Lhss: lhs, Operator: "=", Rhss: rhs, Typed: $1.Typed, Mutable: $1.Mutable}
-			if len(lhs) != len(rhs) && !(len(rhs) == 1 && len(lhs) > len(rhs)) {
+			if len(lhs.Exprs) != len(rhs.Exprs) && !(len(rhs.Exprs) == 1 && len(lhs.Exprs) > len(rhs.Exprs)) {
 				yylex.Error("unexpected ','")
 			}
 		}
-		$$.SetPosition(lhs[0].Position())
+		$$.SetPosition(lhs.Exprs[0].Position())
 	}
 
 stmt_lets_helper :
 	exprs op_lets exprs
 	{
-		$$ = struct{Exprs1, Exprs2 []ast.Expr; Typed, Mutable bool}{Exprs1: $1, Exprs2: $3, Typed: $2, Mutable: false}
+		$$ = struct{Exprs1, Exprs2 *ast.ExprsExpr; Typed, Mutable bool}{Exprs1: $1, Exprs2: $3, Typed: $2, Mutable: false}
 	}
 	| MUT exprs WALRUS exprs
 	{
-		$$ = struct{Exprs1, Exprs2 []ast.Expr; Typed, Mutable bool}{Exprs1: $2, Exprs2: $4, Typed: true, Mutable: true}
+		$$ = struct{Exprs1, Exprs2 *ast.ExprsExpr; Typed, Mutable bool}{Exprs1: $2, Exprs2: $4, Typed: true, Mutable: true}
 	}
 
 op_lets :
@@ -628,12 +628,12 @@ func_expr_typed_idents :
 	}
 
 opt_exprs :
-	/* nothing */ { $$ = nil }
+	/* nothing */ { $$ = &ast.ExprsExpr{Exprs: []ast.Expr{}} }
 	| exprs       { $$ = $1  }
 
 exprs :
-	  expr                          { $$ = []ast.Expr{$1} }
-	| exprs comma_opt_newlines expr { $$ = append($1, $3) }
+	  expr                          { $$ = &ast.ExprsExpr{Exprs: []ast.Expr{$1}}  }
+	| exprs comma_opt_newlines expr { $1.Exprs = append($1.Exprs, $3) }
 
 opt_expr :
 	/* nothing */ { $$ = nil }
@@ -674,8 +674,8 @@ expr_paren :
 element : expr
 
 element_list :
-	keyed_element
-	| element_list ',' keyed_element
+	keyed_element                    { $$ = &ast.ExprsExpr{Exprs: []ast.Expr{$1}}  }
+	| element_list ',' keyed_element { $1.Exprs = append($1.Exprs, $3) }
 
 opt_element_list :
 	/* nothing */  { $$ = nil }
@@ -684,8 +684,8 @@ opt_element_list :
 key : expr
 
 keyed_element :
-	element
-	| key ':' element
+	element           { $$ = $1 }
+	| key ':' element { $$ = $3 }
 
 composite_lit : literal_type literal_value { $$ = $2 }
 
@@ -700,10 +700,10 @@ literal_value : '{' opt_element_list opt_comma '}' { $$ = $2 }
 expr_array :
 	EMPTYARR
 	{
-		$$ = &ast.ArrayExpr{}
+		$$ = &ast.ArrayExpr{Exprs: &ast.ExprsExpr{Exprs: []ast.Expr{}}}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 	}
-	| '[' comma_separated_exprs ']'
+	| '[' element_list ']'
 	{
 		$$ = &ast.ArrayExpr{Exprs: $2}
 		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
@@ -714,11 +714,11 @@ expr_array :
 //		if l, ok := yylex.(*Lexer); ok { $$.SetPosition(l.pos) }
 //	}
 
-comma_separated_exprs :
-	opt_newlines opt_exprs opt_comma_opt_newlines
-	{
-		$$ = $2
-	}
+//comma_separated_exprs :
+//	opt_newlines opt_exprs opt_comma_opt_newlines
+//	{
+//		$$ = $2
+//	}
 
 expr_ternary :
 	expr '?' expr ':' expr
@@ -829,11 +829,11 @@ expr_anon_call :
 expr_call_helper :
 	'(' exprs VARARG ')'
 	{
-		$$ = struct{Exprs []ast.Expr; VarArg bool}{Exprs: $2, VarArg: true}
+		$$ = struct{Exprs *ast.ExprsExpr; VarArg bool}{Exprs: $2, VarArg: true}
 	}
 	| '(' opt_exprs ')'
 	{
-		$$ = struct{Exprs []ast.Expr; VarArg bool}{Exprs: $2}
+		$$ = struct{Exprs *ast.ExprsExpr; VarArg bool}{Exprs: $2}
 	}
 
 unary_op :
@@ -1099,7 +1099,7 @@ expr_map_container :
 expr_map_content :
 	opt_newlines
 	{
-		$$ = &ast.MapExpr{}
+		$$ = &ast.MapExpr{Keys: &ast.ExprsExpr{Exprs: []ast.Expr{}}, Values: &ast.ExprsExpr{Exprs: []ast.Expr{}}}
 	}
 	| opt_newlines expr_map_content_helper opt_comma_opt_newlines
 	{
@@ -1109,12 +1109,12 @@ expr_map_content :
 expr_map_content_helper :
 	expr_map_key_value
 	{
-		$$ = &ast.MapExpr{Keys: []ast.Expr{$1[0]}, Values: []ast.Expr{$1[1]}}
+		$$ = &ast.MapExpr{Keys: &ast.ExprsExpr{Exprs: []ast.Expr{$1[0]}}, Values:  &ast.ExprsExpr{Exprs: []ast.Expr{$1[1]}}}
 	}
 	| expr_map_content_helper comma_opt_newlines expr_map_key_value
 	{
-		$$.Keys = append($$.Keys, $3[0])
-		$$.Values = append($$.Values, $3[1])
+		$$.Keys.Exprs = append($$.Keys.Exprs, $3[0])
+		$$.Values.Exprs = append($$.Values.Exprs, $3[1])
 	}
 
 expr_map_key_value :

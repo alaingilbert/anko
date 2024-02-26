@@ -135,7 +135,7 @@ func decompileLoopStmt(w *bytes.Buffer, prefix string, s *ast.LoopStmt, deep int
 }
 
 func decompileReturnStmt(w *bytes.Buffer, s *ast.ReturnStmt, prefix string) {
-	for _, e := range s.Exprs {
+	for _, e := range s.Exprs.(*ast.ExprsExpr).Exprs {
 		w.WriteString(prefix + "return ")
 		decompileExpr(w, e, 0)
 		w.WriteString("\n")
@@ -147,9 +147,9 @@ func decompileBreakStmt(w *bytes.Buffer, prefix string) {
 }
 
 func decompileLetsStmtHelper(w *bytes.Buffer, s *ast.LetsStmt) {
-	joinExpr(w, s.Lhss)
+	joinExpr(w, s.Lhss.(*ast.ExprsExpr).Exprs)
 	w.WriteString(" = ")
-	joinExpr(w, s.Rhss)
+	joinExpr(w, s.Rhss.(*ast.ExprsExpr).Exprs)
 }
 
 func decompileLetsStmt(w *bytes.Buffer, prefix string, s *ast.LetsStmt) {
@@ -160,7 +160,7 @@ func decompileLetsStmt(w *bytes.Buffer, prefix string, s *ast.LetsStmt) {
 
 func decompileSwitchCaseStmt(w *bytes.Buffer, prefix string, s *ast.SwitchCaseStmt, deep int) {
 	w.WriteString(prefix + "case ")
-	joinExpr(w, s.Exprs)
+	joinExpr(w, s.Exprs.Exprs)
 	w.WriteString(":\n")
 	decompileStmt(w, s.Stmt, deep+1)
 }
@@ -229,7 +229,7 @@ func decompileAnonCallExpr(w *bytes.Buffer, prefix string, e *ast.AnonCallExpr) 
 	w.WriteString(prefix)
 	decompileExpr(w, e.Expr, 0)
 	w.WriteString("(")
-	joinExpr(w, e.SubExprs)
+	joinExpr(w, e.SubExprs.Exprs)
 	w.WriteString(")")
 }
 
@@ -250,8 +250,8 @@ func decompileConstExpr(w *bytes.Buffer, prefix string, e *ast.ConstExpr) {
 func decompileMapExpr(w *bytes.Buffer, prefix string, e *ast.MapExpr) {
 	w.WriteString(prefix)
 	w.WriteString(`{`)
-	for i, k := range e.Keys {
-		v := e.Values[i]
+	for i, k := range e.Keys.Exprs {
+		v := e.Values.Exprs[i]
 		decompileExpr(w, k, 0)
 		w.WriteString(": ")
 		decompileExpr(w, v, 0)
@@ -263,7 +263,7 @@ func decompileMapExpr(w *bytes.Buffer, prefix string, e *ast.MapExpr) {
 func decompileArrayExpr(w *bytes.Buffer, prefix string, e *ast.ArrayExpr) {
 	w.WriteString(prefix)
 	w.WriteString("[")
-	joinExpr(w, e.Exprs)
+	joinExpr(w, e.Exprs.Exprs)
 	w.WriteString("]")
 }
 
@@ -275,7 +275,7 @@ func decompileStringExpr(w *bytes.Buffer, prefix string, e *ast.StringExpr) {
 func decompileCallExpr(w *bytes.Buffer, prefix string, e *ast.CallExpr) {
 	w.WriteString(prefix)
 	w.WriteString(e.Name + "(")
-	joinExpr(w, e.SubExprs)
+	joinExpr(w, e.SubExprs.Exprs)
 	w.WriteString(")")
 }
 

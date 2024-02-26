@@ -96,7 +96,7 @@ type ContinueStmt struct {
 // ReturnStmt provide "return" expression statement.
 type ReturnStmt struct {
 	StmtImpl
-	Exprs []Expr
+	Exprs Expr
 }
 
 // ThrowStmt provide "throw" expression statement.
@@ -143,7 +143,7 @@ type SwitchStmt struct {
 // SwitchCaseStmt provide switch case statement.
 type SwitchCaseStmt struct {
 	StmtImpl
-	Exprs []Expr
+	Exprs *ExprsExpr
 	Stmt  Stmt
 }
 
@@ -157,9 +157,9 @@ type VarStmt struct {
 // LetsStmt provide multiple statement of let.
 type LetsStmt struct {
 	StmtImpl
-	Lhss     []Expr
+	Lhss     Expr
 	Operator string
-	Rhss     []Expr
+	Rhss     Expr
 	Typed    bool
 	Mutable  bool
 }
@@ -167,7 +167,7 @@ type LetsStmt struct {
 // LetMapItemStmt provide statement of let for map item.
 type LetMapItemStmt struct {
 	StmtImpl
-	Lhss []Expr
+	Lhss Expr
 	Rhs  Expr
 }
 

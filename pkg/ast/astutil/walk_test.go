@@ -133,15 +133,15 @@ func TestWalk(t *testing.T) {
 		case *ast.CallExpr:
 			switch exp.Name {
 			case `testA`:
-				if len(exp.SubExprs) != 3 {
+				if len(exp.SubExprs.Exprs) != 3 {
 					return errors.New("invalid parameter count")
 				}
 			case `Main`:
-				if len(exp.SubExprs) != 1 {
+				if len(exp.SubExprs.Exprs) != 1 {
 					return errors.New("invalid parameter count")
 				}
 			case `Tester`:
-				if len(exp.SubExprs) != 0 {
+				if len(exp.SubExprs.Exprs) != 0 {
 					return errors.New("invalid parameter count")
 				}
 			}
@@ -191,7 +191,7 @@ fmt.Println(Main())
 		switch e := e.(type) {
 		case *ast.CallExpr:
 			//check if the BuiltinFuncX is getting the right number of args
-			if e.Name == `BuiltinFuncX` && len(e.SubExprs) != 3 {
+			if e.Name == `BuiltinFuncX` && len(e.SubExprs.Exprs) != 3 {
 				return errors.New("invalid number of arguments to BuiltinFuncX")
 			}
 		case *ast.FuncExpr:
@@ -247,13 +247,13 @@ func TestErrors(t *testing.T) {
 	fn := func(any, int) error { return nil }
 	err := walkStmt(&ast.StmtsStmt{Stmts: []ast.Stmt{errStmt}}, fn, 0)
 	assert.Error(t, err)
-	err = walkStmt(&ast.LetMapItemStmt{Lhss: []ast.Expr{errExpr}}, fn, 0)
+	err = walkStmt(&ast.LetMapItemStmt{Lhss: &ast.ExprsExpr{Exprs: []ast.Expr{errExpr}}}, fn, 0)
 	assert.Error(t, err)
 	err = walkStmt(&ast.LetMapItemStmt{Rhs: errExpr}, fn, 0)
 	assert.Error(t, err)
-	err = walkStmt(&ast.LetsStmt{Lhss: []ast.Expr{errExpr}}, fn, 0)
+	err = walkStmt(&ast.LetsStmt{Lhss: &ast.ExprsExpr{Exprs: []ast.Expr{errExpr}}}, fn, 0)
 	assert.Error(t, err)
-	err = walkStmt(&ast.LetsStmt{Rhss: []ast.Expr{errExpr}}, fn, 0)
+	err = walkStmt(&ast.LetsStmt{Rhss: &ast.ExprsExpr{Exprs: []ast.Expr{errExpr}}}, fn, 0)
 	assert.Error(t, err)
 	err = walkStmt(&ast.IfStmt{If: errExpr}, fn, 0)
 	assert.Error(t, err)

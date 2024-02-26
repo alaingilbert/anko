@@ -225,8 +225,8 @@ func makeType(vmp *VmParams, env envPkg.IEnv, typeStruct *ast.TypeStruct) (refle
 
 func invokeArrayExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ArrayExpr) (reflect.Value, error) {
 	if e.TypeData == nil {
-		a := make([]any, len(e.Exprs))
-		for i, expr := range e.Exprs {
+		a := make([]any, len(e.Exprs.Exprs))
+		for i, expr := range e.Exprs.Exprs {
 			arg, err := invokeExpr(vmp, env, expr)
 			if err != nil {
 				return nilValue, newError(expr, err)
@@ -244,9 +244,9 @@ func invokeArrayExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ArrayExpr) (reflect.
 		return nilValue, newStringError(e, "cannot make type nil")
 	}
 
-	slice := reflect.MakeSlice(t, len(e.Exprs), len(e.Exprs))
+	slice := reflect.MakeSlice(t, len(e.Exprs.Exprs), len(e.Exprs.Exprs))
 	valueType := t.Elem()
-	for i, ee := range e.Exprs {
+	for i, ee := range e.Exprs.Exprs {
 		rv, err := invokeExpr(vmp, env, ee)
 		if err != nil {
 			return nilValue, err
@@ -262,13 +262,13 @@ func invokeArrayExpr(vmp *VmParams, env envPkg.IEnv, e *ast.ArrayExpr) (reflect.
 
 func invokeMapExpr(vmp *VmParams, env envPkg.IEnv, e *ast.MapExpr) (reflect.Value, error) {
 	nilValueL := nilValue
-	m := make(map[any]any, len(e.Keys))
-	for i, ee := range e.Keys {
+	m := make(map[any]any, len(e.Keys.Exprs))
+	for i, ee := range e.Keys.Exprs {
 		key, err := invokeExpr(vmp, env, ee)
 		if err != nil {
 			return nilValueL, newError(ee, err)
 		}
-		valueExpr := e.Values[i]
+		valueExpr := e.Values.Exprs[i]
 		rv, err := invokeExpr(vmp, env, valueExpr)
 		if err != nil {
 			return nilValueL, newError(valueExpr, err)

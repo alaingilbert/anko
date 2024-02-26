@@ -61,23 +61,23 @@ func walkStmt(stmt ast.Stmt, f WalkFunc, deep int) error {
 	case *ast.BreakStmt:
 	case *ast.ContinueStmt:
 	case *ast.LetMapItemStmt:
-		if err := walkExprs(stmt.Lhss, f, deep); err != nil {
+		if err := walkExpr(stmt.Lhss, f, deep); err != nil {
 			return err
 		}
 		if err := walkExpr(stmt.Rhs, f, deep); err != nil {
 			return err
 		}
 	case *ast.ReturnStmt:
-		return walkExprs(stmt.Exprs, f, deep)
+		return walkExpr(stmt.Exprs, f, deep)
 	case *ast.ExprStmt:
 		return walkExpr(stmt.Expr, f, deep)
 	case *ast.VarStmt:
 		return walkExprs(stmt.Exprs, f, deep)
 	case *ast.LetsStmt:
-		if err := walkExprs(stmt.Lhss, f, deep); err != nil {
+		if err := walkExpr(stmt.Lhss, f, deep); err != nil {
 			return err
 		}
-		if err := walkExprs(stmt.Rhss, f, deep); err != nil {
+		if err := walkExpr(stmt.Rhss, f, deep); err != nil {
 			return err
 		}
 		return nil
@@ -166,6 +166,12 @@ func walkExpr(expr ast.Expr, f WalkFunc, deep int) error {
 		return err
 	}
 	switch expr := expr.(type) {
+	case *ast.ExprsExpr:
+		for i := range expr.Exprs {
+			if err := walkExpr(expr.Exprs[i], f, deep); err != nil {
+				return err
+			}
+		}
 	case *ast.LenExpr:
 	case *ast.NumberExpr:
 	case *ast.IdentExpr:
@@ -186,14 +192,16 @@ func walkExpr(expr ast.Expr, f WalkFunc, deep int) error {
 		}
 		return walkExpr(expr.End, f, deep)
 	case *ast.ArrayExpr:
-		return walkExprs(expr.Exprs, f, deep)
+		return walkExpr(expr.Exprs, f, deep)
 	case *ast.MapExpr:
-		for i := range expr.Keys {
-			if err := walkExpr(expr.Keys[i], f, deep); err != nil {
-				return err
-			}
-			if err := walkExpr(expr.Values[i], f, deep); err != nil {
-				return err
+		if expr.Keys != nil {
+			for i := range expr.Keys.Exprs {
+				if err := walkExpr(expr.Keys.Exprs[i], f, deep); err != nil {
+					return err
+				}
+				if err := walkExpr(expr.Values.Exprs[i], f, deep); err != nil {
+					return err
+				}
 			}
 		}
 	case *ast.DerefExpr:
@@ -234,7 +242,7 @@ func walkExpr(expr ast.Expr, f WalkFunc, deep int) error {
 		}
 		return walkExpr(&ast.CallExpr{Func: reflect.Value{}, Callable: &ast.Callable{SubExprs: expr.SubExprs, VarArg: expr.VarArg, Go: expr.Go}}, f, deep)
 	case *ast.CallExpr:
-		return walkExprs(expr.SubExprs, f, deep)
+		return walkExpr(expr.SubExprs, f, deep)
 	case *ast.TernaryOpExpr:
 		if err := walkExpr(expr.Expr, f, deep); err != nil {
 			return err

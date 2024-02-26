@@ -228,7 +228,7 @@ func runLetsStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetsStmt) (reflect.Va
 		}
 		return nil
 	}
-	return runVarOrLetStmt(vmp, env, stmt.Lhss, stmt.Rhss, defineFn)
+	return runVarOrLetStmt(vmp, env, stmt.Lhss.(*ast.ExprsExpr).Exprs, stmt.Rhss.(*ast.ExprsExpr).Exprs, defineFn)
 }
 
 func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt) (reflect.Value, error) {
@@ -243,7 +243,7 @@ func runLetMapItemStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.LetMapItemStmt)
 	} else {
 		rvs = []reflect.Value{rv, trueValue}
 	}
-	for i, lhs := range stmt.Lhss {
+	for i, lhs := range stmt.Lhss.(*ast.ExprsExpr).Exprs {
 		v := rvs[i]
 		v = elemIfInterfaceNNil(v)
 		_, err = invokeLetExpr(vmp, env, &ast.LetsStmt{Typed: false}, lhs, v)
@@ -518,18 +518,18 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 func runReturnStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.ReturnStmt) (reflect.Value, error) {
 	var err error
 	rv := nilValue
-	switch len(stmt.Exprs) {
+	switch len(stmt.Exprs.(*ast.ExprsExpr).Exprs) {
 	case 0:
 		return rv, nil
 	case 1:
-		rv, err = invokeExpr(vmp, env, stmt.Exprs[0])
+		rv, err = invokeExpr(vmp, env, stmt.Exprs.(*ast.ExprsExpr).Exprs[0])
 		if err != nil {
 			return rv, newError(stmt, err)
 		}
 		return rv, nil
 	}
-	rvs := make([]any, len(stmt.Exprs))
-	for i, expr := range stmt.Exprs {
+	rvs := make([]any, len(stmt.Exprs.(*ast.ExprsExpr).Exprs))
+	for i, expr := range stmt.Exprs.(*ast.ExprsExpr).Exprs {
 		rv, err = invokeExpr(vmp, env, expr)
 		if err != nil {
 			return rv, newError(stmt, err)
@@ -590,8 +590,8 @@ func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 		switch e := caseStmt.Expr.(type) {
 		case *ast.LetsStmt:
 			letStmt = e
-			pos = e.Rhss[0]
-			che, ok = e.Rhss[0].(*ast.ChanExpr)
+			pos = e.Rhss.(*ast.ExprsExpr).Exprs[0]
+			che, ok = e.Rhss.(*ast.ExprsExpr).Exprs[0].(*ast.ChanExpr)
 		case *ast.ExprStmt:
 			pos = e.Expr
 			che, ok = e.Expr.(*ast.ChanExpr)
@@ -629,9 +629,9 @@ func runSelectStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SelectStmt) (reflec
 	tmp := func(chosen int, rv reflect.Value) (reflect.Value, error) {
 		var err error
 		if letStmt := letsStmts[chosen]; letStmt != nil {
-			rv, err = invokeLetExpr(vmp, newenv, letStmt, letStmt.Lhss[0], rv)
+			rv, err = invokeLetExpr(vmp, newenv, letStmt, letStmt.Lhss.(*ast.ExprsExpr).Exprs[0], rv)
 			if err != nil {
-				return nilValueL, newError(letStmt.Lhss[0], err)
+				return nilValueL, newError(letStmt.Lhss.(*ast.ExprsExpr).Exprs[0], err)
 			}
 		}
 		if statements := bodies[chosen]; statements != nil {
@@ -671,7 +671,7 @@ func runSwitchStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.SwitchStmt) (reflec
 
 	for _, switchCaseStmt := range stmt.Cases {
 		caseStmt := switchCaseStmt.(*ast.SwitchCaseStmt)
-		for _, expr := range caseStmt.Exprs {
+		for _, expr := range caseStmt.Exprs.Exprs {
 			caseValue, err := invokeExpr(vmp, newenv, expr)
 			if err != nil {
 				return nilValue, newError(expr, err)

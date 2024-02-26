@@ -39,15 +39,15 @@ type ExprsExpr struct {
 // ArrayExpr provide Array expression.
 type ArrayExpr struct {
 	ExprImpl
-	Exprs    []Expr
+	Exprs    *ExprsExpr
 	TypeData *TypeStruct
 }
 
 // MapExpr provide Map expression.
 type MapExpr struct {
 	ExprImpl
-	Keys     []Expr
-	Values   []Expr
+	Keys     *ExprsExpr
+	Values   *ExprsExpr
 	TypeData *TypeStruct
 }
 
@@ -108,7 +108,7 @@ type TernaryOpExpr struct {
 // Callable ...
 type Callable struct {
 	ExprImpl
-	SubExprs []Expr
+	SubExprs *ExprsExpr
 	VarArg   bool
 	Go       bool
 	Defer    bool

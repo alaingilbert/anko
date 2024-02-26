@@ -228,9 +228,9 @@ func decodeVarStmt(r *Decoder) *ast.VarStmt {
 func decodeLetsStmt(r *Decoder) *ast.LetsStmt {
 	out := &ast.LetsStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
-	out.Lhss = r.readExprArray()
+	out.Lhss = decodeExpr(r)
 	out.Operator = r.readString()
-	out.Rhss = r.readExprArray()
+	out.Rhss = decodeExpr(r)
 	out.Typed = r.readBool()
 	out.Mutable = r.readBool()
 	return out
@@ -240,7 +240,7 @@ func decodeLetMapItemStmt(r *Decoder) *ast.LetMapItemStmt {
 	out := &ast.LetMapItemStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Rhs = decodeExpr(r)
-	out.Lhss = r.readExprArray()
+	out.Lhss = decodeExpr(r)
 	return out
 }
 
@@ -341,7 +341,7 @@ func decodeSwitchCaseStmt(r *Decoder) *ast.SwitchCaseStmt {
 	out := &ast.SwitchCaseStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
 	out.Stmt = decodeSingleStmt(r)
-	out.Exprs = r.readExprArray()
+	out.Exprs = decodeExprsExpr(r)
 	return out
 }
 
@@ -392,7 +392,7 @@ func decodeLabelStmt(r *Decoder) *ast.LabelStmt {
 func decodeReturnStmt(r *Decoder) *ast.ReturnStmt {
 	out := &ast.ReturnStmt{}
 	out.StmtImpl = decodeStmtImpl(r)
-	out.Exprs = r.readExprArray()
+	out.Exprs = decodeExpr(r)
 	return out
 }
 
@@ -503,7 +503,7 @@ func decodeStringExpr(r *Decoder) *ast.StringExpr {
 func decodeArrayExpr(r *Decoder) *ast.ArrayExpr {
 	out := &ast.ArrayExpr{}
 	out.ExprImpl = decodeExprImpl(r)
-	out.Exprs = r.readExprArray()
+	out.Exprs = decodeExprsExpr(r)
 	out.TypeData = decodeTypeStruct(r)
 	return out
 }
@@ -511,8 +511,8 @@ func decodeArrayExpr(r *Decoder) *ast.ArrayExpr {
 func decodeMapExpr(r *Decoder) *ast.MapExpr {
 	out := &ast.MapExpr{}
 	out.ExprImpl = decodeExprImpl(r)
-	out.Keys = r.readExprArray()
-	out.Values = r.readExprArray()
+	out.Keys = decodeExprsExpr(r)
+	out.Values = decodeExprsExpr(r)
 	out.TypeData = decodeTypeStruct(r)
 	return out
 }
@@ -746,7 +746,7 @@ func decodeDeleteExpr(r *Decoder) *ast.DeleteExpr {
 func decodeCallable(r *Decoder) *ast.Callable {
 	out := &ast.Callable{}
 	out.ExprImpl = decodeExprImpl(r)
-	out.SubExprs = r.readExprArray()
+	out.SubExprs = decodeExprsExpr(r)
 	out.VarArg = r.readBool()
 	out.Go = r.readBool()
 	out.Defer = r.readBool()

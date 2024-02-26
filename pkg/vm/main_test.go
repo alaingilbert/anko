@@ -234,6 +234,7 @@ func runTest1(t *testing.T, test Test, testingOptions *Options, stmt ast.Stmt) {
 
 	for outputName, outputValue := range test.Output {
 		value, err = e.GetEnv().Get(outputName)
+		value, err = e.GetEnv().Get(outputName)
 		if err != nil {
 			t.Errorf("Get error: %v - outputName: %v - script: %v", err, outputName, test.Script)
 			return

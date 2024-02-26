@@ -557,37 +557,33 @@ func runCForStmt(vmp *VmParams, env envPkg.IEnv, stmt *ast.CForStmt) (reflect.Va
 			break
 		}
 
-		rv, stmtErr := runSingleStmt(vmp, newenv, stmt.Stmt)
-		if stmtErr != nil {
-			if errors.Is(stmtErr, ErrContinue) {
-			} else if errors.Is(stmtErr, ErrBreak) {
+		rv, err := runSingleStmt(vmp, newenv, stmt.Stmt)
+		if err != nil {
+			if errors.Is(err, ErrContinue) {
+				var cErr *ContinueErr
+				if errors.As(err, &cErr) {
+					if cErr.label != "" && cErr.label != stmt.Label {
+						return nilValue, cErr
+					}
+				}
+			} else if errors.Is(err, ErrBreak) {
 				var bErr *BreakErr
-				if errors.As(stmtErr, &bErr) {
+				if errors.As(err, &bErr) {
 					if bErr.label != "" {
 						return nilValueL, bErr
 					}
 				}
 				break
-			} else if errors.Is(stmtErr, ErrReturn) {
-				return rv, stmtErr
+			} else if errors.Is(err, ErrReturn) {
+				return rv, err
 			} else {
-				return nilValueL, newError(stmt, stmtErr)
+				return nilValueL, newError(stmt, err)
 			}
 		}
 		_, err = invokeExpr(vmp, newenv, stmt.Expr3)
 		if err != nil {
 			return nilValueL, err
 		}
-
-		if errors.Is(stmtErr, ErrContinue) {
-			var cErr *ContinueErr
-			if errors.As(stmtErr, &cErr) {
-				if cErr.label != "" && cErr.label != stmt.Label {
-					return nilValue, cErr
-				}
-			}
-		}
-
 		if vmp.Validate {
 			break
 		}

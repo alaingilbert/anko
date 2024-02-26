@@ -1,5 +1,5 @@
 // Remaining reduce/reduce conflicts are:
-//     [1, 2, 3] conflicts with [1]int64
+//     label conflicts with expr_member_or_ident
 //
 // https://gitlab.com/cznic/gc/-/blob/20cf7bee948948b44142f2a04eff623012069407/v3/internal/ebnf/spec.ebnf
 

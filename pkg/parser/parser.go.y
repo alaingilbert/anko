@@ -104,6 +104,7 @@ import (
 %type<type_data> key_type
 %type<type_data> element_type
 %type<type_data> array_type
+%type<type_data> slice_type
 %type<type_data> literal_type
 %type<type_data> type_lit
 %type<type_data> qualified_ident
@@ -234,7 +235,7 @@ stmt :
 
 expr :
 	expr_iterable
-	//| composite_lit
+	| composite_lit
 	| expr_literals
 	| expr_unary
 	| expr_func
@@ -687,13 +688,27 @@ keyed_element :
 	element           { $$ = $1 }
 	| key ':' element { $$ = $3 }
 
-composite_lit : literal_type literal_value { $$ = $2 }
+composite_lit :
+	literal_type literal_value
+	{
+		if $1.Kind == ast.TypeSlice {
+			$$ = &ast.ArrayExpr{TypeData: $1, Exprs: $2.(*ast.ExprsExpr)}
+		} else {
+			$$ = $2
+		}
+	}
 
-literal_type : array_type
+literal_type : array_type | slice_type
 
 array_length : expr
 
 array_type : '[' array_length ']' element_type { $$ = $4 }
+
+slice_type :
+	EMPTYARR element_type
+	{
+		$$ = &ast.TypeStruct{Kind: ast.TypeSlice, SubType: $2}
+	}
 
 literal_value : '{' opt_element_list opt_comma '}' { $$ = $2 }
 
@@ -985,7 +1000,8 @@ type :
 
 type_lit :
 	pointer_type
-	//| array_type
+	| array_type
+	| slice_type
 	| typed_slice_count
 	| map_type
 	| channel_type
